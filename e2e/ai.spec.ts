@@ -1,11 +1,22 @@
-// AI 도면 해석 실측 E2E — OpenRouter 실제 API 호출 (네트워크 필요)
+﻿// AI 도면 해석 실측 E2E — OpenRouter 실제 API 호출 (네트워크 필요)
 // ⚠️ 키는 저장하지 않음 — 실행 전 환경변수로 지정하세요:
 //   PowerShell: $env:OPENROUTER_API_KEY="sk-or-v1-..." ; npx playwright test e2e/ai.spec.ts
 // 키 미지정 시 이 파일은 skip 됩니다.
 import { test, expect } from '@playwright/test'
+import { readFileSync } from 'fs'
 
-const API_KEY = process.env.OPENROUTER_API_KEY ?? ''
-const FREE_VISION_MODEL = 'google/gemma-4-31b-it:free'
+const API_KEY = process.env.OPENROUTER_API_KEY ?? readEnvLocal()
+
+function readEnvLocal(): string {
+  try {
+    const raw = readFileSync('.env.local', 'utf8')
+    const m = raw.match(/VITE_OPENROUTER_KEY=(.+)/)
+    return m ? m[1].trim() : ''
+  } catch {
+    return ''
+  }
+}
+const FREE_VISION_MODEL = 'stealth/ox-alpha' // Ox Alpha — 사용자 키로 실측 확인된 모델
 
 test.describe.configure({ mode: 'serial' })
 test.skip(!API_KEY, 'OPENROUTER_API_KEY 환경변수 미지정 — 실제 API 테스트 생략')

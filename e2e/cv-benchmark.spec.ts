@@ -1,6 +1,6 @@
 ﻿// M18 CV 벤치마크 — 다운로드한 실도면 이미지들을 planVision 파이프라인으로 일괄 변환·평가
 // (LLM/네트워크 불필요 — fixtures의 로컬 이미지 대상, 결정론)
-import { test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'fs'
 import { buildPlanFromImage, autoThresholdOtsu, toGray, invertGray, inkRatio } from '../src/engine/planVision'
 import type { Gray } from '../src/engine/planVision'

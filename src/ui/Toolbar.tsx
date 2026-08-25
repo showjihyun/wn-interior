@@ -238,22 +238,38 @@ function AiModal({ onClose }: { onClose: () => void }) {
       setStatus('API 키 미설정 — ⚙️ 설정에서 입력하세요')
       return
     }
+    // 429(업스트림 한도)는 자동 재시도 — Ox Alpha 등 공유 풀 모델에서 흔함
+    const delays = [0, 6000, 18000]
+    let lastStatus = 0
     setStatus('해석 중… (수십 초 소요)')
     try {
       const req = buildChatRequest(ai, dataUrl)
-      const res = await fetch(req.url, req.init)
-      if (!res.ok) {
+      for (let attempt = 0; attempt < delays.length; attempt++) {
+        if (delays[attempt] > 0) {
+          setStatus(`한도 초과(429) — ${delays[attempt] / 1000}초 후 재시도… (${attempt + 1}/${delays.length - 1})`)
+          await new Promise((r) => setTimeout(r, delays[attempt]))
+          setStatus('해석 중… (재시도)')
+        }
+        const res = await fetch(req.url, req.init)
+        if (res.ok) {
+          const j = await res.json()
+          const content = parseChatResponse(j)
+          setRawJson(content)
+          apply(content)
+          lastStatus = 0
+          break
+        }
+        lastStatus = res.status
+        if (res.status !== 429) break
+      }
+      if (lastStatus !== 0) {
         const map: Record<number, string> = {
           401: 'API 키가 올바르지 않습니다(401) — ⚙️ 설정에서 키를 다시 확인하세요',
-          402: 'API 크레딧 부족(402) — OpenRouter에서 크레딧을 충전하거나 설정에서 무료 모델을 선택하세요',
-          429: '요청 한도 초과(429) — 잠시 후 다시 시도하세요 (무료 티어는 일일 한도 있음)',
+          402: 'API 크레딧 부족(402) — OpenRouter에서 크레딧을 충전하거나 설정에서 다른 모델을 선택하세요',
+          429: '요청 한도 초과(429) — 모델이 현재 혼잡합니다. 잠시 후 다시 시도하거나 설정에서 다른 모델을 선택하세요',
         }
-        throw new Error(map[res.status] ?? `API ${res.status}`)
+        throw new Error(map[lastStatus] ?? `API ${lastStatus}`)
       }
-      const j = await res.json()
-      const content = parseChatResponse(j)
-      setRawJson(content)
-      apply(content)
     } catch (e) {
       const msg = (e as Error).message
       st.showToast(`AI 해석 실패: ${msg}`, 'error')

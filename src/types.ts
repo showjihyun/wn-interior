@@ -134,6 +134,8 @@ export interface Placement {
 
 export interface Project {
   version: 1
+  /** 저장소 내 고유 id (다중 프로젝트 지원) */
+  id?: string
   name: string
   plan: FloorPlan
   placements: Placement[]

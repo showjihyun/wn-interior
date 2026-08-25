@@ -150,7 +150,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
       rooms: raw.rooms,
     })
     if (!norm.ok || !norm.plan) {
-      setStatus(`변환 실패: ${norm.error}`)
+      useStore.getState().showToast(`도면 변환 실패: ${norm.error}`, 'error')
       return
     }
     // opening offset 재계산 (벽 시작점부터의 거리) — keptOpenings[i] ↔ norm.openings[i] 순서 대응
@@ -178,7 +178,8 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     setTimeout(onClose, 900)
     } catch (e) {
       console.error('[PlanVision] apply 실패', e)
-      setStatus(`변환 적용 실패: ${(e as Error).message}`)
+      useStore.getState().showToast(`도면 변환 실패: ${(e as Error).message}`, 'error')
+      setStatus(`적용 실패: ${(e as Error).message}`)
     }
   }
 

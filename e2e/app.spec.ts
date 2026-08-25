@@ -381,6 +381,65 @@ test('조명 강도 슬라이더가 store에 반영된다', async ({ page }) => 
   expect(await S(page, '.lightIntensity')).toBe(0.4)
 })
 
+// ── 세션별 다중 프로젝트 ──
+
+test('다중 프로젝트: 새 프로젝트 생성 → 도면 그리기 → 전환 → 복귀 시 데이터 유지', async ({ page }) => {
+  // 현재(샘플)에서 새 프로젝트 생성
+  await page.getByRole('button', { name: /📁 프로젝트/ }).click()
+  const modal = page.locator('.modal')
+  await modal.getByRole('button', { name: /새 프로젝트/ }).click()
+  await expect(page.locator('.ed2d-svg')).toBeVisible() // 빈 도면 → 2D가 그리기 시작점
+  expect(await S(page, '.plan.walls.length')).toBe(0)
+  expect(await S(page, '.projectName')).toBe('새 프로젝트')
+
+  // 벽 2개 그리기
+  await page.getByRole('button', { name: /벽 그리기/ }).click()
+  const svg = page.locator('.ed2d-svg')
+  const b = (await svg.boundingBox())!
+  await svg.click({ position: { x: b.width * 0.4, y: b.height * 0.4 } })
+  await svg.click({ position: { x: b.width * 0.6, y: b.height * 0.4 } })
+  await page.getByRole('button', { name: '벽 완성' }).click()
+  await page.waitForTimeout(900) // 자동저장
+
+  // 다른 프로젝트로 전환해도 분리됨
+  await page.evaluate(() => window.__hp3d_store.getState().newProject('다른 집'))
+  expect(await S(page, '.plan.walls.length')).toBe(0)
+
+  // 복귀 → 벽 유지 (세션 격리 + 저장 확인)
+  await page.getByRole('button', { name: /📁 프로젝트/ }).click()
+  await page.locator('.proj-item', { hasText: '새 프로젝트' }).first().getByRole('button', { name: '열기' }).click()
+  const walls = await page.evaluate(() =>
+    window.__hp3d_store.getState().projects.length,
+  )
+  expect(walls).toBeGreaterThanOrEqual(2)
+})
+
+test('기존 단일 슬롯 데이터는 첫 로드 시 마이그레이션된다', async ({ page }) => {
+  // 구버전 형식 시드
+  await page.addInitScript(() => {
+    localStorage.clear()
+    localStorage.setItem(
+      'homeplan3d.project.v1',
+      JSON.stringify({
+        version: 1,
+        name: '구버전 우리집',
+        plan: { unit: 'mm', wallHeight: 2400, walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 1000, y: 0 }, thickness: 120 }], openings: [], rooms: [] },
+        placements: [],
+        customProducts: [],
+        createdAt: '2020-01-01T00:00:00Z',
+        updatedAt: '2020-01-01T00:00:00Z',
+      }),
+    )
+  })
+  await page.goto('/')
+  await page.waitForFunction(() => !!(window as any).__hp3d_store)
+  expect(await S(page, '.projectName')).toBe('구버전 우리집')
+  expect(await S(page, '.plan.walls.length')).toBe(1)
+  // 구 슬롯은 정리됨 (새 키로 이동)
+  const legacyGone = await page.evaluate(() => localStorage.getItem('homeplan3d.project.v1'))
+  expect(legacyGone).toBeNull()
+})
+
 test('AI 해석 모달: 열림→닫힘, 보정 안내 문구 포함', async ({ page }) => {
   await page.getByRole('button', { name: /AI 도면 해석/ }).click()
   const modal = page.locator('.modal')

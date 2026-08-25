@@ -1,4 +1,4 @@
-# 홈플랜 3D — 진행 관리 (TODO & GOAL)
+﻿# 홈플랜 3D — 진행 관리 (TODO & GOAL)
 
 > 이 파일이 프로젝트의 **단일 진실 원본(Single Source of Truth)** 입니다.
 > 세션이 끊기면 이 파일을 읽고 마지막 체크포인트부터 이어서 진행합니다.
@@ -184,6 +184,27 @@
 - [x] apply 예외 삼킴 방지 — 실패 시 상태 표시 (검증 선: 실패를 삼키지 않는다)
 
 검증: 단위 70 passed / E2E 32 passed / tsc OK / build OK (2026-08-25)
+
+### M16 캐릭터 워크스루 + 세션별 프로젝트 저장소 ✅
+- [x] TDD: walk.ts 충돌 해석 (원-AABB 7테스트, 축별 슬라이드, 벽+가구+경계)
+- [x] 캐릭터 설정: 신장(cm)·몸무게(kg) → 눈높이(신장×0.94)·캐릭터 반경 자동 산정 (WalkPanel)
+- [x] 1인칭: 눈높이 시점 / 3인칭: 캐릭터 후방 추적 카메라 + 캡슐 캐릭터 렌더 (readPixels 픽셀 검증)
+- [x] 가구 충돌: 배치 가구 유효 치수 AABB + 캐릭터 반경 (벽만 막던 기존 한계 개선)
+- [x] 워크스루 설정 패널 (신장/몸무게 슬라이더, 시점 전환)
+- [x] E2E: 진입/설정/WASD 이동/가구 충돌 차단 단정 + 3인칭 readPixels 검증 (4종)
+- [x] 회귀 + 문서
+
+### M17 세션별 다중 프로젝트 저장소 ✅
+- [x] StorageAdapter 인터페이스 + LocalStorageAdapter (TDD 6종: 사이클/격리/덮어쓰기/손상 복구)
+- [x] store 통합: projectId·newProject/openProject/deleteProject, 기존 단일 슬롯 자동 마이그레이션
+- [x] 📁 프로젝트 모달 (목록/생성/열기/삭제, 현재 프로젝트 표시)
+- [x] DB 전환 준비: 어댑터 교체만으로 계정별 CRUD 확장 (Vercel KV/Postgres 계획)
+
+### AI 기본 모델 변경 ✅
+- [x] 기본: OpenRouter stealth/ox-alpha (vision) — 키는 .env.local(git 제외) 또는 ⚙️ 설정 입력
+- [x] 401/402/429 상태별 메시지 + 빈 키 가드 + **모든 에러 Toast 일원화**(alert 제거)
+
+검증: 단위 83 / E2E 38(+AI skip 2) / preview 스모크 / tsc / build (2026-08-25)
 
 ## 🔖 체크포인트 로그
 - 2026-08-24: 계획 수립, 딥인터뷰 확정, M0~M1 완료

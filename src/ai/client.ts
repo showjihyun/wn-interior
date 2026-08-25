@@ -31,7 +31,7 @@ export function buildChatRequest(settings: AiSettings, imageDataUrl: string): Ch
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${settings.apiKey}`,
+        Authorization: `Bearer ${settings.apiKey.trim()}`,
       },
       body: JSON.stringify({
         model: settings.model,

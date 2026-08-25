@@ -128,11 +128,11 @@ function CustomForm() {
     const D = parseInt(d)
     const H = parseInt(h)
     if (!name || !W || !D || !H) {
-      alert('이름과 가로·세로·높이(mm)를 모두 입력하세요. 예: 1600 / 800 / 750')
+      useStore.getState().showToast('이름과 가로·세로·높이(mm)를 모두 입력하세요', 'error')
       return
     }
     if (url && !/^https?:\/\//.test(url)) {
-      alert('모델 URL은 http(s):// 로 시작해야 합니다.')
+      useStore.getState().showToast('모델 URL은 http(s):// 로 시작해야 합니다', 'error')
       return
     }
     add({

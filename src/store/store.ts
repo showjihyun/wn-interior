@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────
 // 전역 상태 — 단일 소스 오브 트루스 (Project = plan + placements)
 // Undo/Redo: 스냅샷 스택 / localStorage 자동저장(debounce)
 // ─────────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ import { SAMPLE_PLACEMENTS, SAMPLE_PLAN } from '../data/samplePlan'
 import { CATALOG, PRODUCT_MAP } from '../data/catalog'
 import { canDropAt } from '../engine/drop'
 import { resolveDims } from '../engine/dims'
+import { storage, type ProjectMeta } from '../storage/storage'
 
 const LS_KEY = 'homeplan3d.project.v1'
 
@@ -49,11 +50,22 @@ export interface AppState {
   viewPreset: 'iso' | 'top' | 'walk'
   variants: Variant[]
   moving: { id: string; origin: { x: number; z: number; rotY: number } } | null
-  toast: { id: number; msg: string } | null
+  toast: { id: number; msg: string; kind: 'error' | 'warn' | 'info' } | null
   /** 씬 조명 강도 배율 (0.2~2.0, 기본 1) */
   lightIntensity: number
+  /** 워크스루 캐릭터 설정 */
+  walkConfig: { heightCm: number; weightKg: number }
+  walkView: 'fp' | 'tp'
+  projectId: string
+  projects: ProjectMeta[]
 
   setLightIntensity: (v: number) => void
+  setWalkConfig: (patch: Partial<{ heightCm: number; weightKg: number }>) => void
+  setWalkView: (v: 'fp' | 'tp') => void
+  newProject: (name?: string) => void
+  openProject: (id: string) => void
+  deleteProject: (id: string) => void
+  refreshProjects: () => void
 
   setPending: (id: string | null) => void
   setViewPreset: (v: 'iso' | 'top' | 'walk') => void
@@ -63,7 +75,7 @@ export interface AppState {
   beginMove: (id: string, origin: { x: number; z: number; rotY: number }) => void
   confirmMove: () => void
   cancelMove: () => void
-  showToast: (msg: string) => void
+  showToast: (msg: string, kind?: 'error' | 'warn' | 'info') => void
 
   commit: (fn: (s: AppState) => void) => void
   undo: () => void
@@ -107,46 +119,74 @@ function persist(s: AppState) {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     try {
+      const existing = storage.load(s.projectId)
       const proj: Project = {
         version: 1,
+        id: s.projectId,
         name: s.projectName,
         plan: s.plan,
         placements: s.placements,
         customProducts: s.customProducts,
-        createdAt: new Date().toISOString(),
+        createdAt: existing?.createdAt ?? new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      localStorage.setItem(LS_KEY, JSON.stringify(proj))
+      storage.save(proj)
     } catch {
       /* 저장 실패 무시 */
     }
   }, 600)
 }
 
-function initialProject(): { plan: FloorPlan; placements: Placement[]; customProducts: Product[]; name: string } {
+/** 저장소 초기화: 기존 단일 슬롯 마이그레이션 → 최근 프로젝트 → 샘플 신규 */
+function initialProject(): Project {
+  // 1) 구버전 단일 슬롯 마이그레이션
   try {
     const raw = localStorage.getItem(LS_KEY)
     if (raw) {
       const p = JSON.parse(raw) as Project
-      if (p?.plan?.walls?.length) {
-        return { plan: p.plan, placements: p.placements ?? [], customProducts: p.customProducts ?? [], name: p.name ?? '우리집' }
+      if (p?.plan) {
+        const id = Math.random().toString(36).slice(2, 10)
+        const proj: Project = {
+          ...p,
+          id,
+          placements: p.placements ?? [],
+          customProducts: p.customProducts ?? [],
+          createdAt: p.createdAt ?? new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        storage.save(proj)
+        localStorage.removeItem(LS_KEY)
+        return proj
       }
     }
   } catch {
-    /* 폴백 */
+    /* 마이그레이션 실패 시 폴백 */
   }
-  return {
+  // 2) 저장된 프로젝트 중 최근 항목
+  const list = storage.list()
+  if (list.length > 0) {
+    const p = storage.load(list[0].id)
+    if (p) return p
+  }
+  // 3) 샘플 프로젝트 신규 생성
+  const id = Math.random().toString(36).slice(2, 10)
+  const proj: Project = {
+    version: 1,
+    id,
+    name: '샘플 아파트 (34평형)',
     plan: clonePlan(SAMPLE_PLAN),
     placements: SAMPLE_PLACEMENTS.map((sp) => ({
-      id: uid(),
+      id: Math.random().toString(36).slice(2, 10),
       productId: sp.productId,
       pos: { ...sp.pos },
       rotY: sp.rotY,
-      colorway: undefined,
     })),
     customProducts: [],
-    name: '샘플 아파트 (34평형)',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }
+  storage.save(proj)
+  return proj
 }
 
 function uid() {
@@ -157,6 +197,8 @@ const init = initialProject()
 
 export const useStore = create<AppState>((set, get) => ({
   projectName: init.name,
+  projectId: init.id ?? 'current',
+  projects: storage.list(),
   plan: init.plan,
   placements: init.placements,
   customProducts: init.customProducts,
@@ -170,12 +212,16 @@ export const useStore = create<AppState>((set, get) => ({
   moving: null,
   toast: null,
   lightIntensity: 1,
+  walkConfig: { heightCm: 170, weightKg: 65 },
+  walkView: 'fp',
 
   setLightIntensity: (v) => set({ lightIntensity: Math.max(0.2, Math.min(2, v)) }),
+  setWalkConfig: (patch) => set((s) => ({ walkConfig: { ...s.walkConfig, ...patch } })),
+  setWalkView: (v) => set({ walkView: v }),
   ai: {
-    baseUrl: 'https://api.openai.com/v1',
-    apiKey: '',
-    model: 'gpt-4o',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKey: (import.meta.env.VITE_OPENROUTER_KEY as string) ?? '',
+    model: 'stealth/ox-alpha',
   },
 
   productById: (id) =>
@@ -293,9 +339,9 @@ export const useStore = create<AppState>((set, get) => ({
     set({ moving: null })
   },
 
-  showToast: (msg) => {
+  showToast: (msg, kind = 'warn') => {
     const tid = Date.now()
-    set({ toast: { id: tid, msg } })
+    set({ toast: { id: tid, msg, kind } })
     setTimeout(() => {
       if (get().toast?.id === tid) set({ toast: null })
     }, 2600)
@@ -450,6 +496,67 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setAi: (patch) => set((s) => ({ ai: { ...s.ai, ...patch } })),
+
+  newProject: (name = '새 프로젝트') => {
+    const id = uid()
+    const proj: Project = {
+      version: 1,
+      id,
+      name,
+      plan: { unit: 'mm', wallHeight: 2400, walls: [], openings: [], rooms: [] },
+      placements: [],
+      customProducts: get().customProducts,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    storage.save(proj)
+    set({
+      projectId: id,
+      projectName: proj.name,
+      plan: proj.plan,
+      placements: [],
+      selectedId: null,
+      moving: null,
+      past: [],
+      future: [],
+      projects: storage.list(),
+    })
+  },
+
+  openProject: (id) => {
+    const p = storage.load(id)
+    if (!p) {
+      get().showToast('프로젝트를 불러올 수 없습니다', 'error')
+      return
+    }
+    set({
+      projectId: id,
+      projectName: p.name,
+      plan: p.plan,
+      placements: p.placements,
+      customProducts: p.customProducts ?? [],
+      selectedId: null,
+      moving: null,
+      past: [],
+      future: [],
+    })
+    get().showToast(`'${p.name}' 열림`, 'info')
+  },
+
+  deleteProject: (id) => {
+    storage.delete(id)
+    const st = get()
+    if (id === st.projectId) {
+      const rest = storage.list()
+      if (rest.length > 0) st.openProject(rest[0].id)
+      else st.newProject()
+    } else {
+      set({ projects: storage.list() })
+    }
+    get().showToast('프로젝트 삭제됨', 'info')
+  },
+
+  refreshProjects: () => set({ projects: storage.list() }),
 }))
 
 export function allCatalog(): Product[] {

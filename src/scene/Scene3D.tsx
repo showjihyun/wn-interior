@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────
 // 3D 씬 컨테이너 — 조명/카메라 프리셋(아이소·탑·워크스루)/그리드/캡처
 // ─────────────────────────────────────────────────────────────
 import { useEffect, useRef } from 'react'
@@ -10,10 +10,11 @@ import type { FloorPlan } from '../types'
 import { useStore } from '../store/store'
 import { Floors3D, Walls3D } from './Structure'
 import { FurnitureAll, planCenter } from './Furniture3D'
-import { projectOnSegment } from '../engine/geom'
+import { WalkControls as WalkControlsNew } from './WalkControls'
 
 function CameraRig({ center }: { center: { x: number; y: number } }) {
   const preset = useStore((s) => s.viewPreset)
+  const plan = useStore((s) => s.plan)
   const { camera } = useThree()
   const controls = useRef<OrbitControlsImpl>(null)
 
@@ -31,7 +32,7 @@ function CameraRig({ center }: { center: { x: number; y: number } }) {
     c.update()
   }, [preset, center.x, center.y, camera])
 
-  if (preset === 'walk') return <WalkControls />
+  if (preset === 'walk') return <WalkControlsNew plan={plan} />
   return (
     <OrbitControls
       ref={controls}
@@ -41,133 +42,6 @@ function CameraRig({ center }: { center: { x: number; y: number } }) {
       maxDistance={45000}
     />
   )
-}
-
-const EYE = 1600
-
-/** 1인칭 워크스루: 드래그=시선, WASD/화살표=이동, 벽 충돌 차단 */
-function WalkControls() {
-  const plan = useStore((s) => s.plan)
-  const { camera, gl } = useThree()
-  const keys = useRef<Record<string, boolean>>({})
-  const yaw = useRef(0)
-  const pitch = useRef(0)
-
-  // 초기 위치: 도면 중심 남쪽에서 북쪽 바라봄
-  const centerRef = useRef<{ x: number; y: number } | null>(null)
-  useEffect(() => {
-    camera.rotation.order = 'YXZ'
-    const c = planCenter(plan)
-    centerRef.current = c
-    camera.position.set(c.x, EYE, c.y + Math.min(3500, (maxExtent(plan) / 2) * 0.7))
-    yaw.current = 0
-    pitch.current = 0
-
-    const kd = (e: KeyboardEvent) => {
-      keys.current[e.code] = true
-    }
-    const ku = (e: KeyboardEvent) => {
-      keys.current[e.code] = false
-    }
-    const el = gl.domElement
-    let dragging = false
-    let lx = 0
-    let ly = 0
-    const pd = (e: PointerEvent) => {
-      dragging = true
-      lx = e.clientX
-      ly = e.clientY
-    }
-    const pm = (e: PointerEvent) => {
-      if (!dragging) return
-      yaw.current -= ((e.clientX - lx) * Math.PI) / 380
-      pitch.current -= ((e.clientY - ly) * Math.PI) / 380
-      pitch.current = Math.max(-1.05, Math.min(1.05, pitch.current))
-      lx = e.clientX
-      ly = e.clientY
-    }
-    const pu = () => {
-      dragging = false
-    }
-    window.addEventListener('keydown', kd)
-    window.addEventListener('keyup', ku)
-    el.addEventListener('pointerdown', pd)
-    window.addEventListener('pointermove', pm)
-    window.addEventListener('pointerup', pu)
-    return () => {
-      window.removeEventListener('keydown', kd)
-      window.removeEventListener('keyup', ku)
-      el.removeEventListener('pointerdown', pd)
-      window.removeEventListener('pointermove', pm)
-      window.removeEventListener('pointerup', pu)
-      keys.current = {}
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gl])
-
-  useFrame((_, dtRaw) => {
-    const k = keys.current
-    const speed = (k.ShiftLeft || k.ShiftRight ? 6000 : 2600) * Math.min(dtRaw, 0.05)
-    const f = { x: -Math.sin(yaw.current), z: -Math.cos(yaw.current) }
-    const r = { x: Math.cos(yaw.current), z: -Math.sin(yaw.current) }
-    let dx = 0
-    let dz = 0
-    if (k.KeyW || k.ArrowUp) {
-      dx += f.x
-      dz += f.z
-    }
-    if (k.KeyS || k.ArrowDown) {
-      dx -= f.x
-      dz -= f.z
-    }
-    if (k.KeyD || k.ArrowRight) {
-      dx += r.x
-      dz += r.z
-    }
-    if (k.KeyA || k.ArrowLeft) {
-      dx -= r.x
-      dz -= r.z
-    }
-    if (dx !== 0) {
-      const nx = camera.position.x + dx * speed
-      if (!hitWall(plan, nx, camera.position.z)) camera.position.x = nx
-    }
-    if (dz !== 0) {
-      const nz = camera.position.z + dz * speed
-      if (!hitWall(plan, camera.position.x, nz)) camera.position.z = nz
-    }
-    camera.rotation.set(pitch.current, yaw.current, 0)
-  })
-
-  return null
-}
-
-function maxExtent(plan: FloorPlan): number {
-  let m = 0
-  for (const room of plan.rooms)
-    for (const p of room.polygon) m = Math.max(m, Math.abs(p.x), Math.abs(p.y))
-  return m * 2 || 10000
-}
-
-function hitWall(plan: FloorPlan, x: number, z: number): boolean {
-  const RADIUS = 260
-  for (const w of plan.walls) {
-    const { dist } = projectOnSegment({ x, y: z }, w.a, w.b)
-    if (dist < w.thickness / 2 + RADIUS) return true
-  }
-  // 도면 전체 범위 클램프 (여유 ±2m)
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
-  for (const room of plan.rooms)
-    for (const p of room.polygon) {
-      minX = Math.min(minX, p.x)
-      minY = Math.min(minY, p.y)
-      maxX = Math.max(maxX, p.x)
-      maxY = Math.max(maxY, p.y)
-    }
-  return x < minX - 2000 || x > maxX + 2000 || z < minY - 2000 || z > maxY + 2000
 }
 
 function Sun({ center, intensity }: { center: { x: number; y: number }; intensity: number }) {

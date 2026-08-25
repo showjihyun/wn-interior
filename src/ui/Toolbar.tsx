@@ -3,6 +3,7 @@ import { useStore } from '../store/store'
 import { normalizeAiPlan } from '../ai/normalizePlan'
 import { buildChatRequest, parseChatResponse } from '../ai/client'
 import { PlanVisionModal as CvModal } from './PlanVisionModal'
+import { ProjectsModal } from './ProjectsModal'
 
 function Btn({
   onClick,
@@ -31,6 +32,7 @@ export function Toolbar() {
   const [setOpen, setSetOpen] = useState(false)
   const [varOpen, setVarOpen] = useState(false)
   const [cvOpen, setCvOpen] = useState(false)
+  const [projOpen, setProjOpen] = useState(false)
 
   function exportJson() {
     const proj = s.exportProject()
@@ -45,9 +47,9 @@ export function Toolbar() {
     f.text().then((txt) => {
       try {
         s.loadProject(JSON.parse(txt))
-        alert('프로젝트를 불러왔습니다.')
+        useStore.getState().showToast('프로젝트를 불러왔습니다', 'info')
       } catch {
-        alert('JSON 파싱 실패')
+        useStore.getState().showToast('JSON 파싱 실패 — 올바른 프로젝트 파일이 아닙니다', 'error')
       }
     })
   }
@@ -118,6 +120,9 @@ export function Toolbar() {
           onChange={(e) => s.setLightIntensity(parseFloat(e.target.value))}
         />
       </label>
+      <Btn onClick={() => setProjOpen(true)} title="세션별 프로젝트 관리">
+        📁 프로젝트
+      </Btn>
       <Btn onClick={() => setCvOpen(true)} title="이미지 처리로 벽·방·문을 자동 검출 (LLM 불필요)">
         🧮 도면 자동 변환
       </Btn>
@@ -131,6 +136,7 @@ export function Toolbar() {
       {setOpen && <SettingsModal onClose={() => setSetOpen(false)} />}
       {varOpen && <VariantsModal onClose={() => setVarOpen(false)} />}
       {cvOpen && <CvModal onClose={() => setCvOpen(false)} />}
+      {projOpen && <ProjectsModal onClose={() => setProjOpen(false)} />}
     </div>
   )
 }
@@ -226,23 +232,32 @@ function AiModal({ onClose }: { onClose: () => void }) {
 
   async function run() {
     if (!dataUrl) return
+    const st = useStore.getState()
+    if (!ai.apiKey.trim()) {
+      st.showToast('API 키가 설정되지 않았습니다. ⚙️ 설정에서 입력하세요', 'error')
+      setStatus('API 키 미설정 — ⚙️ 설정에서 입력하세요')
+      return
+    }
     setStatus('해석 중… (수십 초 소요)')
     try {
       const req = buildChatRequest(ai, dataUrl)
       const res = await fetch(req.url, req.init)
       if (!res.ok) {
-        if (res.status === 402)
-          throw new Error('API 크레딧 부족(402) — OpenRouter에서 크레딧을 충전하거나 설정에서 무료 모델을 선택하세요')
-        if (res.status === 429)
-          throw new Error('요청 한도 초과(429) — 잠시 후 다시 시도하세요 (무료 티어는 일일 한도 있음)')
-        throw new Error(`API ${res.status}`)
+        const map: Record<number, string> = {
+          401: 'API 키가 올바르지 않습니다(401) — ⚙️ 설정에서 키를 다시 확인하세요',
+          402: 'API 크레딧 부족(402) — OpenRouter에서 크레딧을 충전하거나 설정에서 무료 모델을 선택하세요',
+          429: '요청 한도 초과(429) — 잠시 후 다시 시도하세요 (무료 티어는 일일 한도 있음)',
+        }
+        throw new Error(map[res.status] ?? `API ${res.status}`)
       }
       const j = await res.json()
       const content = parseChatResponse(j)
       setRawJson(content)
       apply(content)
     } catch (e) {
-      setStatus(`실패: ${(e as Error).message}`)
+      const msg = (e as Error).message
+      st.showToast(`AI 해석 실패: ${msg}`, 'error')
+      setStatus(`실패: ${msg}`)
     }
   }
 
@@ -319,6 +334,12 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>⚙️ AI 설정 (OpenAI 호환)</h3>
         <div className="presets">
+          <button
+            onClick={() => setForm({ ...form, baseUrl: 'https://openrouter.ai/api/v1', model: 'stealth/ox-alpha' })}
+            title="OpenRouter — Ox Alpha (vision)"
+          >
+            Ox Alpha
+          </button>
           <button
             onClick={() => setForm({ ...form, baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o' })}
             title="OpenRouter — openai/gpt-4o"

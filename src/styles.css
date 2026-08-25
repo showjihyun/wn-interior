@@ -639,9 +639,9 @@ body,
   bottom: 52px;
   left: 50%;
   transform: translateX(-50%);
-  background: #3a1f1f;
-  border: 1px solid #a33;
-  color: #ffb4b4;
+  background: #1f242a;
+  border: 1px solid #3b424a;
+  color: #e8eaed;
   padding: 10px 18px;
   border-radius: 10px;
   font-size: 14px;
@@ -649,6 +649,21 @@ body,
   z-index: 200;
   animation: toast-in 0.18s ease-out;
   box-shadow: 0 6px 24px #00000066;
+}
+.toast-error {
+  background: #3a1f1f;
+  border-color: #a33;
+  color: #ffb4b4;
+}
+.toast-warn {
+  background: #3a2f1f;
+  border-color: #a83;
+  color: #ffd9a3;
+}
+.toast-info {
+  background: #1f2a3a;
+  border-color: #36a;
+  color: #b4d4ff;
 }
 @keyframes toast-in {
   from {
@@ -748,4 +763,119 @@ body,
   max-height: 46vh;
   overflow: auto;
   text-align: center;
+}
+
+/* ── 워크스루 패널 ── */
+.walk-panel {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: #1f242aee;
+  border: 1px solid #3b424a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  width: 240px;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+.wp-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.walk-panel label {
+  display: block;
+  font-size: 12px;
+  color: #97a0a9;
+  margin-bottom: 8px;
+}
+.walk-panel label b {
+  color: #ffd54a;
+  float: right;
+}
+.walk-panel input[type='range'] {
+  width: 100%;
+}
+.wp-stats {
+  font-size: 11px;
+  color: #7d868f;
+  margin-bottom: 8px;
+}
+.wp-views {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.wp-views button {
+  flex: 1;
+  background: #262b31;
+  border: 1px solid #3b424a;
+  color: #aab0b7;
+  border-radius: 6px;
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 12px;
+}
+.wp-views button.on {
+  background: #2f4156;
+  border-color: #4a90c2;
+  color: #fff;
+}
+.wp-hint {
+  font-size: 10.5px;
+  color: #6b7480;
+}
+
+/* ── 프로젝트 목록 ── */
+.proj-list {
+  max-height: 40vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.proj-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #21262c;
+  border: 1px solid #2e343b;
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+.proj-item.on {
+  border-color: #ffb300;
+}
+.pi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.pi-info span {
+  color: #7d868f;
+  font-size: 11px;
+}
+.pi-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.pi-actions button {
+  background: #262b31;
+  border: 1px solid #3b424a;
+  color: #d5d9de;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.pi-actions .danger {
+  color: #ff7b72;
+}
+.pi-current {
+  color: #ffd54a;
+  font-weight: 700;
+  font-size: 12px;
 }

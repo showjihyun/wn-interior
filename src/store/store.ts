@@ -517,6 +517,7 @@ export const useStore = create<AppState>((set, get) => ({
       placements: [],
       selectedId: null,
       moving: null,
+      mode: '2d', // 빈 도면은 2D 그리기부터 시작
       past: [],
       future: [],
       projects: storage.list(),

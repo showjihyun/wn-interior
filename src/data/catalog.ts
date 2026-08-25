@@ -1,4 +1,4 @@
-import type { Product, CategoryId } from '../types'
+﻿import type { Product, CategoryId } from '../types'
 import { loadBrandProducts } from './brandCatalog'
 
 // ─────────────────────────────────────────────────────────────
@@ -63,6 +63,28 @@ export const CATALOG: Product[] = [
     mount: 'floor',
     shape: 'islandBar',
     colorways: ['#b98d5e', '#f0ebe2', '#3d4247'],
+  },
+  {
+    id: 'p-blackout-curtain',
+    name: '암막 커튼 200 (창가)',
+    category: 'living',
+    dims: { w: 2000, d: 150, h: 2300 },
+    mount: 'floor',
+    snapToWall: true,
+    shape: 'curtain',
+    colorways: ['#d8cfc0', '#4a5568', '#7a8a80'],
+    note: '폭 200cm × 높이 230cm · 창가 벽면 배치용 (2폭 기준)',
+  },
+  {
+    id: 'p-roller-blind',
+    name: '롤스크린 150',
+    category: 'living',
+    dims: { w: 1500, d: 120, h: 2000 },
+    mount: 'floor',
+    snapToWall: true,
+    shape: 'blind',
+    colorways: ['#f0ebe2', '#9aa39a'],
+    note: '폭 150cm × 높이 200cm',
   },
   // ── 거실 ──
   {

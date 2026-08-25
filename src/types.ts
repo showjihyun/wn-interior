@@ -117,6 +117,8 @@ export type ShapeKind =
   | 'robotVacuum'
   | 'airPurifier'
   | 'tvOled'
+  | 'curtain'
+  | 'blind'
 
 /** 공간에 배치된 제품 인스턴스 */
 export interface Placement {

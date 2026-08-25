@@ -369,6 +369,10 @@ export function detectRooms(
 
 export interface PlanVisionOpts {
   threshold: number
+  useOtsuFromRgba?: Uint8ClampedArray
+  morphCloseRadius?: number
+  denoiseMinComponentPx?: number
+  orthoToleranceMm?: number
   minThicknessPx: number
   minLengthPx: number
   gapRangeMm: [number, number]
@@ -386,7 +390,10 @@ export interface RawPlan {
 }
 
 /** 전체 파이프라인 — Gray → 정규화 전 RawPlan (호출부가 normalizeAiPlan으로 검증) */
-export function buildPlanFromImage(gray: Gray, opts: PlanVisionOpts): RawPlan {
+export function buildPlanFromImage(inputGray: Gray, opts: PlanVisionOpts): RawPlan {
+  let gray = inputGray
+  if (opts.morphCloseRadius && opts.morphCloseRadius > 0) gray = morphClose(gray, opts.morphCloseRadius)
+  if (opts.denoiseMinComponentPx && opts.denoiseMinComponentPx > 0) gray = removeSmallComponents(gray, opts.denoiseMinComponentPx)
   const wallsPx = findWalls(gray, {
     minThicknessPx: opts.minThicknessPx,
     minLengthPx: opts.minLengthPx,
@@ -416,4 +423,165 @@ export function buildPlanFromImage(gray: Gray, opts: PlanVisionOpts): RawPlan {
     .map((r, i) => ({ name: names[i] ?? `방${i + 1}`, polygon: r.polygon, areaM2: r.areaM2 }))
 
   return { wallHeight: opts.wallHeightMm, walls, openings, rooms, mmPerPx }
+}
+// ── CV 전처리 개선 (문헌 기반: 텍스트/그래픽 분리, Otsu, 모폴로지, Manhattan 스냅) ──
+
+/** 연결요소 라벨링 후 크기가 minSizePx 미만인 잉크 덩어리(텍스트·기호) 제거 */
+export function removeSmallComponents(gray: Gray, minSizePx: number): Gray {
+  const { width: W, height: H } = gray
+  const out = new Uint8Array(gray.data)
+  const visited = new Uint8Array(W * H)
+  const queue = new Int32Array(W * H)
+  for (let i = 0; i < W * H; i++) {
+    if (!gray.data[i] || visited[i]) continue
+    // BFS로 컴포넌트 수집
+    const comp: number[] = []
+    let qs = 0
+    let qe = 0
+    visited[i] = 1
+    queue[qe++] = i
+    while (qs < qe) {
+      const c = queue[qs++]
+      comp.push(c)
+      const x = c % W
+      const y = (c / W) | 0
+      if (x > 0 && gray.data[c - 1] && !visited[c - 1]) { visited[c - 1] = 1; queue[qe++] = c - 1 }
+      if (x < W - 1 && gray.data[c + 1] && !visited[c + 1]) { visited[c + 1] = 1; queue[qe++] = c + 1 }
+      if (y > 0 && gray.data[c - W] && !visited[c - W]) { visited[c - W] = 1; queue[qe++] = c - W }
+      if (y < H - 1 && gray.data[c + W] && !visited[c + W]) { visited[c + W] = 1; queue[qe++] = c + W }
+    }
+    if (comp.length < minSizePx) for (const c of comp) out[c] = 0
+  }
+  return { data: out, width: W, height: H }
+}
+
+/** Otsu 자동 임계값 (RGBA luminance 히스토그램) */
+export function autoThresholdOtsu(rgba: Uint8ClampedArray, width: number, height: number): number {
+  void width
+  void height
+  const hist = new Float64Array(256)
+  let total = 0
+  for (let p = 0; p < rgba.length; p += 4) {
+    if (rgba[p + 3] === 0) continue
+    const lum = Math.round(0.299 * rgba[p] + 0.587 * rgba[p + 1] + 0.114 * rgba[p + 2])
+    hist[lum]++
+    total++
+  }
+  if (total === 0) return 128
+  let sum = 0
+  for (let i = 0; i < 256; i++) sum += i * hist[i]
+  let sumB = 0
+  let wB = 0
+  let best = 0
+  let bestVar = -1
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]
+    if (wB === 0) continue
+    const wF = total - wB
+    if (wF === 0) break
+    sumB += t * hist[t]
+    const mB = sumB / wB
+    const mF = (sum - sumB) / wF
+    const between = wB * wF * (mB - mF) * (mB - mF)
+    if (between > bestVar) {
+      bestVar = between
+      best = t
+    }
+  }
+  return best
+}
+
+/** 이진 모폴로지 클로징 (dilate → erode, 박스 커널) — 작은 균열 봉합 */
+export function morphClose(gray: Gray, radius: number): Gray {
+  if (radius <= 0) return gray
+  const dilate = (src: Uint8Array) => {
+    const out = new Uint8Array(src.length)
+    for (let y = 0; y < gray.height; y++) {
+      for (let x = 0; x < gray.width; x++) {
+        let v = 0
+        for (let d = -radius; d <= radius && !v; d++) {
+          const xx = Math.min(gray.width - 1, Math.max(0, x + d))
+          if (src[y * gray.width + xx]) v = 255
+        }
+        out[y * gray.width + x] = v
+      }
+    }
+    return out
+  }
+  const erode = (src: Uint8Array) => {
+    const out = new Uint8Array(src.length)
+    for (let y = 0; y < gray.height; y++) {
+      for (let x = 0; x < gray.width; x++) {
+        let v = 255
+        for (let d = -radius; d <= radius && v; d++) {
+          const xx = Math.min(gray.width - 1, Math.max(0, x + d))
+          if (!src[y * gray.width + xx]) v = 0
+        }
+        out[y * gray.width + x] = v
+      }
+    }
+    return out
+  }
+  // 두 축 순차 적용 (박스 커널 = 분리 가능)
+  const d1 = dilate(gray.data)
+  const t = gray.width
+  const d2 = new Uint8Array(d1.length)
+  for (let y = 0; y < gray.height; y++) {
+    for (let x = 0; x < gray.width; x++) {
+      let v = 0
+      for (let d = -radius; d <= radius && !v; d++) {
+        const yy = Math.min(gray.height - 1, Math.max(0, y + d))
+        if (d1[yy * t + x]) v = 255
+      }
+      d2[y * t + x] = v
+    }
+  }
+  const e1 = erode(d2)
+  const e2 = new Uint8Array(e1.length)
+  for (let y = 0; y < gray.height; y++) {
+    for (let x = 0; x < gray.width; x++) {
+      let v = 255
+      for (let d = -radius; d <= radius && v; d++) {
+        const yy = Math.min(gray.height - 1, Math.max(0, y + d))
+        if (!e1[yy * t + x]) v = 0
+      }
+      e2[y * t + x] = v
+    }
+  }
+  return { data: e2, width: gray.width, height: gray.height }
+}
+
+/** 방 폴리곤 직교 스냅 — 축에 가까운 변을 정렬 (Manhattan 가정) */
+export function orthogonalizePolygon(poly: Pt[], toleranceMm: number): Pt[] {
+  const pts = poly.map((p) => ({ ...p }))
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i]
+      const b = pts[(i + 1) % pts.length]
+      const dx = Math.abs(b.x - a.x)
+      const dy = Math.abs(b.y - a.y)
+      if (dy <= toleranceMm && dy <= dx) {
+        const avg = (a.y + b.y) / 2
+        a.y = avg
+        b.y = avg
+      } else if (dx <= toleranceMm) {
+        const avg = (a.x + b.x) / 2
+        a.x = avg
+        b.x = avg
+      }
+    }
+  }
+  return pts
+}
+
+export function invertGray(gray: Gray): Gray {
+  const out = new Uint8Array(gray.data.length)
+  for (let i = 0; i < out.length; i++) out[i] = gray.data[i] ? 0 : 255
+  return { data: out, width: gray.width, height: gray.height }
+}
+
+export function inkRatio(gray: Gray): number {
+  let n = 0
+  for (let i = 0; i < gray.data.length; i++) if (gray.data[i]) n++
+  return n / gray.data.length
 }

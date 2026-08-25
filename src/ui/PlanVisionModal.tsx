@@ -3,7 +3,7 @@
 // LLM 불필요. planVision 엔진 + normalizeAiPlan 검증 재사용.
 // ─────────────────────────────────────────────────────────────
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { toGray, buildPlanFromImage, type Gray, type PlanVisionOpts } from '../engine/planVision'
+import { toGray, buildPlanFromImage, autoThresholdOtsu, invertGray, inkRatio, type Gray, type PlanVisionOpts } from '../engine/planVision'
 import { normalizeAiPlan } from '../ai/normalizePlan'
 import { useStore } from '../store/store'
 
@@ -16,6 +16,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   const [minThickness, setMinThickness] = useState(4)
   const [minLength, setMinLength] = useState(40)
   const [exteriorMm, setExteriorMm] = useState(200)
+  const [useOtsu, setUseOtsu] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const grayRef = useRef<Gray | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -34,6 +35,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   }
 
   /** 이미지 → Gray (캔버스 경유) */
+  const rgbaRef = useRef<ImageData | null>(null)
   const computeGray = useCallback(
     (im: HTMLImageElement, th: number): Gray | null => {
       const c = document.createElement('canvas')
@@ -45,7 +47,10 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
       ctx.fillRect(0, 0, c.width, c.height)
       ctx.drawImage(im, 0, 0, c.width, c.height)
       const id = ctx.getImageData(0, 0, c.width, c.height)
-      return toGray(id.data, c.width, c.height, th)
+      rgbaRef.current = id
+      const g0 = toGray(id.data, c.width, c.height, th)
+      // 어두운 배경(반전 도면) 자동 감지 → 반전
+      return inkRatio(g0) > 0.5 ? invertGray(g0) : g0
     },
     [],
   )
@@ -53,11 +58,25 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   /** 파이프라인 실행 + 프리뷰 렌더 */
   const run = useCallback(() => {
     if (!img || !canvasRef.current) return
-    const gray = computeGray(img, threshold)
+    let th = threshold
+    if (useOtsu) {
+      const c = document.createElement('canvas')
+      c.width = img.width
+      c.height = img.height
+      const ctx = c.getContext('2d')!
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, c.width, c.height)
+      ctx.drawImage(img, 0, 0, c.width, c.height)
+      th = autoThresholdOtsu(ctx.getImageData(0, 0, c.width, c.height).data, c.width, c.height)
+    }
+    const gray = computeGray(img, th)
     if (!gray) return
     grayRef.current = gray
     const opts: PlanVisionOpts = {
-      threshold,
+      threshold: th,
+      morphCloseRadius: 2,
+      denoiseMinComponentPx: 300,
+      orthoToleranceMm: 80,
       minThicknessPx: minThickness,
       minLengthPx: minLength,
       gapRangeMm: [500, 1400],
@@ -110,7 +129,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     setStatus(
       `벽 ${raw.walls.length}개 · 방 ${raw.rooms.length}개 · 문 후보 ${raw.openings.length}개 · 축척 1px=${raw.mmPerPx.toFixed(1)}mm`,
     )
-  }, [img, threshold, minThickness, minLength, exteriorMm, computeGray])
+  }, [img, threshold, minThickness, minLength, exteriorMm, useOtsu, computeGray])
 
   // 파라미터 변경 시 디바운스 재실행
   useEffect(() => {
@@ -206,6 +225,9 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
             <label>
               최소 벽 길이 {minLength}px
               <input type="range" min={20} max={200} value={minLength} onChange={(e) => setMinLength(+e.target.value)} />
+            </label>
+            <label style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <input type="checkbox" checked={useOtsu} onChange={(e) => setUseOtsu(e.target.checked)} /> 자동 임계값(Otsu)
             </label>
             <label>
               외벽 두께(축척 기준) {exteriorMm}mm

@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────
 // 파라메트릭 가구 셰이프 — 실측 dims(mm)를 그대로 박스 조합으로 재현
 // 규약: 원점=바닥 중심, 로컬 +z=정면(앞), 뒷면 -z (벽 부착 시 벽쪽)
 // 천장 부착(pendant)만 예외: 원점=천장, 아래로 -y 확장
@@ -450,6 +450,39 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {/* 중앙 발판 스탠드 */}
           <Box size={[Math.min(w * 0.33, 470), 26, d]} pos={[0, 0, 0]} color="#1c1f24" rough={0.4} metal={0.5} />
           <Box size={[60, 60, d * 0.7]} pos={[0, 26, 0]} color="#1c1f24" />
+        </group>
+      )
+    }
+    case 'curtain': {
+      // 주름 커튼: 좌우 물결 패널 + 상단 레일
+      const folds = Math.max(6, Math.round(w / 220))
+      const foldW = w / folds
+      const panels: ReactNode[] = []
+      for (let i = 0; i < folds; i++) {
+        panels.push(
+          <Box
+            key={i}
+            size={[foldW * 0.62, h - 60, d]}
+            pos={[-w / 2 + foldW * (i + 0.5), 60, 0]}
+            color={i % 2 ? shade(c, -14) : shade(c, 10)}
+            rough={0.95}
+          />,
+        )
+      }
+      return (
+        <group>
+          {panels}
+          <Box size={[w + 60, 50, d + 30]} pos={[0, h - 50, 0]} color="#8a8f96" rough={0.4} metal={0.5} />
+        </group>
+      )
+    }
+    case 'blind': {
+      // 롤스크린: 상단 롤 + 하강 패널 + 하단 바
+      return (
+        <group>
+          <Cyl rTop={d / 2 + 15} rBot={d / 2 + 15} h={w} pos={[0, h - 60, 0]} color={shade(c, -12)} rotZ={Math.PI / 2} />
+          <Box size={[w - 40, h - 140, 16]} pos={[0, 40, 0]} color={c} rough={0.85} />
+          <Box size={[w - 30, 40, d]} pos={[0, 20, 0]} color={shade(c, -30)} rough={0.6} />
         </group>
       )
     }

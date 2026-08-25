@@ -213,7 +213,15 @@ function MaterialTab() {
 function CostTab() {
   const placements = useStore((s) => s.placements)
   const productOf = useStore((s) => s.productById)
+  const plan = useStore((s) => s.plan)
+  const projectName = useStore((s) => s.projectName)
   const r = buildCostReport(placements, productOf)
+
+  function downloadQuoteFile() {
+    import('../cost/quote').then(({ buildQuoteText, downloadQuote }) => {
+      downloadQuote(buildQuoteText(projectName, r, plan), `${projectName}-견적서.md`)
+    })
+  }
 
   return (
     <div className="costlist">
@@ -221,6 +229,9 @@ function CostTab() {
         <span>참고 가격 합계</span>
         <b>{won(r.pricedTotal)}</b>
       </div>
+      <button className="quote-btn" onClick={downloadQuoteFile} title="방 면적·마감재·제품 합계를 마크다운 견적서로 저장">
+        📄 견적서 다운로드 (.md)
+      </button>
       {r.lines.length === 0 && r.unpriced.length === 0 && (
         <p className="hint" style={{ padding: 12 }}>배치된 제품이 없습니다.</p>
       )}

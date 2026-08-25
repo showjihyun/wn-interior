@@ -17,6 +17,7 @@ import type {
 import { SAMPLE_PLACEMENTS, SAMPLE_PLAN } from '../data/samplePlan'
 import { CATALOG, PRODUCT_MAP } from '../data/catalog'
 import { canDropAt } from '../engine/drop'
+import { resolveDims } from '../engine/dims'
 
 const LS_KEY = 'homeplan3d.project.v1'
 
@@ -47,9 +48,12 @@ export interface AppState {
   pendingProductId: string | null
   viewPreset: 'iso' | 'top' | 'walk'
   variants: Variant[]
-  /** 이동 확정 대기 상태 (원위치 정보 포함) */
   moving: { id: string; origin: { x: number; z: number; rotY: number } } | null
   toast: { id: number; msg: string } | null
+  /** 씬 조명 강도 배율 (0.2~2.0, 기본 1) */
+  lightIntensity: number
+
+  setLightIntensity: (v: number) => void
 
   setPending: (id: string | null) => void
   setViewPreset: (v: 'iso' | 'top' | 'walk') => void
@@ -165,6 +169,9 @@ export const useStore = create<AppState>((set, get) => ({
   variants: [],
   moving: null,
   toast: null,
+  lightIntensity: 1,
+
+  setLightIntensity: (v) => set({ lightIntensity: Math.max(0.2, Math.min(2, v)) }),
   ai: {
     baseUrl: 'https://api.openai.com/v1',
     apiKey: '',
@@ -264,7 +271,8 @@ export const useStore = create<AppState>((set, get) => ({
       set({ moving: null })
       return
     }
-    const r = canDropAt(s.plan, prod, s.placements, mv.id, pl.pos.x, pl.pos.z, pl.rotY, s.productById)
+    const effProduct = { ...prod, dims: resolveDims(prod, pl) }
+    const r = canDropAt(s.plan, effProduct, s.placements, mv.id, pl.pos.x, pl.pos.z, pl.rotY, s.productById)
     if (r.ok) {
       s.updatePlacement(mv.id, { pos: { ...pl.pos }, rotY: pl.rotY })
       set({ moving: null })

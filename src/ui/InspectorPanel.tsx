@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 import { useStore } from '../store/store'
 import { polygonArea } from '../engine/geom'
+import { resolveDims } from '../engine/dims'
 
 export function InspectorPanel() {
   const selectedId = useStore((s) => s.selectedId)
@@ -43,6 +44,14 @@ export function InspectorPanel() {
 
   const room = plan.rooms.find((r) => r.id === placement.roomId)
   const elev = placement.elevationOverride ?? product.defaultElevation ?? 0
+  const eff = resolveDims(product, placement)
+  const pid = placement.id
+
+  function setDim(axis: 'w' | 'd' | 'h', v: number) {
+    if (!Number.isFinite(v) || v <= 0) return
+    const next = { ...eff, [axis]: v }
+    updatePlacement(pid, { dimsOverride: next })
+  }
 
   return (
     <div className="inspector">
@@ -52,15 +61,40 @@ export function InspectorPanel() {
         <tbody>
           <tr>
             <td>가로</td>
-            <td>{product.dims.w} mm</td>
+            <td>
+              <input
+                type="number"
+                step={10}
+                className="dims-input"
+                value={Math.round(eff.w)}
+                title="유사 제품을 실측에 맞게 조정 (오버라이드)"
+                onChange={(e) => setDim('w', parseInt(e.target.value))}
+              />
+            </td>
           </tr>
           <tr>
             <td>세로(깊이)</td>
-            <td>{product.dims.d} mm</td>
+            <td>
+              <input
+                type="number"
+                step={10}
+                className="dims-input"
+                value={Math.round(eff.d)}
+                onChange={(e) => setDim('d', parseInt(e.target.value))}
+              />
+            </td>
           </tr>
           <tr>
             <td>높이</td>
-            <td>{product.dims.h} mm</td>
+            <td>
+              <input
+                type="number"
+                step={10}
+                className="dims-input"
+                value={Math.round(eff.h)}
+                onChange={(e) => setDim('h', parseInt(e.target.value))}
+              />
+            </td>
           </tr>
           <tr>
             <td>설치 높이</td>
@@ -72,6 +106,15 @@ export function InspectorPanel() {
           </tr>
         </tbody>
       </table>
+      {placement.dimsOverride && (
+        <button
+          className="dims-reset"
+          onClick={() => updatePlacement(placement.id, { dimsOverride: undefined })}
+          title="제품 실측으로 되돌리기"
+        >
+          ↺ 제품 실측으로 되돌리기
+        </button>
+      )}
 
       {product.colorways && product.colorways.length > 0 && (
         <>

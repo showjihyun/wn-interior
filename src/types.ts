@@ -128,6 +128,8 @@ export interface Placement {
   rotY: number // deg
   colorway?: string
   elevationOverride?: number
+  /** 치수 오버라이드 — 유사 제품을 실측에 맞게 조정 (누락/무효 값은 제품 실측 폴백) */
+  dimsOverride?: { w: number; d: number; h: number }
 }
 
 export interface Project {

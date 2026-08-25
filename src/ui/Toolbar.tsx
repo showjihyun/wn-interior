@@ -2,6 +2,7 @@
 import { useStore } from '../store/store'
 import { normalizeAiPlan } from '../ai/normalizePlan'
 import { buildChatRequest, parseChatResponse } from '../ai/client'
+import { PlanVisionModal as CvModal } from './PlanVisionModal'
 
 function Btn({
   onClick,
@@ -29,6 +30,7 @@ export function Toolbar() {
   const [aiOpen, setAiOpen] = useState(false)
   const [setOpen, setSetOpen] = useState(false)
   const [varOpen, setVarOpen] = useState(false)
+  const [cvOpen, setCvOpen] = useState(false)
 
   function exportJson() {
     const proj = s.exportProject()
@@ -105,6 +107,20 @@ export function Toolbar() {
       />
 
       <div className="grow" />
+      <label className="light-ctl" title="씬 조명 강도 (오늘의집 렌더링 권장: 햇빛 0.3~1.0)">
+        ☀
+        <input
+          type="range"
+          min={0.2}
+          max={2}
+          step={0.1}
+          value={s.lightIntensity}
+          onChange={(e) => s.setLightIntensity(parseFloat(e.target.value))}
+        />
+      </label>
+      <Btn onClick={() => setCvOpen(true)} title="이미지 처리로 벽·방·문을 자동 검출 (LLM 불필요)">
+        🧮 도면 자동 변환
+      </Btn>
       <Btn onClick={() => setAiOpen(true)} title="도면 이미지를 AI로 해석">
         ✨ AI 도면 해석
       </Btn>
@@ -114,6 +130,7 @@ export function Toolbar() {
       {aiOpen && <AiModal onClose={() => setAiOpen(false)} />}
       {setOpen && <SettingsModal onClose={() => setSetOpen(false)} />}
       {varOpen && <VariantsModal onClose={() => setVarOpen(false)} />}
+      {cvOpen && <CvModal onClose={() => setCvOpen(false)} />}
     </div>
   )
 }

@@ -329,6 +329,58 @@ test('가격 탭: 배치 제품 합산 + 미확인 분리 + 출처 새창 링크
   await expect(page.locator('.cost-line', { hasText: '3인용 패브릭 소파' })).toContainText('견적 필요')
 })
 
+// ── M14: 오늘의집 벤치마크 반영 ──
+
+test('단축키 1=2D, 3=3D 모드 전환', async ({ page }) => {
+  await page.keyboard.press('1')
+  expect(await S(page, '.mode')).toBe('2d')
+  await page.keyboard.press('3')
+  expect(await S(page, '.mode')).toBe('3d')
+})
+
+test('카탈로그 카드에 색상 스와철과 "배치 N개" 뱃지가 표시된다', async ({ page }) => {
+  await page.evaluate(() => {
+    const s = window.__hp3d_store.getState()
+    s.commit((d) => {
+      d.placements = [] // 결정론성: 샘플 배치 제거 후 시작
+    })
+  })
+  await page.getByRole('button', { name: /거실/ }).click()
+  const card = page.locator('.pcard', { hasText: '3인용 패브릭 소파' })
+  await expect(card.locator('.card-swatches .card-sw')).toHaveCount(4) // colorways 미리보기
+  await expect(card.locator('.placed-badge')).toHaveCount(0)
+
+  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 }))
+  await expect(card.locator('.placed-badge')).toHaveText('배치 1개')
+  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 3500 }))
+  await expect(card.locator('.placed-badge')).toHaveText('배치 2개')
+})
+
+test('인스펙터 치수 오버라이드: 유사 제품을 실측에 맞게 조정 + 실측 복귀', async ({ page }) => {
+  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 }))
+  await expect(page.locator('.inspector h4')).toContainText('소파')
+
+  // W 2100 → 1800 오버라이드
+  const wInput = page.locator('.dims-input').first()
+  await wInput.fill('1800')
+  const ov = await S(page, '.placements.at(-1).dimsOverride')
+  expect(ov).toEqual({ w: 1800, d: 950, h: 850 })
+
+  // 충돌 판정도 오버라이드 치수 사용 — 좁은 방2(2800폭)에 1800 소파 배치 가능 여부는 canDropAt이 판정
+  // 실측 복귀
+  await page.getByRole('button', { name: /제품 실측으로 되돌리기/ }).click()
+  expect(await S(page, '.placements.at(-1).dimsOverride')).toBeUndefined()
+  expect(await S(page, '.placements.at(-1)')).toBeTruthy()
+})
+
+test('조명 강도 슬라이더가 store에 반영된다', async ({ page }) => {
+  const slider = page.locator('.light-ctl input[type=range]')
+  await slider.fill('1.5')
+  expect(await S(page, '.lightIntensity')).toBe(1.5)
+  await slider.fill('0.4')
+  expect(await S(page, '.lightIntensity')).toBe(0.4)
+})
+
 test('AI 해석 모달: 열림→닫힘, 보정 안내 문구 포함', async ({ page }) => {
   await page.getByRole('button', { name: /AI 도면 해석/ }).click()
   const modal = page.locator('.modal')

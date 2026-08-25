@@ -25,6 +25,8 @@ export function App() {
         if (pl) st.updatePlacement(pl.id, { rotY: pl.rotY + (e.shiftKey ? -15 : 15) })
         e.preventDefault()
       }
+      if (e.key === '1') useStore.getState().setMode('2d') // 오늘의집 벤치마크: 1=2D
+      if (e.key === '3') useStore.getState().setMode('3d') // 3=3D
       if ((e.key === 'Delete' || e.key === 'Backspace') && st.selectedId && !st.selectedId.startsWith('wall:')) {
         st.removePlacement(st.selectedId)
       }

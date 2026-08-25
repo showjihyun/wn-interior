@@ -170,21 +170,25 @@ function hitWall(plan: FloorPlan, x: number, z: number): boolean {
   return x < minX - 2000 || x > maxX + 2000 || z < minY - 2000 || z > maxY + 2000
 }
 
-function Sun({ center }: { center: { x: number; y: number } }) {
+function Sun({ center, intensity }: { center: { x: number; y: number }; intensity: number }) {
   return (
-    <directionalLight
-      castShadow
-      position={[center.x - 7000, 14000, center.y - 5000]}
-      intensity={1.5}
-      shadow-mapSize-width={2048}
-      shadow-mapSize-height={2048}
-      shadow-camera-left={-15000}
-      shadow-camera-right={15000}
-      shadow-camera-top={15000}
-      shadow-camera-bottom={-15000}
-      shadow-camera-far={45000}
-      shadow-bias={-0.0004}
-    />
+    <>
+      <directionalLight
+        castShadow
+        position={[center.x - 7000, 14000, center.y - 5000]}
+        intensity={1.5 * intensity}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-left={-15000}
+        shadow-camera-right={15000}
+        shadow-camera-top={15000}
+        shadow-camera-bottom={-15000}
+        shadow-camera-far={45000}
+        shadow-bias={-0.0004}
+      />
+      <ambientLight intensity={0.28 * intensity} />
+      <hemisphereLight args={['#ffffff', '#aeb4ba', 0.65 * intensity]} />
+    </>
   )
 }
 
@@ -203,6 +207,7 @@ export function Scene3D() {
   const pendingId = useStore((s) => s.pendingProductId)
   const select = useStore((s) => s.select)
   const setPending = useStore((s) => s.setPending)
+  const lightIntensity = useStore((s) => s.lightIntensity)
   const center = planCenter(plan)
 
   return (
@@ -226,7 +231,7 @@ export function Scene3D() {
       <fog attach="fog" args={['#dfe6ec', 40000, 90000]} />
       <hemisphereLight args={['#ffffff', '#aeb4ba', 0.65]} />
       <ambientLight intensity={0.28} />
-      <Sun center={center} />
+      <Sun center={center} intensity={lightIntensity} />
 
       <Floors3D plan={plan} />
       <Walls3D plan={plan} />

@@ -13,7 +13,7 @@ const BRANDS = ['전체', ...getBrandList()] as const
 const fmt = (v: number) => (v >= 1000 ? `${(v / 10).toFixed(0)}cm` : `${v}mm`)
 const won = (v: number) => v.toLocaleString('ko-KR') + '원'
 
-function ProductCard({ p, selected }: { p: Product; selected?: boolean }) {
+function ProductCard({ p, selected, placedCount }: { p: Product; selected?: boolean; placedCount?: number }) {
   const setPending = useStore((s) => s.setPending)
   const setMode = useStore((s) => s.setMode)
   const ref = useRef<HTMLDivElement>(null)
@@ -37,6 +37,7 @@ function ProductCard({ p, selected }: { p: Product; selected?: boolean }) {
       <div className="pname">
         {p.name}
         {p.brand && <span className="brand-tag">{p.brand}</span>}
+        {!!placedCount && <span className="placed-badge">배치 {placedCount}개</span>}
       </div>
       <div className="pdims">
         W{fmt(p.dims.w)} · D{fmt(p.dims.d)} · H{fmt(p.dims.h)}
@@ -56,6 +57,13 @@ function ProductCard({ p, selected }: { p: Product; selected?: boolean }) {
           </a>
         )}
       </div>
+      {p.colorways && p.colorways.length > 0 && (
+        <div className="card-swatches">
+          {p.colorways.slice(0, 4).map((c) => (
+            <span key={c} className="card-sw" style={{ background: c }} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -70,6 +78,9 @@ function CatalogTab() {
   const list = brand === '전체' ? all : all.filter((p) => p.brand === brand)
   // 3D에서 선택한 배치물의 제품 → 카탈로그 카드 하이라이트 (양방향 동기화)
   const selectedProductId = placements.find((p) => p.id === selectedId)?.productId
+  // 제품별 현재 배치 수 ("배치 N개" 뱃지)
+  const placedCount = new Map<string, number>()
+  for (const pl of placements) placedCount.set(pl.productId, (placedCount.get(pl.productId) ?? 0) + 1)
 
   return (
     <>
@@ -96,7 +107,7 @@ function CatalogTab() {
           </p>
         )}
         {list.map((p) => (
-          <ProductCard key={p.id} p={p} selected={p.id === selectedProductId} />
+          <ProductCard key={p.id} p={p} selected={p.id === selectedProductId} placedCount={placedCount.get(p.id)} />
         ))}
       </div>
       {cat === 'custom' && <CustomForm />}

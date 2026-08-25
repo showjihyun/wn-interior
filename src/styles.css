@@ -312,6 +312,32 @@ body,
   text-align: right;
   color: #fff;
 }
+.dims-input {
+  background: #22262b;
+  border: 1px solid #363c44;
+  color: #fff;
+  border-radius: 5px;
+  padding: 4px 6px;
+  width: 90px;
+  text-align: right;
+}
+.dims-input:hover {
+  border-color: #4a90c2;
+}
+.dims-reset {
+  background: #262b31;
+  border: 1px solid #343a42;
+  color: #b9c0c8;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 11.5px;
+  width: 100%;
+}
+.dims-reset:hover {
+  border-color: #ffb300;
+  color: #ffd54a;
+}
 .lbl {
   display: block;
   margin: 12px 0 6px;
@@ -489,6 +515,39 @@ body,
   color: #ff7b72;
 }
 
+.light-ctl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffd54a;
+  font-size: 14px;
+}
+.light-ctl input[type='range'] {
+  width: 90px;
+}
+.card-swatches {
+  display: flex;
+  gap: 4px;
+  margin-top: 5px;
+}
+.card-sw {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid #3a4048;
+  display: inline-block;
+}
+.placed-badge {
+  display: inline-block;
+  margin-left: 6px;
+  background: #1f3a2c;
+  color: #7dd8a5;
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 /* ── 가격 탭 ── */
 .costlist {
   overflow-y: auto;
@@ -662,4 +721,31 @@ body,
   margin-top: 10px;
   color: #ffd54a;
   font-size: 13px;
+}
+
+/* ── CV 도면 변환 모달 ── */
+.modal-wide {
+  width: min(860px, 94vw);
+}
+.pv-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 10px 0;
+}
+.pv-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #97a0a9;
+}
+.pv-preview {
+  background: #14171a;
+  border: 1px solid #2c3138;
+  border-radius: 8px;
+  padding: 8px;
+  max-height: 46vh;
+  overflow: auto;
+  text-align: center;
 }

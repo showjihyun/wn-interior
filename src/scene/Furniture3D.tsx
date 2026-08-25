@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────
 // 배치된 가구 렌더 + 인터랙션(선택·드래그·벽자석·회전·충돌)
 // 드래그 중: 히스토리 없는 move / 드래그 종료: 커밋 1회 → Undo 1번에 복원
 // ─────────────────────────────────────────────────────────────
@@ -11,6 +11,7 @@ import type { FloorPlan, Placement, Product } from '../types'
 import { useStore } from '../store/store'
 import { Shape } from './shapes'
 import { footprintAABB, aabbOverlap, roomAt, snapPlacement as resolveSnap } from '../engine/geom'
+import { resolveDims } from '../engine/dims'
 import { canDropAt } from '../engine/drop'
 
 /** GLTF 모델을 실측 높이에 자동 피팅 (바닥 중심 정렬) */
@@ -41,9 +42,10 @@ export function computeConflicts(placements: Placement[], productOf: (id: string
     .map((pl) => {
       const prod = productOf(pl.productId)
       if (!prod || prod.mount === 'wall-mount' || prod.mount === 'ceiling') return null
+      const eff = resolveDims(prod, pl)
       return {
         id: pl.id,
-        box: footprintAABB(prod.dims.w, prod.dims.d, pl.pos.x, pl.pos.z, pl.rotY),
+        box: footprintAABB(eff.w, eff.d, pl.pos.x, pl.pos.z, pl.rotY),
       }
     })
     .filter(Boolean) as { id: string; box: ReturnType<typeof footprintAABB> }[]
@@ -92,6 +94,8 @@ function FurnitureItem({
   const yBase =
     product.mount === 'ceiling' ? plan.wallHeight : product.mount === 'wall-mount' ? (placement.elevationOverride ?? product.defaultElevation ?? 0) : 0
   const color = placement.colorway ?? product.colorways?.[0]
+  const eff = resolveDims(product, placement)
+  const effProduct = { ...product, dims: eff }
 
   const downScreen = useRef<{ x: number; y: number } | null>(null)
   const originRef = useRef<{ x: number; z: number; rotY: number } | null>(null)
@@ -146,7 +150,7 @@ function FurnitureItem({
     }
   }
 
-  const r = Math.max(product.dims.w, product.dims.d) / 2 + 60
+  const r = Math.max(eff.w, eff.d) / 2 + 60
 
   return (
     <group
@@ -169,14 +173,14 @@ function FurnitureItem({
         {product.modelUrl ? (
           <GltfProduct url={product.modelUrl} dims={product.dims} />
         ) : (
-          <Shape kind={product.shape} p={product} c={color} />
+          <Shape kind={product.shape} p={effProduct} c={color} />
         )}
       </Suspense>
       {isSel && (
         <SelectionOutline
-          w={product.dims.w}
-          h={product.dims.h}
-          d={product.dims.d}
+          w={eff.w}
+          h={eff.h}
+          d={eff.d}
           hangsDown={product.mount === 'ceiling'}
         />
       )}
@@ -188,7 +192,7 @@ function FurnitureItem({
       )}
       {conflicted && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 4, 0]}>
-          <planeGeometry args={[product.dims.w, product.dims.d]} />
+          <planeGeometry args={[eff.w, eff.d]} />
           <meshBasicMaterial color="#ff4d4d" transparent opacity={0.35} side={THREE.DoubleSide} />
         </mesh>
       )}

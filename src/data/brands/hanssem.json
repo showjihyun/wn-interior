@@ -1,0 +1,59 @@
+{
+  "brand": "한샘",
+  "fetchedAt": "2026-08-25",
+  "products": [
+    {
+      "id": "hs-kitchenbach-lower",
+      "name": "한샘 키친바흐 싱크대 하부장 L2400",
+      "model": "키친바흐 (모듈 L2400)",
+      "category": "kitchen",
+      "dims": { "w": 2400, "d": 600, "h": 850 },
+      "mount": "floor",
+      "snapToWall": true,
+      "shape": "sinkLower",
+      "colorways": ["#f2efe8", "#8a9296", "#3d4247"],
+      "note": "모듈 L2400 · 상판 포함 높이 850mm · 깊이 600mm · 최대 2.7m 천장 맞춤 시공 가능",
+      "sourceUrl": "https://store.hanssem.com/category/20009"
+    },
+    {
+      "id": "hs-kitchenbach-upper",
+      "name": "한샘 키친바흐 싱크대 상부장 L2400",
+      "model": "키친바흐 (모듈 L2400)",
+      "category": "kitchen",
+      "dims": { "w": 2400, "d": 350, "h": 700 },
+      "mount": "wall-mount",
+      "snapToWall": true,
+      "defaultElevation": 1450,
+      "shape": "sinkUpper",
+      "colorways": ["#f2efe8", "#8a9296"],
+      "note": "모듈 L2400 · 깊이 350mm · 하부장 상판에서 600mm 간격 설치 권장",
+      "sourceUrl": "https://store.hanssem.com/category/20009"
+    },
+    {
+      "id": "hs-sliding-wardrobe-2400",
+      "name": "한샘 유로506 슬라이딩 붙박이장 2400",
+      "model": "유로 506 노엘/스케치 (모듈 800×3)",
+      "category": "storage",
+      "dims": { "w": 2400, "d": 700, "h": 2200 },
+      "mount": "floor",
+      "snapToWall": true,
+      "shape": "wardrobe",
+      "colorways": ["#efece4", "#cfc8ba", "#8a9296"],
+      "note": "몸통 깊이 600mm + 슬라이딩 레일·도어 → 설치 외경 약 700mm · 높이 2200mm부터 맞춤 · 모듈 폭 800/900/1000",
+      "sourceUrl": "https://store.hanssem.com/category/20073"
+    },
+    {
+      "id": "hs-shoe-wardrobe-900",
+      "name": "한샘 신발장 900 (스테이 시리즈)",
+      "model": "스테이 신발장",
+      "category": "storage",
+      "dims": { "w": 900, "d": 350, "h": 1100 },
+      "mount": "floor",
+      "snapToWall": true,
+      "shape": "shoeCabinet",
+      "colorways": ["#f0ebe2", "#8a9296", "#3d4247"],
+      "note": "폭 900mm · 깊이 350mm · 일반 유통 규격 기준",
+      "sourceUrl": "https://store.hanssem.com"
+    }
+  ]
+}

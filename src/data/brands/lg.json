@@ -1,0 +1,96 @@
+{
+  "brand": "LG전자",
+  "fetchedAt": "2026-08-25",
+  "products": [
+    {
+      "id": "lg-oled65c5",
+      "name": "LG 올레드 evo C5 65인치 (스탠드형)",
+      "model": "OLED65C5SNA",
+      "category": "appliance",
+      "dims": { "w": 1441, "d": 230, "h": 880 },
+      "mount": "floor",
+      "shape": "tvOled",
+      "colorways": ["#2a2d33"],
+      "note": "스탠드 포함 1441×880×230mm · 스탠드 폭 470mm · 스탠드 제외 1441×826×45.1mm",
+      "sourceUrl": "https://www.lge.co.kr/tvs/oled65c5sna-stand"
+    },
+    {
+      "id": "lg-oled65c5-wall",
+      "name": "LG 올레드 evo C5 65인치 (벽걸이)",
+      "model": "OLED65C4ENA",
+      "category": "appliance",
+      "dims": { "w": 1441, "d": 60, "h": 826 },
+      "mount": "wall-mount",
+      "snapToWall": true,
+      "defaultElevation": 950,
+      "shape": "tvWall",
+      "colorways": ["#2a2d33"],
+      "note": "스탠드 제외 1441×826×45.1mm + 벽브래킷 여유",
+      "sourceUrl": "https://www.lge.co.kr/care-solutions/tvs/oled65c4ewp"
+    },
+    {
+      "id": "lg-cordzero-r5",
+      "name": "LG 코드제로 R5 로봇청소기",
+      "model": "R580HK / R585WKA1",
+      "category": "appliance",
+      "dims": { "w": 342, "d": 342, "h": 95 },
+      "mount": "floor",
+      "shape": "robotVacuum",
+      "colorways": ["#e8e4dc", "#3a3d42"],
+      "price": 900000,
+      "priceNote": "LG닷컴 정상가 기준(오브제컬렉션 R5)",
+      "note": "본체 342×342×94.5mm · LiDAR 센서 돌기 포함 · 흡입+물걸레",
+      "sourceUrl": "https://www.lge.co.kr/vacuum-cleaners/r580hk"
+    },
+    {
+      "id": "lg-puricare-aerotower",
+      "name": "LG 퓨리케어 에어로타워 공기청정기",
+      "model": "FS064PSJA / FS065PSKA",
+      "category": "appliance",
+      "dims": { "w": 264, "d": 265, "h": 1120 },
+      "mount": "floor",
+      "shape": "airPurifier",
+      "colorways": ["#e9e5df", "#8a8f96"],
+      "price": 929000,
+      "priceNote": "에어로타워 Hit(온풍 겸용) 닷컴가 기준",
+      "note": "264×265×1,120mm · 18.4㎡(5.5평) · 온풍 겸용 모델 포함",
+      "sourceUrl": "https://www.lge.co.kr/air-purifier/fs064psja"
+    },
+    {
+      "id": "lg-puricare-360-alpha",
+      "name": "LG 퓨리케어 360º 알파 UP 공기청정기 20평형",
+      "model": "AS204NG4A",
+      "category": "appliance",
+      "dims": { "w": 347, "d": 347, "h": 612 },
+      "mount": "floor",
+      "shape": "airPurifier",
+      "colorways": ["#f0efe9", "#b8bcb9"],
+      "note": "347×347×612mm · UV나노 살균 · 360도 흡기",
+      "sourceUrl": "https://www.lge.co.kr/air-purifier"
+    },
+    {
+      "id": "lg-dios-fitmax",
+      "name": "LG 디오스 오브제컬렉션 냉장고 Fit&Max 613L",
+      "model": "M626GBB032",
+      "category": "appliance",
+      "dims": { "w": 914, "d": 698, "h": 1860 },
+      "mount": "floor",
+      "shape": "fridge",
+      "colorways": ["#d9cfc0", "#c6cdd2", "#2b2e33"],
+      "note": "914×1,860×698mm · 4도어 613L · 가구장 깊이 700mm에 맞춘 빌트인 효과",
+      "sourceUrl": "https://www.lge.co.kr/business/refrigerators/r937gbb037"
+    },
+    {
+      "id": "lg-kimchi-k227",
+      "name": "LG 디오스 김치톡톡 김치냉장고 219L",
+      "model": "K227S121",
+      "category": "appliance",
+      "dims": { "w": 920, "d": 691, "h": 949 },
+      "mount": "floor",
+      "shape": "washer",
+      "colorways": ["#f0f0ee", "#c9cdd1"],
+      "note": "920×691×949mm · 뚜껑식 219L",
+      "sourceUrl": "https://www.lge.co.kr/refrigerators"
+    }
+  ]
+}

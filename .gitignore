@@ -1,0 +1,12 @@
+node_modules/
+dist/
+shots/
+test-results/
+playwright-report/
+blob-report/
+dev-server.log
+*.log
+.env
+.env.*
+*.local
+.DS_Store

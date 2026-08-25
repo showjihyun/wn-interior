@@ -1,0 +1,44 @@
+{
+  "brand": "삼성전자",
+  "fetchedAt": "2026-08-25",
+  "products": [
+    {
+      "id": "ss-bespoke-fridge-875",
+      "name": "삼성 비스포크 4도어 냉장고 875L",
+      "model": "RF85B911155 (글램/새틴/코타)",
+      "category": "appliance",
+      "dims": { "w": 912, "d": 930, "h": 1853 },
+      "mount": "floor",
+      "shape": "fridge",
+      "colorways": ["#e8e6e0", "#c9cdd1", "#d9c9c0"],
+      "note": "가로 912 × 높이 1,853 × 깊이 930mm · 875L(냉장 522/냉동 353)",
+      "sourceUrl": "https://dinorlife.tistory.com/entry/삼성-비스포크-냉장고와-LG-디오스-오브제-컬렉션-냉장고-비교-추천"
+    },
+    {
+      "id": "ss-frame-65-stand",
+      "name": "삼성 더 프레임 65인치 (스탠드형)",
+      "model": "QN65LS03 / KQ65LSB03",
+      "category": "appliance",
+      "dims": { "w": 1454, "d": 294, "h": 876 },
+      "mount": "floor",
+      "shape": "tvOled",
+      "colorways": ["#2a2d33"],
+      "note": "스탠드 포함 1453.9×875.5×294mm · 스탠드 제외 1453.9×830.9×38.3mm (65인치 라인 공통 규격)",
+      "sourceUrl": "https://www.samsung.com/sec/tvs/the-frame-ls03rafxkr/QN65LS03RAFXKR/"
+    },
+    {
+      "id": "ss-frame-65-wall",
+      "name": "삼성 더 프레임 65인치 (밀착 벽걸이)",
+      "model": "QN65LS03RAFXKR",
+      "category": "appliance",
+      "dims": { "w": 1454, "d": 60, "h": 831 },
+      "mount": "wall-mount",
+      "snapToWall": true,
+      "defaultElevation": 950,
+      "shape": "tvWall",
+      "colorways": ["#2a2d33"],
+      "note": "스탠드 제외 1453.9×830.9×38.3mm · 인박스 밀착 월마운트 + 브래킷 여유",
+      "sourceUrl": "https://www.samsung.com/sec/tvs/the-frame-ls03rafxkr/QN65LS03RAFXKR/"
+    }
+  ]
+}

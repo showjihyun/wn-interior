@@ -1,0 +1,554 @@
+// ─────────────────────────────────────────────────────────────
+// 2D 편집기 (SVG)
+// 도구: 선택/이동 · 벽 그리기(연속) · 문/창문 배치 · 이미지 트레이싱(스케일 보정)
+// ─────────────────────────────────────────────────────────────
+import { useRef, useState } from 'react'
+import type { Pt } from '../types'
+import { useStore } from '../store/store'
+import { wallLength, projectOnSegment, nearestWall, snapGrid } from '../engine/geom'
+
+type Tool = 'select' | 'wall' | 'door' | 'window' | 'entry'
+
+interface TraceImg {
+  url: string
+  ox: number // 플랜좌표 상 이미지 좌상단
+  oy: number
+  natW: number
+  natH: number
+  scale: number
+}
+
+const OPEN_DEFAULT = {
+  door: { width: 800, height: 2050, sill: 0 },
+  entry: { width: 1100, height: 2100, sill: 0 },
+  window: { width: 1500, height: 1500, sill: 900 },
+} as const
+
+export function Editor2D() {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const plan = useStore((s) => s.plan)
+  const placements = useStore((s) => s.placements)
+  const productOf = useStore((s) => s.productById)
+  const selectedId = useStore((s) => s.selectedId)
+  const select = useStore((s) => s.select)
+  const addWall = useStore((s) => s.addWall)
+  const removeWall = useStore((s) => s.removeWall)
+  const updateWall = useStore((s) => s.updateWall)
+  const addOpening = useStore((s) => s.addOpening)
+  const removeOpening = useStore((s) => s.removeOpening)
+  const movePlacement = useStore((s) => s.movePlacement)
+  const updatePlacement = useStore((s) => s.updatePlacement)
+
+  const [tool, setTool] = useState<Tool>('select')
+  const [thickness, setThickness] = useState(120)
+  const [chain, setChain] = useState<Pt[]>([])
+  const [cursor, setCursor] = useState<Pt | null>(null)
+  const [showDims, setShowDims] = useState(true)
+  const [selOpening, setSelOpening] = useState<string | null>(null)
+  const [trace, setTrace] = useState<TraceImg | null>(null)
+  const [calib, setCalib] = useState<{ pts: Pt[] }>({ pts: [] })
+  const draggingPl = useRef<string | null>(null)
+  const dragVertex = useRef<{ wallId: string; end: 'a' | 'b' } | null>(null)
+
+  // viewBox: 전체 도면 + 여백
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const r of plan.rooms)
+    for (const p of r.polygon) {
+      minX = Math.min(minX, p.x)
+      minY = Math.min(minY, p.y)
+      maxX = Math.max(maxX, p.x)
+      maxY = Math.max(maxY, p.y)
+    }
+  for (const w of plan.walls) {
+    minX = Math.min(minX, w.a.x, w.b.x)
+    minY = Math.min(minY, w.a.y, w.b.y)
+    maxX = Math.max(maxX, w.a.x, w.b.x)
+    maxY = Math.max(maxY, w.a.y, w.b.y)
+  }
+  const M = 1500
+  if (!isFinite(minX)) {
+    minX = 0
+    minY = 0
+    maxX = 10000
+    maxY = 8000
+  }
+
+  function toPlan(e: React.PointerEvent | React.MouseEvent): Pt {
+    const svg = svgRef.current!
+    const ctm = svg.getScreenCTM()
+    if (!ctm) return { x: 0, y: 0 }
+    const inv = ctm.inverse()
+    const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(inv)
+    return { x: pt.x, y: pt.y }
+  }
+
+  const snapPt = (p: Pt): Pt => ({ x: snapGrid(p.x, 50), y: snapGrid(p.y, 50) })
+
+  function bgClick(e: React.MouseEvent) {
+    const p = toPlan(e)
+    if (tool === 'wall') {
+      const sp = snapPt(p)
+      setChain((c) => [...c, sp])
+    } else if (tool !== 'select') {
+      // 개구부는 벽 클릭에서 처리
+    }
+  }
+
+  function bgMove(e: React.PointerEvent) {
+    const p = toPlan(e)
+    setCursor(p)
+    if (draggingPl.current) {
+      const pl = placements.find((x) => x.id === draggingPl.current)!
+      const prod = productOf(pl.productId)
+      if (!prod) return
+      movePlacement(pl.id, snapGrid(p.x, 25), snapGrid(p.y, 25))
+      return
+    }
+    if (dragVertex.current) {
+      const sp = snapPt(p)
+      updateWall(dragVertex.current.wallId, { [dragVertex.current.end]: sp })
+      return
+    }
+    if (tool === 'wall') setCursor(snapPt(p))
+  }
+
+  function bgUp() {
+    if (draggingPl.current) {
+      const pl = placements.find((x) => x.id === draggingPl.current)!
+      updatePlacement(pl.id, { pos: { ...pl.pos } }) // 커밋 1회
+      draggingPl.current = null
+    }
+    dragVertex.current = null
+  }
+
+  function svgClick(e: React.MouseEvent) {
+    const p = toPlan(e)
+    if (tool === 'door' || tool === 'window' || tool === 'entry') {
+      const snap = nearestWall(plan, p, 800)
+      if (snap) {
+        const d = OPEN_DEFAULT[tool]
+        addOpening({
+          wallId: snap.wallId,
+          type: tool,
+          offset: Math.max(50, snap.offset - d.width / 2),
+          ...d,
+        })
+      }
+      return
+    }
+    if (tool === 'select') {
+      select(null)
+      setSelOpening(null)
+    }
+  }
+
+  function finishChain() {
+    if (chain.length >= 2) {
+      for (let i = 0; i < chain.length - 1; i++) addWall(chain[i], chain[i + 1], thickness)
+    }
+    setChain([chain[chain.length - 1] ?? null].filter(Boolean) as Pt[])
+  }
+
+  function cancel() {
+    setChain([])
+    setTool('select')
+  }
+
+  function calibrate(realMm: number) {
+    if (!trace || calib.pts.length < 2) return
+    const [a, b] = calib.pts
+    const dPx = Math.hypot(b.x - a.x, b.y - a.y) / trace.scale
+    if (dPx < 5) return
+    const ns = realMm / dPx
+    // 첫 클릭점 고정
+    setTrace({
+      ...trace,
+      scale: ns,
+      ox: calib.pts[0].x - ((calib.pts[0].x - trace.ox) / trace.scale) * ns,
+      oy: calib.pts[0].y - ((calib.pts[0].y - trace.oy) / trace.scale) * ns,
+    })
+    setCalib({ pts: [] })
+  }
+
+  // ── 렌더 헬퍼 ──
+  const wallColor = '#3b4046'
+  return (
+    <div className="ed2d">
+      <div className="ed2d-bar">
+        <button className={tool === 'select' ? 'on' : ''} onClick={() => { setTool('select'); setChain([]) }}>
+          ⬚ 선택/이동
+        </button>
+        <button className={tool === 'wall' ? 'on' : ''} onClick={() => { setTool('wall'); setChain([]) }}>
+          ／ 벽 그리기
+        </button>
+        <select value={thickness} onChange={(e) => setThickness(parseInt(e.target.value))}>
+          {[100, 120, 150, 200, 250, 300].map((t) => (
+            <option key={t} value={t}>
+              두께 {t}mm
+            </option>
+          ))}
+        </select>
+        <span className="sep" />
+        <button className={tool === 'entry' ? 'on' : ''} onClick={() => setTool('entry')}>
+          🚪 출입문
+        </button>
+        <button className={tool === 'door' ? 'on' : ''} onClick={() => setTool('door')}>
+          문
+        </button>
+        <button className={tool === 'window' ? 'on' : ''} onClick={() => setTool('window')}>
+          창문
+        </button>
+        <span className="sep" />
+        <label className="chk">
+          <input type="checkbox" checked={showDims} onChange={(e) => setShowDims(e.target.checked)} /> 치수
+        </label>
+        <TraceControls trace={trace} calibCount={calib.pts.length} onPick={(f) => {
+          const url = URL.createObjectURL(f)
+          const im = new Image()
+          im.onload = () => setTrace({ url, ox: minX, oy: minY, natW: im.naturalWidth, natH: im.naturalHeight, scale: Math.max((maxX - minX) / im.naturalWidth, 1) })
+          im.src = url
+        }} onCalibClick={() => {
+          // 다음 두 번의 클릭을 캘리브레이션으로 사용
+          setCalib({ pts: [] })
+          const handler = (ev: MouseEvent) => {
+            const svg = svgRef.current
+            if (!svg) return
+            const ctm = svg.getScreenCTM()
+            if (!ctm) return
+            const pt = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(ctm.inverse())
+            setCalib((c) => {
+              const pts = [...c.pts, { x: pt.x, y: pt.y }]
+              if (pts.length >= 2) {
+                window.removeEventListener('click', handler)
+                const mm = parseFloat(prompt('두 점 사이의 실제 길이(mm)? 예) 2400', '2400') ?? '')
+                if (!isNaN(mm) && mm > 0) setTimeout(() => calibrateWith(pts, mm), 0)
+              }
+              return { pts }
+            })
+          }
+          window.addEventListener('click', handler)
+        }} />
+        {(chain.length > 0 || tool !== 'select') && (
+          <button onClick={cancel}>취소(Esc)</button>
+        )}
+        {chain.length >= 2 && <button className="primary" onClick={finishChain}>벽 완성</button>}
+      </div>
+
+      <svg
+        ref={svgRef}
+        className={`ed2d-svg t-${tool}`}
+        viewBox={`${minX - M} ${minY - M} ${maxX - minX + M * 2} ${maxY - minY + M * 2}`}
+        onClick={(e) => {
+          if (calib.pts.length > 0 && calib.pts.length < 2) return // 캘리브레이션 중 글로벌 핸들러가 처리
+          svgClick(e)
+        }}
+        onDoubleClick={(() => {})}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          finishChain()
+        }}
+        onPointerMove={bgMove}
+        onPointerUp={bgUp}
+        onPointerDown={bgClick as unknown as React.MouseEventHandler<SVGSVGElement>}
+      >
+        {/* 트레이싱 이미지 */}
+        {trace && (
+          <image
+            href={trace.url}
+            x={trace.ox}
+            y={trace.oy}
+            width={trace.natW * trace.scale}
+            height={trace.natH * trace.scale}
+            opacity={0.55}
+            preserveAspectRatio="none"
+          />
+        )}
+
+        {/* 방 폴리곤 */}
+        {plan.rooms.map((r) => (
+          <g key={r.id}>
+            <polygon
+              points={r.polygon.map((p) => `${p.x},${p.y}`).join(' ')}
+              fill="#f4f6f8"
+              stroke="#dfe4ea"
+              strokeWidth={20}
+            />
+            <text
+              x={r.polygon.reduce((a, p) => a + p.x, 0) / r.polygon.length}
+              y={r.polygon.reduce((a, p) => a + p.y, 0) / r.polygon.length}
+              textAnchor="middle"
+              className="room-label"
+            >
+              {r.name}
+            </text>
+          </g>
+        ))}
+
+        {/* 벽 */}
+        {plan.walls.map((w) => {
+          const L = wallLength(w)
+          return (
+            <g key={w.id}>
+              <line x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y} stroke={wallColor} strokeWidth={w.thickness} strokeLinecap="butt" />
+              <line
+                x1={w.a.x}
+                y1={w.a.y}
+                x2={w.b.x}
+                y2={w.b.y}
+                stroke="transparent"
+                strokeWidth={Math.max(w.thickness, 160)}
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  // 선택 도구에서만 벽 선택 — 문/창문 배치 클릭은 svg까지 전파되야 함
+                  if (tool === 'select') {
+                    e.stopPropagation()
+                    select(`wall:${w.id}`)
+                  }
+                }}
+              />
+              {/* 끝점 핸들 (선택 시) */}
+              {selectedId === `wall:${w.id}` &&
+                (['a', 'b'] as const).map((k) => (
+                  <circle
+                    key={k}
+                    cx={w[k].x}
+                    cy={w[k].y}
+                    r={90}
+                    fill="#ffd54a"
+                    stroke="#b8860b"
+                    strokeWidth={30}
+                    style={{ cursor: 'move' }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation()
+                      dragVertex.current = { wallId: w.id, end: k }
+                    }}
+                  />
+                ))}
+              {selectedId === `wall:${w.id}` && (
+                <text x={(w.a.x + w.b.x) / 2} y={(w.a.y + w.b.y) / 2 - w.thickness / 2 - 60} textAnchor="middle" className="dim-label sel">
+                  {L.toFixed(0)}mm ▸Del 삭제
+                </text>
+              )}
+              {showDims && selectedId !== `wall:${w.id}` && (
+                <text x={(w.a.x + w.b.x) / 2} y={(w.a.y + w.b.y) / 2 - w.thickness / 2 - 60} textAnchor="middle" className="dim-label">
+                  {L.toFixed(0)}
+                </text>
+              )}
+            </g>
+          )
+        })}
+        {selectedId?.startsWith('wall:') && (
+          <DeleteHint onDelete={() => removeWall(selectedId.slice(5))} label="선택된 벽 삭제" />
+        )}
+
+        {/* 개구부 */}
+        {plan.openings.map((o) => {
+          const w = plan.walls.find((x) => x.id === o.wallId)
+          if (!w) return null
+          const { cx, cy } = projectOnSegment(
+            (() => {
+              const len = wallLength(w) || 1
+              const t = o.offset + o.width / 2 / len
+              return { x: w.a.x + (w.b.x - w.a.x) * Math.min(1, t), y: w.a.y + (w.b.y - w.a.y) * Math.min(1, t) }
+            })(),
+            w.a,
+            w.b,
+          )
+          void cx
+          void cy
+          const ang = Math.atan2(w.b.y - w.a.y, w.b.x - w.a.x)
+          const midT = Math.min(1, Math.max(0, (o.offset + o.width / 2) / (wallLength(w) || 1)))
+          const mx = w.a.x + (w.b.x - w.a.x) * midT
+          const my = w.a.y + (w.b.y - w.a.y) * midT
+          const isSel = selOpening === o.id
+          return (
+            <g
+              key={o.id}
+              data-testid={`opening-${o.id}`}
+              transform={`translate(${mx},${my}) rotate(${(ang * 180) / Math.PI})`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelOpening(o.id)
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <rect x={-o.width / 2} y={-w.thickness / 2 - 10} width={o.width} height={w.thickness + 20} fill="#fff" stroke={isSel ? '#ff9800' : '#c9ced4'} strokeWidth={isSel ? 24 : 12} />
+              {o.type === 'window' && (
+                <>
+                  <line x1={-o.width / 2} y1={0} x2={o.width / 2} y2={0} stroke="#4a90c2" strokeWidth={16} />
+                  <line x1={-o.width / 2} y1={-w.thickness / 4} x2={o.width / 2} y2={-w.thickness / 4} stroke="#7db4d8" strokeWidth={8} />
+                  <line x1={-o.width / 2} y1={w.thickness / 4} x2={o.width / 2} y2={w.thickness / 4} stroke="#7db4d8" strokeWidth={8} />
+                </>
+              )}
+              {(o.type === 'door' || o.type === 'entry') && (
+                <>
+                  <line x1={-o.width / 2} y1={0} x2={-o.width / 2} y2={o.width} stroke="#5a4634" strokeWidth={14} />
+                  <path
+                    d={`M ${-o.width / 2} ${o.width} A ${o.width} ${o.width} 0 0 1 ${o.width / 2} 0`}
+                    fill="none"
+                    stroke={o.type === 'entry' ? '#b06a3b' : '#8a8f95'}
+                    strokeWidth={10}
+                  />
+                </>
+              )}
+            </g>
+          )
+        })}
+        {selOpening && <DeleteHint onDelete={() => { removeOpening(selOpening); setSelOpening(null) }} label="선택된 개구부 삭제" />}
+
+        {/* 가구 탑뷰 */}
+        {placements.map((pl) => {
+          const prod = productOf(pl.productId)
+          if (!prod) return null
+          const isSel = selectedId === pl.id
+          return (
+            <rect
+              key={pl.id}
+              x={-prod.dims.w / 2}
+              y={-prod.dims.d / 2}
+              width={prod.dims.w}
+              height={prod.dims.d}
+              rx={40}
+              transform={`translate(${pl.pos.x},${pl.pos.z}) rotate(${pl.rotY})`}
+              fill={isSel ? '#ffd54a66' : '#4a90c222'}
+              stroke={isSel ? '#ff9800' : '#4a90c2'}
+              strokeWidth={isSel ? 30 : 16}
+              style={{ cursor: 'move', pointerEvents: tool === 'select' ? 'auto' : 'none' }}
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                select(pl.id)
+                draggingPl.current = pl.id
+              }}
+            />
+          )
+        })}
+
+        {/* 벽 그리기 미리보기 */}
+        {tool === 'wall' && (
+          <g>
+            {chain.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={70} fill="#ff9800" />
+            ))}
+            {chain.map((p, i) =>
+              i < chain.length - 1 ? (
+                <line key={`l${i}`} x1={p.x} y1={p.y} x2={chain[i + 1].x} y2={chain[i + 1].y} stroke="#ff9800" strokeWidth={thickness} opacity={0.85} />
+              ) : null,
+            )}
+            {cursor && chain.length > 0 && (
+              <line x1={chain[chain.length - 1].x} y1={chain[chain.length - 1].y} x2={cursor.x} y2={cursor.y} stroke="#ffb74d" strokeWidth={thickness} opacity={0.5} />
+            )}
+          </g>
+        )}
+
+        {/* 캘리브레이션 점 */}
+        {calib.pts.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={110} fill="none" stroke="#e91e63" strokeWidth={26} />
+        ))}
+        {trace && calib.pts.length === 0 && (
+          <text x={minX + 200} y={minY - 500} className="dim-label" fontSize={420}>
+            ⓘ 스케일 보정: 도면의 알고 있는 치수 양끝을 차례로 클릭하세요
+          </text>
+        )}
+      </svg>
+
+      {selOpening && <OpeningPanel id={selOpening} />}
+    </div>
+  )
+
+  function calibrateWith(pts: Pt[], mm: number) {
+    if (!trace) return
+    const [a, b] = pts
+    const dPx = Math.hypot(b.x - a.x, b.y - a.y) / trace.scale
+    if (dPx < 5) return
+    const ns = mm / dPx
+    setTrace({
+      ...trace,
+      scale: ns,
+      ox: a.x - ((a.x - trace.ox) / trace.scale) * ns,
+      oy: a.y - ((a.y - trace.oy) / trace.scale) * ns,
+    })
+    setCalib({ pts: [] })
+  }
+}
+
+function DeleteHint({ onDelete, label }: { onDelete: () => void; label: string }) {
+  const [confirming, setConfirming] = useState(false)
+  return (
+    <div className="floating-hint">
+      {label}
+      {!confirming ? (
+        <button onClick={() => setConfirming(true)}>삭제…</button>
+      ) : (
+        <>
+          <button className="danger" onClick={onDelete}>
+            확인
+          </button>
+          <button onClick={() => setConfirming(false)}>아니오</button>
+        </>
+      )}
+    </div>
+  )
+}
+
+function OpeningPanel({ id }: { id: string }) {
+  const op = useStore((s) => s.plan.openings.find((o) => o.id === id))
+  const updateOpening = useStore((s) => s.updateOpening)
+  if (!op) return null
+  return (
+    <div className="floating-panel">
+      <b>{op.type === 'window' ? '창문' : op.type === 'entry' ? '출입문' : '문'}</b> · 폭{' '}
+      <input
+        type="number"
+        step={50}
+        value={op.width}
+        style={{ width: 90 }}
+        onChange={(e) => updateOpening(id, { width: parseInt(e.target.value) || op.width })}
+      />
+      mm
+      {op.type === 'window' && (
+        <>
+          {' '}
+          · 하단높이{' '}
+          <input
+            type="number"
+            step={50}
+            value={op.sill}
+            style={{ width: 90 }}
+            onChange={(e) => updateOpening(id, { sill: parseInt(e.target.value) || 0 })}
+          />
+          mm
+        </>
+      )}
+    </div>
+  )
+}
+
+function TraceControls({
+  trace,
+  calibCount,
+  onPick,
+  onCalibClick,
+}: {
+  trace: TraceImg | null
+  calibCount: number
+  onPick: (f: File) => void
+  onCalibClick: () => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  return (
+    <>
+      <button onClick={() => fileRef.current?.click()} title="도면 이미지를 배경에 깔고 따라 그립니다">
+        🖼️ 트레이싱 {trace ? '●' : ''}
+      </button>
+      <input hidden type="file" accept="image/*" ref={fileRef} onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])} />
+      {trace && (
+        <button onClick={onCalibClick} title="이미지 위 실측 구간 두 점 클릭 → 실제 길이 입력">
+          📐 스케일 보정{calibCount > 0 ? ` (${calibCount}/2)` : ''}
+        </button>
+      )}
+    </>
+  )
+}

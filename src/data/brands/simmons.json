@@ -1,0 +1,30 @@
+{
+  "brand": "시몬스",
+  "fetchedAt": "2026-08-25",
+  "products": [
+    {
+      "id": "sm-queen-set",
+      "name": "시몬스 퀸 침대 세트 (QE 매트리스+프레임)",
+      "model": "뷰티레스트 QE 1500",
+      "category": "bedroom",
+      "dims": { "w": 1600, "d": 2110, "h": 1000 },
+      "mount": "floor",
+      "shape": "bed",
+      "colorways": ["#e8e3da", "#8c95a3", "#7a8a80"],
+      "note": "매트리스 1500×2000×370mm 기준 · 프레임 포함 설치 외경 약 1600×2110mm(헤드 1000mm) · 프레임 디자인별 편차 있음",
+      "sourceUrl": "https://blog.naver.com/sarah6612/223422212882"
+    },
+    {
+      "id": "sm-lk-set",
+      "name": "시몬스 라지킹 침대 세트 (LK 매트리스+프레임)",
+      "model": "뷰티레스트 LK 1700",
+      "category": "bedroom",
+      "dims": { "w": 1800, "d": 2185, "h": 1000 },
+      "mount": "floor",
+      "shape": "bed",
+      "colorways": ["#e8e3da", "#7a8a80"],
+      "note": "매트리스 1700×2075×370mm 기준 · 프레임 포함 설치 외경 약 1800×2185mm",
+      "sourceUrl": "https://blog.naver.com/sarah6612/223422212882"
+    }
+  ]
+}

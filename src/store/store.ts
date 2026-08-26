@@ -461,16 +461,23 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   loadProject: (p) => {
+    // AI/CV/가져오기 결과는 항상 별도 프로젝트로 저장 — 현재 프로젝트 보존
+    const st = get()
+    const id = p.id && p.id !== st.projectId ? p.id : uid()
+    const proj: Project = { ...p, id }
+    storage.save(proj)
     set({
-      projectName: p.name,
-      plan: p.plan,
-      placements: p.placements,
-      customProducts: p.customProducts ?? [],
+      projectName: proj.name,
+      projectId: id,
+      projects: storage.list(),
+      plan: proj.plan,
+      placements: proj.placements,
+      customProducts: proj.customProducts ?? [],
       past: [],
       future: [],
       selectedId: null,
+      moving: null,
     })
-    persist(get())
   },
 
   exportProject: () => {

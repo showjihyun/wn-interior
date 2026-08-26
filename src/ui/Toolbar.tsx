@@ -123,6 +123,9 @@ export function Toolbar() {
       <Btn onClick={() => setProjOpen(true)} title="세션별 프로젝트 관리">
         📁 프로젝트
       </Btn>
+      <Btn active={s.showDims3D} onClick={s.toggleDims3D} title="3D 외곽 가로·세로 실측 치수선">
+        📐 치수선
+      </Btn>
       <Btn onClick={() => setCvOpen(true)} title="이미지 처리로 벽·방·문을 자동 검출 (LLM 불필요)">
         🧮 도면 자동 변환
       </Btn>

@@ -11,6 +11,7 @@ import { useStore } from '../store/store'
 import { Floors3D, Walls3D } from './Structure'
 import { FurnitureAll, planCenter } from './Furniture3D'
 import { WalkControls as WalkControlsNew } from './WalkControls'
+import { PlanDimensions3D } from './PlanDimensions3D'
 
 function CameraRig({ center }: { center: { x: number; y: number } }) {
   const preset = useStore((s) => s.viewPreset)
@@ -82,6 +83,7 @@ export function Scene3D() {
   const select = useStore((s) => s.select)
   const setPending = useStore((s) => s.setPending)
   const lightIntensity = useStore((s) => s.lightIntensity)
+  const showDims3D = useStore((s) => s.showDims3D)
   const center = planCenter(plan)
 
   return (
@@ -110,6 +112,7 @@ export function Scene3D() {
       <Floors3D plan={plan} />
       <Walls3D plan={plan} />
       <FurnitureAll plan={plan} />
+      {showDims3D && <PlanDimensions3D plan={plan} />}
 
       <gridHelper args={[60000, 60, '#bfc6cd', '#d7dde2']} position={[center.x, -12, center.y]} />
 

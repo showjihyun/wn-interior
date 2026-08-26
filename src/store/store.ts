@@ -56,12 +56,14 @@ export interface AppState {
   /** 워크스루 캐릭터 설정 */
   walkConfig: { heightCm: number; weightKg: number }
   walkView: 'fp' | 'tp'
+  showDims3D: boolean
   projectId: string
   projects: ProjectMeta[]
 
   setLightIntensity: (v: number) => void
   setWalkConfig: (patch: Partial<{ heightCm: number; weightKg: number }>) => void
   setWalkView: (v: 'fp' | 'tp') => void
+  toggleDims3D: () => void
   newProject: (name?: string) => void
   openProject: (id: string) => void
   deleteProject: (id: string) => void
@@ -214,10 +216,12 @@ export const useStore = create<AppState>((set, get) => ({
   lightIntensity: 1,
   walkConfig: { heightCm: 170, weightKg: 65 },
   walkView: 'fp',
+  showDims3D: true,
 
   setLightIntensity: (v) => set({ lightIntensity: Math.max(0.2, Math.min(2, v)) }),
   setWalkConfig: (patch) => set((s) => ({ walkConfig: { ...s.walkConfig, ...patch } })),
   setWalkView: (v) => set({ walkView: v }),
+  toggleDims3D: () => set((s) => ({ showDims3D: !s.showDims3D })),
   ai: {
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKey: (import.meta.env.VITE_OPENROUTER_KEY as string) ?? '',

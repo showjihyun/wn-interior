@@ -11,6 +11,7 @@ const MAX_DIM = 1600 // 성능 가드: 긴 변 최대 px
 
 export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null)
+  const [srcUrl, setSrcUrl] = useState('')
   const [status, setStatus] = useState('')
   const [threshold, setThreshold] = useState(128)
   const [minThickness, setMinThickness] = useState(4)
@@ -23,6 +24,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
 
   const loadFile = (f: File) => {
     const url = URL.createObjectURL(f)
+    setSrcUrl(url)
     const im = new Image()
     im.onload = () => {
       const scale = Math.min(1, MAX_DIM / Math.max(im.naturalWidth, im.naturalHeight))
@@ -75,7 +77,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     const opts: PlanVisionOpts = {
       threshold: th,
       morphCloseRadius: 2,
-      denoiseMinComponentPx: 300,
+      denoiseMinComponentPx: 800,
       orthoToleranceMm: 80,
       minThicknessPx: minThickness,
       minLengthPx: minLength,
@@ -152,6 +154,9 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
       exteriorWallMm: exteriorMm,
       minRoomAreaM2: 1.5,
       wallHeightMm: 2400,
+      morphCloseRadius: 2,
+      denoiseMinComponentPx: 800,
+      orthoToleranceMm: 80,
     })
     // 문 갭 mm 필터 (normalize 전 적용 — 이후 인덱스 대응으로 offset 재계산)
     const keptOpenings = raw.openings.filter((o) => o.width >= 500 && o.width <= 1400)
@@ -213,32 +218,44 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
         <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && loadFile(e.target.files[0])} />
 
         {img && (
-          <div className="pv-controls">
-            <label>
-              이진화 임계값 {threshold}
-              <input type="range" min={60} max={220} value={threshold} onChange={(e) => setThreshold(+e.target.value)} />
-            </label>
-            <label>
-              최소 벽 두께 {minThickness}px
-              <input type="range" min={2} max={20} value={minThickness} onChange={(e) => setMinThickness(+e.target.value)} />
-            </label>
-            <label>
-              최소 벽 길이 {minLength}px
-              <input type="range" min={20} max={200} value={minLength} onChange={(e) => setMinLength(+e.target.value)} />
-            </label>
-            <label style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <input type="checkbox" checked={useOtsu} onChange={(e) => setUseOtsu(e.target.checked)} /> 자동 임계값(Otsu)
-            </label>
-            <label>
-              외벽 두께(축척 기준) {exteriorMm}mm
-              <input type="range" min={100} max={400} step={10} value={exteriorMm} onChange={(e) => setExteriorMm(+e.target.value)} />
-            </label>
-          </div>
-        )}
+          <>
+            <div className="pv-controls">
+              <label>
+                이진화 임계값 {threshold}
+                <input type="range" min={60} max={220} value={threshold} onChange={(e) => setThreshold(+e.target.value)} />
+              </label>
+              <label>
+                최소 벽 두께 {minThickness}px
+                <input type="range" min={2} max={20} value={minThickness} onChange={(e) => setMinThickness(+e.target.value)} />
+              </label>
+              <label>
+                최소 벽 길이 {minLength}px
+                <input type="range" min={20} max={200} value={minLength} onChange={(e) => setMinLength(+e.target.value)} />
+              </label>
+              <label style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <input type="checkbox" checked={useOtsu} onChange={(e) => setUseOtsu(e.target.checked)} /> 자동 임계값(Otsu)
+              </label>
+              <label>
+                외벽 두께(축척 기준) {exteriorMm}mm
+                <input type="range" min={100} max={400} step={10} value={exteriorMm} onChange={(e) => setExteriorMm(+e.target.value)} />
+              </label>
+            </div>
 
-        <div className="pv-preview">
-          <canvas ref={canvasRef} style={{ maxWidth: '100%', background: '#fff' }} />
-        </div>
+            {/* 좌: 원본 도면 / 우: 변환 결과 오버레이 */}
+            <div className="pv-split">
+              <div className="pv-pane">
+                <div className="pv-pane-title">📄 원본 도면</div>
+                <img src={srcUrl} alt="원본 도면" style={{ maxWidth: '100%', maxHeight: '44vh' }} />
+              </div>
+              <div className="pv-pane">
+                <div className="pv-pane-title">🧊 변환 결과 (벽=빨강 · 방=색 채움 · 문=파랑)</div>
+                <div className="pv-preview">
+                  <canvas ref={canvasRef} style={{ maxWidth: '100%', background: '#fff' }} />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
           <button className="primary" disabled={!img} onClick={apply}>

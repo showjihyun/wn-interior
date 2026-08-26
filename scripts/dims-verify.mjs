@@ -1,0 +1,12 @@
+﻿import { chromium } from 'playwright'
+const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--use-angle=swiftshader'] })
+const page = await browser.newPage({ viewport: { width: 1600, height: 950 } })
+await page.addInitScript(() => localStorage.clear())
+await page.goto('http://localhost:5173/')
+await page.waitForFunction(() => !!(window).__hp3d_store)
+await page.waitForTimeout(1200)
+await page.getByRole('button', { name: '탑뷰' }).click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: 'shots/24-dims3d-top.png' })
+await browser.close()
+console.log('done')

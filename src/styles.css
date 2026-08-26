@@ -895,3 +895,43 @@ body,
 .quote-btn:hover {
   background: #3a5270;
 }
+
+/* ── CV 모달 좌/우 분할 ── */
+.pv-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.pv-pane {
+  background: #14171a;
+  border: 1px solid #2c3138;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 0;
+  text-align: center;
+}
+.pv-pane-title {
+  font-size: 11.5px;
+  color: #97a0a9;
+  margin-bottom: 6px;
+  text-align: left;
+}
+.pv-pane img {
+  max-width: 100%;
+  max-height: 44vh;
+  object-fit: contain;
+}
+
+/* ── 3D 치수선 라벨 ── */
+.dim3d-label {
+  background: #ffffffee;
+  border: 1px solid #2b6fd8;
+  color: #1a3a6b;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+}

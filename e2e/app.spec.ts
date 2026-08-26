@@ -440,6 +440,14 @@ test('기존 단일 슬롯 데이터는 첫 로드 시 마이그레이션된다'
   expect(legacyGone).toBeNull()
 })
 
+test('3D 외곽 치수선 토글 (기본 표시 → 끄기)', async ({ page }) => {
+  expect(await S(page, '.showDims3D')).toBe(true)
+  await page.getByRole('button', { name: /치수선/ }).click()
+  expect(await S(page, '.showDims3D')).toBe(false)
+  await page.getByRole('button', { name: /치수선/ }).click()
+  expect(await S(page, '.showDims3D')).toBe(true)
+})
+
 test('AI 해석 모달: 열림→닫힘, 보정 안내 문구 포함', async ({ page }) => {
   await page.getByRole('button', { name: /AI 도면 해석/ }).click()
   const modal = page.locator('.modal')

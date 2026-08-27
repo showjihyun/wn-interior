@@ -1,0 +1,811 @@
+{
+  "summary": {
+    "count": 100,
+    "roomCountExact": 100,
+    "wallCountExact": 97,
+    "maxRoomCountDifference": 0,
+    "maxWallCountDifference": 4
+  },
+  "rows": [
+    {
+      "category": "high_quality",
+      "id": "1245",
+      "auditRooms": 10,
+      "officialRooms": 10,
+      "auditWalls": 23,
+      "officialWalls": 23
+    },
+    {
+      "category": "high_quality",
+      "id": "5912",
+      "auditRooms": 21,
+      "officialRooms": 21,
+      "auditWalls": 44,
+      "officialWalls": 44
+    },
+    {
+      "category": "high_quality",
+      "id": "9872",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "high_quality",
+      "id": "108",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 19,
+      "officialWalls": 19
+    },
+    {
+      "category": "high_quality",
+      "id": "11936",
+      "auditRooms": 9,
+      "officialRooms": 9,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "high_quality",
+      "id": "6694",
+      "auditRooms": 16,
+      "officialRooms": 16,
+      "auditWalls": 43,
+      "officialWalls": 43
+    },
+    {
+      "category": "high_quality",
+      "id": "3814",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "high_quality",
+      "id": "208",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 18,
+      "officialWalls": 18
+    },
+    {
+      "category": "high_quality",
+      "id": "11818",
+      "auditRooms": 18,
+      "officialRooms": 18,
+      "auditWalls": 27,
+      "officialWalls": 27
+    },
+    {
+      "category": "high_quality",
+      "id": "9888",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "high_quality",
+      "id": "3147",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 17,
+      "officialWalls": 17
+    },
+    {
+      "category": "high_quality",
+      "id": "11760",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 18,
+      "officialWalls": 18
+    },
+    {
+      "category": "high_quality",
+      "id": "810",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "high_quality",
+      "id": "5687",
+      "auditRooms": 10,
+      "officialRooms": 10,
+      "auditWalls": 23,
+      "officialWalls": 23
+    },
+    {
+      "category": "high_quality",
+      "id": "339",
+      "auditRooms": 18,
+      "officialRooms": 18,
+      "auditWalls": 30,
+      "officialWalls": 30
+    },
+    {
+      "category": "high_quality",
+      "id": "1007",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 18,
+      "officialWalls": 18
+    },
+    {
+      "category": "high_quality",
+      "id": "4817",
+      "auditRooms": 14,
+      "officialRooms": 14,
+      "auditWalls": 34,
+      "officialWalls": 34
+    },
+    {
+      "category": "high_quality",
+      "id": "2134",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 16,
+      "officialWalls": 16
+    },
+    {
+      "category": "high_quality",
+      "id": "4723",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 22,
+      "officialWalls": 22
+    },
+    {
+      "category": "high_quality",
+      "id": "7018",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 18,
+      "officialWalls": 18
+    },
+    {
+      "category": "high_quality",
+      "id": "1713",
+      "auditRooms": 12,
+      "officialRooms": 12,
+      "auditWalls": 30,
+      "officialWalls": 30
+    },
+    {
+      "category": "high_quality",
+      "id": "3249",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 11,
+      "officialWalls": 11
+    },
+    {
+      "category": "high_quality",
+      "id": "4936",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 16,
+      "officialWalls": 16
+    },
+    {
+      "category": "high_quality",
+      "id": "6373",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "high_quality",
+      "id": "5594",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 18,
+      "officialWalls": 18
+    },
+    {
+      "category": "high_quality",
+      "id": "5775",
+      "auditRooms": 12,
+      "officialRooms": 12,
+      "auditWalls": 22,
+      "officialWalls": 22
+    },
+    {
+      "category": "high_quality",
+      "id": "7841",
+      "auditRooms": 14,
+      "officialRooms": 14,
+      "auditWalls": 34,
+      "officialWalls": 34
+    },
+    {
+      "category": "high_quality",
+      "id": "1412",
+      "auditRooms": 15,
+      "officialRooms": 15,
+      "auditWalls": 29,
+      "officialWalls": 29
+    },
+    {
+      "category": "high_quality",
+      "id": "8653",
+      "auditRooms": 20,
+      "officialRooms": 20,
+      "auditWalls": 54,
+      "officialWalls": 54
+    },
+    {
+      "category": "high_quality",
+      "id": "7768",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 37,
+      "officialWalls": 33
+    },
+    {
+      "category": "high_quality",
+      "id": "1651",
+      "auditRooms": 23,
+      "officialRooms": 23,
+      "auditWalls": 55,
+      "officialWalls": 55
+    },
+    {
+      "category": "high_quality",
+      "id": "7932",
+      "auditRooms": 17,
+      "officialRooms": 17,
+      "auditWalls": 40,
+      "officialWalls": 40
+    },
+    {
+      "category": "high_quality",
+      "id": "5014",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 23,
+      "officialWalls": 23
+    },
+    {
+      "category": "high_quality",
+      "id": "749",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "high_quality",
+      "id": "3736",
+      "auditRooms": 15,
+      "officialRooms": 15,
+      "auditWalls": 27,
+      "officialWalls": 27
+    },
+    {
+      "category": "high_quality",
+      "id": "2193",
+      "auditRooms": 39,
+      "officialRooms": 39,
+      "auditWalls": 77,
+      "officialWalls": 77
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "1579",
+      "auditRooms": 13,
+      "officialRooms": 13,
+      "auditWalls": 22,
+      "officialWalls": 22
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "8139",
+      "auditRooms": 10,
+      "officialRooms": 10,
+      "auditWalls": 29,
+      "officialWalls": 29
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "1581",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 23,
+      "officialWalls": 23
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "102",
+      "auditRooms": 22,
+      "officialRooms": 22,
+      "auditWalls": 54,
+      "officialWalls": 54
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "449",
+      "auditRooms": 11,
+      "officialRooms": 11,
+      "auditWalls": 21,
+      "officialWalls": 21
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "4842",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 19,
+      "officialWalls": 19
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "6274",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 20,
+      "officialWalls": 20
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "1269",
+      "auditRooms": 24,
+      "officialRooms": 24,
+      "auditWalls": 62,
+      "officialWalls": 62
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "7813",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 22,
+      "officialWalls": 22
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "9347",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 20,
+      "officialWalls": 20
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "4845",
+      "auditRooms": 9,
+      "officialRooms": 9,
+      "auditWalls": 18,
+      "officialWalls": 18
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "6257",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 16,
+      "officialWalls": 16
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "333",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 19,
+      "officialWalls": 19
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "4741",
+      "auditRooms": 19,
+      "officialRooms": 19,
+      "auditWalls": 29,
+      "officialWalls": 29
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "1345",
+      "auditRooms": 15,
+      "officialRooms": 15,
+      "auditWalls": 31,
+      "officialWalls": 31
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "6212",
+      "auditRooms": 4,
+      "officialRooms": 4,
+      "auditWalls": 13,
+      "officialWalls": 13
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "5531",
+      "auditRooms": 20,
+      "officialRooms": 20,
+      "auditWalls": 40,
+      "officialWalls": 40
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "6282",
+      "auditRooms": 10,
+      "officialRooms": 10,
+      "auditWalls": 27,
+      "officialWalls": 26
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "3967",
+      "auditRooms": 21,
+      "officialRooms": 21,
+      "auditWalls": 52,
+      "officialWalls": 52
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "5688",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 19,
+      "officialWalls": 19
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "8600",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 8,
+      "officialWalls": 8
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "1913",
+      "auditRooms": 18,
+      "officialRooms": 18,
+      "auditWalls": 39,
+      "officialWalls": 39
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "3240",
+      "auditRooms": 3,
+      "officialRooms": 3,
+      "auditWalls": 10,
+      "officialWalls": 10
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "9082",
+      "auditRooms": 12,
+      "officialRooms": 12,
+      "auditWalls": 22,
+      "officialWalls": 22
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "8237",
+      "auditRooms": 16,
+      "officialRooms": 16,
+      "auditWalls": 36,
+      "officialWalls": 36
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "2144",
+      "auditRooms": 13,
+      "officialRooms": 13,
+      "auditWalls": 29,
+      "officialWalls": 29
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "1402",
+      "auditRooms": 17,
+      "officialRooms": 17,
+      "auditWalls": 39,
+      "officialWalls": 39
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "3724",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 20,
+      "officialWalls": 20
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "8320",
+      "auditRooms": 13,
+      "officialRooms": 13,
+      "auditWalls": 34,
+      "officialWalls": 34
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "6523",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "4709",
+      "auditRooms": 18,
+      "officialRooms": 18,
+      "auditWalls": 36,
+      "officialWalls": 36
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "9526",
+      "auditRooms": 38,
+      "officialRooms": 38,
+      "auditWalls": 123,
+      "officialWalls": 123
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "821",
+      "auditRooms": 20,
+      "officialRooms": 20,
+      "auditWalls": 42,
+      "officialWalls": 42
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "6414",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "8721",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 25,
+      "officialWalls": 25
+    },
+    {
+      "category": "high_quality_architectural",
+      "id": "5044",
+      "auditRooms": 16,
+      "officialRooms": 16,
+      "auditWalls": 27,
+      "officialWalls": 27
+    },
+    {
+      "category": "colorful",
+      "id": "6028",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "colorful",
+      "id": "9831",
+      "auditRooms": 27,
+      "officialRooms": 27,
+      "auditWalls": 76,
+      "officialWalls": 76
+    },
+    {
+      "category": "colorful",
+      "id": "5941",
+      "auditRooms": 15,
+      "officialRooms": 15,
+      "auditWalls": 40,
+      "officialWalls": 40
+    },
+    {
+      "category": "colorful",
+      "id": "2027",
+      "auditRooms": 13,
+      "officialRooms": 13,
+      "auditWalls": 23,
+      "officialWalls": 23
+    },
+    {
+      "category": "colorful",
+      "id": "1794",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "colorful",
+      "id": "3639",
+      "auditRooms": 12,
+      "officialRooms": 12,
+      "auditWalls": 31,
+      "officialWalls": 31
+    },
+    {
+      "category": "colorful",
+      "id": "8759",
+      "auditRooms": 9,
+      "officialRooms": 9,
+      "auditWalls": 17,
+      "officialWalls": 17
+    },
+    {
+      "category": "colorful",
+      "id": "6321",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "colorful",
+      "id": "8235",
+      "auditRooms": 15,
+      "officialRooms": 15,
+      "auditWalls": 25,
+      "officialWalls": 25
+    },
+    {
+      "category": "colorful",
+      "id": "4006",
+      "auditRooms": 3,
+      "officialRooms": 3,
+      "auditWalls": 14,
+      "officialWalls": 14
+    },
+    {
+      "category": "colorful",
+      "id": "476",
+      "auditRooms": 3,
+      "officialRooms": 3,
+      "auditWalls": 12,
+      "officialWalls": 12
+    },
+    {
+      "category": "colorful",
+      "id": "6232",
+      "auditRooms": 16,
+      "officialRooms": 16,
+      "auditWalls": 33,
+      "officialWalls": 32
+    },
+    {
+      "category": "colorful",
+      "id": "11261",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "colorful",
+      "id": "14936",
+      "auditRooms": 4,
+      "officialRooms": 4,
+      "auditWalls": 11,
+      "officialWalls": 11
+    },
+    {
+      "category": "colorful",
+      "id": "14807",
+      "auditRooms": 11,
+      "officialRooms": 11,
+      "auditWalls": 33,
+      "officialWalls": 33
+    },
+    {
+      "category": "colorful",
+      "id": "14126",
+      "auditRooms": 10,
+      "officialRooms": 10,
+      "auditWalls": 20,
+      "officialWalls": 20
+    },
+    {
+      "category": "colorful",
+      "id": "13513",
+      "auditRooms": 12,
+      "officialRooms": 12,
+      "auditWalls": 27,
+      "officialWalls": 27
+    },
+    {
+      "category": "colorful",
+      "id": "13226",
+      "auditRooms": 8,
+      "officialRooms": 8,
+      "auditWalls": 11,
+      "officialWalls": 11
+    },
+    {
+      "category": "colorful",
+      "id": "12946",
+      "auditRooms": 9,
+      "officialRooms": 9,
+      "auditWalls": 20,
+      "officialWalls": 20
+    },
+    {
+      "category": "colorful",
+      "id": "12560",
+      "auditRooms": 7,
+      "officialRooms": 7,
+      "auditWalls": 16,
+      "officialWalls": 16
+    },
+    {
+      "category": "colorful",
+      "id": "11962",
+      "auditRooms": 15,
+      "officialRooms": 15,
+      "auditWalls": 28,
+      "officialWalls": 28
+    },
+    {
+      "category": "colorful",
+      "id": "11573",
+      "auditRooms": 9,
+      "officialRooms": 9,
+      "auditWalls": 15,
+      "officialWalls": 15
+    },
+    {
+      "category": "colorful",
+      "id": "11193",
+      "auditRooms": 13,
+      "officialRooms": 13,
+      "auditWalls": 21,
+      "officialWalls": 21
+    },
+    {
+      "category": "colorful",
+      "id": "10706",
+      "auditRooms": 17,
+      "officialRooms": 17,
+      "auditWalls": 40,
+      "officialWalls": 40
+    },
+    {
+      "category": "colorful",
+      "id": "1570",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 10,
+      "officialWalls": 10
+    },
+    {
+      "category": "colorful",
+      "id": "6230",
+      "auditRooms": 19,
+      "officialRooms": 19,
+      "auditWalls": 34,
+      "officialWalls": 34
+    },
+    {
+      "category": "colorful",
+      "id": "3598",
+      "auditRooms": 5,
+      "officialRooms": 5,
+      "auditWalls": 11,
+      "officialWalls": 11
+    },
+    {
+      "category": "colorful",
+      "id": "1603",
+      "auditRooms": 6,
+      "officialRooms": 6,
+      "auditWalls": 21,
+      "officialWalls": 21
+    }
+  ]
+}

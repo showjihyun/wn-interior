@@ -1,63 +1,354 @@
-# 홈플랜 3D — 인테리어 시뮬레이터
+<a id="english"></a>
 
-도면 이미지(AI 해석)·트레이싱·직접 그리기로 평면도를 만들고,
-**실측(mm) 기준**으로 3D 공간을 생성해 가구·자재를 배치하는 웹 앱입니다.
-(오늘의집 3D 인테리어 / 아키스케치 / 한샘 홈플래너의 핵심 컨셉 참고 — PLAN.md 참조)
+# HomePlan 3D
 
-## 실행
+### Upload a floor plan. Calibrate one real dimension. Walk through the result.
+
+[English](#english) | [한국어](#한국어)
+
+![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111827)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-R3F-111111?logo=threedotjs&logoColor=white)
+![Tests](https://img.shields.io/badge/Vitest-140_tests-6E9F18?logo=vitest&logoColor=white)
+![License guard](https://img.shields.io/badge/non--commercial_models-production_off-59D499)
+[![Verify](https://github.com/showjihyun/wn-interior/actions/workflows/verify.yml/badge.svg)](https://github.com/showjihyun/wn-interior/actions/workflows/verify.yml)
+
+HomePlan 3D is a browser-based interior planner that turns a floor-plan image into one shared, millimetre-based project rendered as both an editable SVG plan and an interactive 3D scene.
+
+The core import path needs no cloud AI: upload an image, enter one known width, compare the vector overlay, then continue in 2D or jump straight into 3D. Furniture snaps to walls, respects room boundaries, collides at real dimensions, survives save/reload, and can be explored in first or third person.
+
+> This is not a “one-click truth machine.” Conversion produces an explicit draft, blocks silent scale mistakes, surfaces suspicious results, and keeps human correction in the loop.
+
+## 20-second demo
+
+![HomePlan 3D — floor plan upload to editable 3D](docs/assets/homeplan-3d-demo.gif)
+
+The GIF is generated from the real application—not a mockup—with `npm run demo:gif`.
+
+What you are seeing: the browser CV path ingests a real Korean 33-pyeong plan, detects **25 walls, 6 rooms, and 7 openings**, calibrates the width to **11,800mm**, preserves those openings through Apply, and renders the same project in 3D and 2D.
+
+## Why this is fun
+
+- **Image → editable geometry → 3D**, without flattening the result into a screenshot.
+- **One source of truth:** 2D and 3D render the same `Project { plan, placements }` in millimetres.
+- **Scale cannot fail silently:** enter a known width or explicitly accept estimated scale before Apply is enabled.
+- **Correction-first UX:** walls, rooms, openings, and dimensions remain editable after conversion.
+- **Real interior behaviour:** 25mm grid snap, wall magnetism, collision rejection, installation height, Undo/Redo, and A/B variants.
+- **Walk the plan:** first-person and third-person navigation with wall and furniture collision.
+- **Honest model boundary:** CubiCasa-derived research models are disabled in production unless research mode is explicitly enabled.
+
+## The product workflow
+
+1. Click **평면도 업로드 → 3D** (_Floor plan upload → 3D_).
+2. Upload PNG/JPG and enter one real horizontal dimension.
+3. Compare the original with detected walls, rooms, doors, and windows.
+4. Resolve scale and detection warnings, then apply the draft.
+5. Choose **Correct in 2D** or **View 3D now**.
+6. Verify wall connections, room boundaries, openings, and dimensions.
+7. Place real-size products, compare variants, walk the result, and export.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Image[Floor-plan image] --> Import[PlanVision import workflow]
+    Import --> Classic[Browser CV pipeline]
+    Import -. research mode .-> Neural[Local CNN / Raster2Seq]
+    Classic --> Gate[Scale + plan review gate]
+    Neural --> Gate
+    Gate --> Normalize[Schema normalization]
+    Normalize --> Project[Project: FloorPlan + Placements]
+    Project --> Store[Zustand store + history]
+    Store --> SVG[SVG 2D editor]
+    Store --> R3F[Three.js / R3F scene]
+    Store --> Storage[StorageAdapter / localStorage]
+    SVG --> Store
+    R3F --> Store
+```
+
+### Data invariants
+
+| Boundary        | Invariant                                                                               |
+| --------------- | --------------------------------------------------------------------------------------- |
+| Geometry        | All persisted lengths use millimetres.                                                  |
+| 2D / 3D         | Both views read and mutate the same project state.                                      |
+| Import          | Invalid walls, rooms, and openings are rejected or normalized before store load.        |
+| Scale           | Apply is blocked until measured scale or explicit estimated-scale consent exists.       |
+| Persistence     | Project IDs isolate imports so a converted plan cannot overwrite the current project.   |
+| Research models | Non-commercial checkpoints are development/research-only and production-off by default. |
+
+### Import pipeline
+
+```text
+RGBA image
+  → Otsu / luminance binarization
+  → inversion + denoise + morphological close
+  → horizontal / vertical wall bands
+  → room contours + door/window candidates
+  → known-width scale calibration
+  → review issues + opening sanitization
+  → normalized FloorPlan
+  → Correct in 2D | View 3D now
+```
+
+### Repository map
+
+```text
+src/
+├─ types.ts             FloorPlan, Product, Placement and Project contracts
+├─ engine/              CV, scale review, geometry, collision, walk and textures
+├─ store/store.ts       Shared state, Undo/Redo, variants and project lifecycle
+├─ storage/             Swappable persistence adapter
+├─ editor2d/            SVG plan editor and draft-review guidance
+├─ scene/               Three.js/R3F structure, furniture and walkthrough
+├─ ui/                  Import workflow, catalog, inspector and project controls
+└─ data/                Sample plan, materials and sourced product catalog
+
+e2e/                    Real-browser product journeys and CV fixtures
+docs/evidence/          Accuracy, model and license audits
+docs/tdd/               Reproducible RED → GREEN → REFACTOR evidence
+```
+
+## Development workflow
+
+Behaviour changes follow a verifiable cycle:
+
+```text
+Acceptance contract
+  → RED: run the smallest test and record the intended failure
+  → GREEN: implement the minimum behaviour
+  → REFACTOR: run coverage, browser E2E and production preview
+  → Evidence note in docs/tdd/
+```
+
+The repository rejects assertion-free test files, committed `.only`, and comments pretending to be RED evidence. See [the TDD workflow](docs/TDD-WORKFLOW.md) and [feature-completeness rubric](docs/CORE-FEATURE-COMPLETENESS.md).
+
+## Quick start
+
+Requirements: Node.js 22.19+ and npm. CI runs on Node.js 24.
 
 ```bash
 npm install
-npm run dev   # http://localhost:5173
+npm run dev
 ```
 
-빌드: `npm run build`
+Open `http://localhost:5173`.
 
-테스트:
+### Verification commands
+
 ```bash
-npm test          # Vitest 단위테스트 (geom/store/AI 정규화, 29개)
-npm run test:e2e  # Playwright E2E (5개 시나리오, dev 서버 자동 기동/재사용)
+npm test               # Vitest unit/contract tests
+npm run test:contracts # assertion/.only/false-RED guard
+npm run test:coverage  # tests + global and high-risk coverage floors
+npm run test:e2e       # Playwright against the development app
+npm run test:preview   # production build + preview smoke tests
+npm run verify         # contracts + lint + format + coverage + build
+npm run verify:full    # everything above + E2E + production preview
 ```
 
-## 핵심 흐름
+### Rebuild the README GIF
 
-1. **공간 만들기**
-   - 샘플 아파트(34평형대)로 바로 시작, 또는
-   - 툴바 `🧮 도면 자동 변환`: 도면 이미지를 **LLM 없이 이미지 처리(CV)로 해석** — 두꺼운 벽선 검출·문 갭·방 폴리곤 자동 검출, 좌(원본)/우(변환 미리보기) 분할 프리뷰, 슬라이더로 실시간 보정
-   - 툴바 `✨ AI 도면 해석`: OpenAI 호환 Vision API로 해석 — 기본 모델 **OpenRouter Ox Alpha**(`stealth/ox-alpha`), 키는 ⚙️ 설정 또는 `.env.local`의 `VITE_OPENROUTER_KEY`
-   - `2D 도면편집` 모드: 벽 그리기(연속 클릭), 끝점 드래그, 문/창문 배치, 이미지 트레이싱 + 두 점 스케일 보정
-2. **3D 배치**: 좌측 카탈로그 클릭 → 고스트 미리보기 → 클릭 배치 → 드래그 이동(벽 자석 스냅) · R 회전 · 인스펙터에서 치수 오버라이드(유사 제품 실측 조정)/색상/설치 높이
-3. **마감재**: 좌측 `마감재` 탭에서 방별 바닥재·벽지 선택 (600장판·마루 플랭크 등 실규격 타일링)
-4. **가격**: 좌측 `가격` 탭에서 배치 제품 참고가 합계 + 출처 링크
-5. **출력**: PNG 스크린샷 / 프로젝트 JSON 내보내기·불러오기 / `📁 프로젝트`로 세션별 다중 평면도 관리 (자동저장)
+```bash
+# terminal 1
+npm run dev
 
-## 조작법
+# terminal 2
+npx playwright install chromium
+npm run demo:gif
+```
 
-| 동작 | 방법 |
-|---|---|
-| 이동 | 드래그 (25mm 그리드 스냅, 벽부착 제품 자석) |
-| 회전 | R (+15°) / Shift+R (−15°) / 인스펙터 버튼 |
-| 삭제 | Delete |
-| 되돌리기 | Ctrl+Z / Ctrl+Y |
-| 시점 | 마우스 드래그(회전)·휠(줌), 툴바 아이소/탑뷰 |
-| **워크스루** | 🚶 버튼 → 드래그: 시선 · WASD: 걷기 · Shift: 달리기 (벽·가구 충돌 차단). 좌하단 패널에서 **신장/몸무게** 설정(캐릭터 크기·눈높이 자동) + **1인칭/3인칭** 전환 |
-| **프로젝트** | 📁 버튼 → 세션별 다중 평면도 생성/전환/삭제 (브라우저 저장, 자동 마이그레이션) |
-| **배치안 비교** | 🗂 버튼 → 현재 상태를 썸네일과 함께 저장 → 여러 안 오가며 적용 |
-| **GLTF 가구** | 내 가구 등록 시 모델(.glb) URL 입력 → 실측 높이에 자동 피팅 |
+This records the checked-in Korean 33-pyeong fixture and writes `docs/assets/homeplan-3d-demo.gif` as a 20-second, 960×540 animation.
+
+## Optional local CNN research mode
+
+The browser CV path works without Python. The optional CubiCasa-derived CNN improves research benchmarks but is **CC BY-NC 4.0** and must not be treated as commercially deployable.
+
+```powershell
+pip install -r scripts/requirements-cv.txt
+pip install torch --index-url https://download.pytorch.org/whl/cu128  # NVIDIA
+
+npm run cv:setup
+npm run cv:server
+npm run dev
+```
+
+CUDA is preferred; CPU is the fallback. Production builds disable non-commercial models unless `VITE_ENABLE_NONCOMMERCIAL_RESEARCH_MODE=true` is deliberately supplied. See the [license comparison](docs/evidence/CV-LICENSE-COMPARISON.md).
+
+## Accuracy, without the hand-waving
+
+On the fixed 900-plan holdout, the local CNN hybrid reached **47.52% room F1** and **76.63% wall F1**. Direct opening vectorization later reached **87.07% door-location F1** and **82.97% window-location F1** on that holdout.
+
+Those numbers are useful, but room extraction is not reliable enough for autonomous completion. HomePlan 3D therefore treats conversion as a measurable draft and asks users to verify every wall, room, opening, and dimension. Full evidence lives in:
+
+- [CV algorithm improvement](docs/evidence/CV-ALGORITHM-IMPROVEMENT.md)
+- [Opening-vector research](docs/evidence/CV-RESEARCH-STAGE-1.md)
+- [2,200-plan accuracy audit](docs/evidence/CV-ACCURACY-AUDIT.md)
+- [User-validation plan](docs/USER-VALIDATION.md)
+
+## Keyboard and interaction cheatsheet
+
+| Action           | Control                                                   |
+| ---------------- | --------------------------------------------------------- |
+| Move             | Drag; 25mm grid; wall-mounted products magnetize to walls |
+| Rotate           | `R` / `Shift+R`, or inspector controls                    |
+| Delete           | `Delete`                                                  |
+| Undo / Redo      | `Ctrl+Z` / `Ctrl+Y`                                       |
+| 2D / 3D          | `1` / `3`                                                 |
+| Walkthrough      | Walk button, mouse look, `WASD`, `Shift` to run           |
+| Variants         | Save/apply A/B layouts with thumbnails                    |
+| Custom furniture | Register dimensions and an optional `.glb` URL            |
+
+---
+
+<a id="한국어"></a>
+
+# 홈플랜 3D
+
+### 평면도를 올리고, 실측 하나를 맞추고, 완성된 공간을 직접 걸어보세요.
+
+[English](#english) | [한국어](#한국어)
+
+홈플랜 3D는 평면도 이미지를 **편집 가능한 SVG 도면과 인터랙티브 3D 공간**으로 바꾸는 브라우저 기반 인테리어 플래너입니다. 2D와 3D는 별도 결과물이 아니라 mm 단위의 동일한 `Project { plan, placements }`를 함께 렌더합니다.
+
+핵심 변환에는 클라우드 AI가 필요하지 않습니다. 이미지를 올리고 실제 가로 치수 하나를 입력한 뒤 원본과 벡터 오버레이를 비교하고, 2D 보정 또는 3D 확인으로 이어갑니다. 가구는 실측 크기로 벽에 스냅되고, 방 경계와 충돌을 검사하며, 저장·재열기와 1·3인칭 워크스루까지 연결됩니다.
+
+> “한 번 클릭하면 정답”이라고 주장하지 않습니다. 변환 결과는 명시적인 초안이며, 잘못된 축척의 조용한 적용을 막고 사람이 수정해야 할 항목을 드러냅니다.
+
+## 20초 데모
+
+![홈플랜 3D — 평면도 업로드부터 편집 가능한 3D까지](docs/assets/homeplan-3d-demo.gif)
+
+이 GIF는 목업이 아니라 실제 앱을 `npm run demo:gif`로 조작해 생성합니다.
+
+영상에서는 실제 한국 33평 도면을 브라우저 CV로 처리해 **벽 25개, 방 6개, 문·창문 7개**를 검출하고, 전체 가로를 **11,800mm**로 보정한 뒤 같은 프로젝트를 3D와 2D로 확인합니다.
+
+## 핵심 포인트
+
+- **이미지 → 편집 가능한 구조 → 3D**로 이어지며 결과가 스크린샷으로 굳지 않습니다.
+- **단일 데이터 원본:** 2D와 3D가 같은 mm 기반 프로젝트를 읽고 수정합니다.
+- **축척 안전장치:** 실측값을 입력하거나 추정 축척 사용을 명시적으로 확인해야 적용됩니다.
+- **보정 우선 UX:** 변환 후에도 벽·방·문·창문·치수를 직접 편집할 수 있습니다.
+- **실제 배치 규칙:** 25mm 그리드, 벽 자석, 충돌 거부, 설치 높이, Undo/Redo와 배치안 비교를 지원합니다.
+- **공간 체험:** 벽·가구 충돌이 적용되는 1인칭/3인칭 워크스루를 제공합니다.
+- **정직한 라이선스 경계:** CubiCasa 계열 연구 모델은 명시적 연구 모드가 아니면 production에서 꺼집니다.
+
+## 사용자 워크플로우
+
+1. **평면도 업로드 → 3D**를 누릅니다.
+2. PNG/JPG를 올리고 도면 전체 가로 실측값 하나를 입력합니다.
+3. 원본과 검출된 벽·방·문·창문을 비교합니다.
+4. 축척·검출 경고를 확인하고 초안을 적용합니다.
+5. **2D에서 보정** 또는 **바로 3D 보기**를 선택합니다.
+6. 벽 연결, 방 경계, 문·창문, 실측 치수를 검수합니다.
+7. 실측 가구를 배치하고 배치안을 비교한 뒤 워크스루·견적·내보내기를 사용합니다.
 
 ## 아키텍처
 
-```
-src/
-├─ types.ts            # FloorPlan/Product/Placement 스키마 (단위 mm)
-├─ data/               # 샘플 평면도, 실측 카탈로그 27종, 마감재 정의
-├─ store/store.ts      # zustand: 단일 데이터 소스 + Undo/Redo + 자동저장
-├─ engine/             # 지오메트리(스냅·충돌), 절차 텍스처(실규격 타일링)
-├─ scene/              # three.js/R3F: 구조물·가구 셰이프·인터랙션
-├─ editor2d/           # SVG 2D 편집기 (트레이싱 포함)
-└─ ui/                 # 툴바/카탈로그/인스펙터/AI 임포트/설정
+```text
+평면도 이미지
+  → 브라우저 CV 또는 선택적 로컬 연구 모델
+  → 축척·검출 검토 게이트
+  → FloorPlan 스키마 정규화
+  → Project { plan, placements }
+  → Zustand 단일 스토어
+     ├─ SVG 2D 편집기
+     ├─ Three.js / R3F 3D 씬
+     └─ StorageAdapter / localStorage
 ```
 
-- 2D와 3D는 같은 `Project{plan, placements}`를 렌더하는 두 뷰입니다.
-- AI 해석 결과는 오차가 있으므로 반드시 2D 편집기에서 보정하는 플로우입니다.
-- 진행 관리: TODO.md (단일 진실 원본)
+### 핵심 불변식
+
+| 경계       | 보장 사항                                                                  |
+| ---------- | -------------------------------------------------------------------------- |
+| 지오메트리 | 저장되는 모든 길이는 mm 단위입니다.                                        |
+| 2D / 3D    | 두 화면은 같은 프로젝트 상태를 읽고 수정합니다.                            |
+| 가져오기   | 잘못된 벽·방·개구부는 스토어 로드 전에 거부하거나 정규화합니다.            |
+| 축척       | 실측 또는 추정 축척 동의가 없으면 적용 버튼이 활성화되지 않습니다.         |
+| 저장       | 가져온 도면은 새 프로젝트 ID로 분리되어 기존 프로젝트를 덮어쓰지 않습니다. |
+| 연구 모델  | 비상업 체크포인트는 개발·연구 전용이며 production 기본 비활성입니다.       |
+
+### 코드 구조
+
+```text
+src/
+├─ types.ts             FloorPlan/Product/Placement/Project 계약
+├─ engine/              CV, 축척 검토, 지오메트리, 충돌, 워크스루, 텍스처
+├─ store/store.ts       공유 상태, Undo/Redo, 배치안, 프로젝트 생명주기
+├─ storage/             교체 가능한 저장 어댑터
+├─ editor2d/            SVG 편집기와 변환 초안 검수 안내
+├─ scene/               Three.js/R3F 구조·가구·워크스루
+├─ ui/                  업로드 흐름, 카탈로그, 인스펙터, 프로젝트 UI
+└─ data/                샘플 도면, 마감재, 출처가 있는 제품 카탈로그
+```
+
+## 개발 워크플로우
+
+모든 동작 변경은 다음의 검증 가능한 사이클을 따릅니다.
+
+```text
+수용 계약
+  → RED: 가장 작은 테스트를 실행하고 의도한 실패 기록
+  → GREEN: 최소 구현
+  → REFACTOR: 커버리지·브라우저 E2E·production preview
+  → docs/tdd/에 증거 보존
+```
+
+assertion 없는 테스트 파일, 커밋된 `.only`, 주석만으로 주장하는 가짜 RED는 자동 검사에서 차단합니다. 자세한 내용은 [TDD 규약](docs/TDD-WORKFLOW.md)과 [핵심 기능 완성도 기준](docs/CORE-FEATURE-COMPLETENESS.md)을 참고하세요.
+
+## 빠른 실행
+
+Node.js 22.19+와 npm이 필요하며 CI는 Node.js 24에서 실행됩니다.
+
+```bash
+npm install
+npm run dev
+```
+
+`http://localhost:5173`을 엽니다.
+
+```bash
+npm test
+npm run test:coverage
+npm run test:e2e
+npm run test:preview
+npm run verify:full
+```
+
+## 선택적 로컬 CNN 연구 모드
+
+브라우저 CV만으로도 핵심 흐름은 동작합니다. 선택적 CubiCasa 계열 CNN은 연구 벤치마크를 개선하지만 **CC BY-NC 4.0**이므로 상업 배포 모델로 취급하면 안 됩니다.
+
+```powershell
+pip install -r scripts/requirements-cv.txt
+pip install torch --index-url https://download.pytorch.org/whl/cu128
+
+npm run cv:setup
+npm run cv:server
+npm run dev
+```
+
+CUDA를 우선 사용하고 CPU로 폴백합니다. production에서는 `VITE_ENABLE_NONCOMMERCIAL_RESEARCH_MODE=true`를 의도적으로 지정하지 않는 한 비상업 모델이 비활성화됩니다.
+
+## 정확도와 한계
+
+고정된 실제 도면 홀드아웃 900건에서 로컬 CNN 하이브리드는 **방 F1 47.52%**, **벽 F1 76.63%**를 기록했습니다. 문·창문 직접 벡터화는 같은 홀드아웃에서 **문 위치 F1 87.07%**, **창 위치 F1 82.97%**를 기록했습니다.
+
+방 추출은 자동 완성으로 부르기에는 부족합니다. 그래서 현재 제품은 변환 결과를 초안으로 제한하고 모든 벽·방·문·창문·치수를 사용자가 확인하도록 합니다. 근거는 다음 문서에서 확인할 수 있습니다.
+
+- [CV 알고리즘 개선](docs/evidence/CV-ALGORITHM-IMPROVEMENT.md)
+- [문·창문 벡터화 연구](docs/evidence/CV-RESEARCH-STAGE-1.md)
+- [2,200건 정확도 감사](docs/evidence/CV-ACCURACY-AUDIT.md)
+- [사용자 검증 실행안](docs/USER-VALIDATION.md)
+
+## 주요 조작
+
+| 동작                | 조작                                               |
+| ------------------- | -------------------------------------------------- |
+| 이동                | 드래그, 25mm 그리드, 벽부착 제품 벽 자석           |
+| 회전                | `R` / `Shift+R` 또는 인스펙터                      |
+| 삭제                | `Delete`                                           |
+| 실행 취소/다시 실행 | `Ctrl+Z` / `Ctrl+Y`                                |
+| 2D / 3D             | `1` / `3`                                          |
+| 워크스루            | 워크스루 버튼, 마우스 시선, `WASD`, `Shift` 달리기 |
+| 배치안              | 썸네일과 함께 A/B안 저장·적용                      |
+| 사용자 가구         | 실측 치수와 선택적 `.glb` URL 등록                 |

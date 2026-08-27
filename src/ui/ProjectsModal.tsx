@@ -34,9 +34,7 @@ export function ProjectsModal({ onClose }: { onClose: () => void }) {
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>📁 내 프로젝트</h3>
-        <p className="hint">
-          브라우저(세션)별로 저장됩니다. 나중에 계정 DB와 동기화될 예정입니다.
-        </p>
+        <p className="hint">브라우저(세션)별로 저장됩니다. 나중에 계정 DB와 동기화될 예정입니다.</p>
         <button
           className="primary"
           style={{ margin: '10px 0' }}
@@ -59,15 +57,32 @@ export function ProjectsModal({ onClose }: { onClose: () => void }) {
                 {m.id === currentId ? (
                   <span className="pi-current">현재</span>
                 ) : (
-                  <button onClick={() => { openProject(m.id); onClose() }}>열기</button>
+                  <button
+                    onClick={() => {
+                      openProject(m.id)
+                      onClose()
+                    }}
+                  >
+                    열기
+                  </button>
                 )}
                 {confirmDel === m.id ? (
                   <>
-                    <button className="danger" onClick={() => { deleteProject(m.id); setConfirmDel(null) }}>확인</button>
+                    <button
+                      className="danger"
+                      onClick={() => {
+                        deleteProject(m.id)
+                        setConfirmDel(null)
+                      }}
+                    >
+                      확인
+                    </button>
                     <button onClick={() => setConfirmDel(null)}>아니오</button>
                   </>
                 ) : (
-                  <button className="danger" onClick={() => setConfirmDel(m.id)}>삭제</button>
+                  <button className="danger" onClick={() => setConfirmDel(m.id)}>
+                    삭제
+                  </button>
                 )}
               </div>
             </div>

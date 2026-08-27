@@ -86,7 +86,10 @@ export function normalizeAiPlan(raw: unknown): NormalizeResult {
       if (poly.length < 3) continue // 깨진 폴리곤 → 제거
       rooms.push({
         id: typeof item.id === 'string' && item.id ? item.id : `r${rooms.length + 1}`,
-        name: typeof item.name === 'string' && item.name.trim() ? item.name.trim() : `방 ${rooms.length + 1}`,
+        name:
+          typeof item.name === 'string' && item.name.trim()
+            ? item.name.trim()
+            : `방 ${rooms.length + 1}`,
         polygon: poly,
       })
     }

@@ -13,11 +13,16 @@ export interface Gray {
 }
 
 /** RGBA ImageData → 이진 Gray (luminance < threshold → 잉크) */
-export function toGray(rgba: Uint8ClampedArray, width: number, height: number, threshold: number): Gray {
+export function toGray(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  threshold: number
+): Gray {
   const data = new Uint8Array(width * height)
   for (let i = 0, p = 0; i < data.length; i++, p += 4) {
     const lum = 0.299 * rgba[p] + 0.587 * rgba[p + 1] + 0.114 * rgba[p + 2]
-    if (lum < threshold) data[i] = 255
+    if (lum <= threshold) data[i] = 255
   }
   return { data, width, height }
 }
@@ -45,18 +50,19 @@ interface Band {
   end: number // H: x2 / V: y2
 }
 
-const overlap = (a1: number, a2: number, b1: number, b2: number) => Math.min(a2, b2) - Math.max(a1, b1)
+const overlap = (a1: number, a2: number, b1: number, b2: number) =>
+  Math.min(a2, b2) - Math.max(a1, b1)
 
 /** 한 방향(H: 가로 밴드 / V: 세로 밴드) 런-밴드 추출 + 솔리드 런 분해 + 갭 검출 */
 function findBands(
   g: Gray,
   vertical: boolean,
-  opts: FindWallOpts,
+  opts: FindWallOpts
 ): { segs: WallSeg[]; openings: { seg: WallSeg; at: number; gapPx: number }[] } {
   const { data, width, height } = g
   const main = vertical ? width : height // 스캔 라인 수
   const cross = vertical ? height : width // 라인 길이
-  const inkAt = (m: number, c: number) => data[(vertical ? c * width + m : m * width + c)] > 0
+  const inkAt = (m: number, c: number) => data[vertical ? c * width + m : m * width + c] > 0
 
   const minLen = opts.minLengthPx
   const gapMin = 6 // 노이즈 컷
@@ -70,7 +76,8 @@ function findBands(
   let open: OpenBand[] = []
   const closed: Band[] = []
   const closeBand = (b: OpenBand) => {
-    if (b.rows >= opts.minThicknessPx) closed.push({ pos1: b.pos1, pos2: b.pos2, start: b.start, end: b.end })
+    if (b.rows >= opts.minThicknessPx)
+      closed.push({ pos1: b.pos1, pos2: b.pos2, start: b.start, end: b.end })
   }
   for (let m = 0; m < main; m++) {
     // 이 라인의 잉크 런 (minLen 이상)
@@ -89,7 +96,9 @@ function findBands(
     // 오픈 밴드와 런 매칭 (교집합 60% 이상)
     const next: OpenBand[] = []
     for (const r of runs) {
-      const hit = open.find((b) => overlap(b.start, b.end, r[0], r[1]) >= 0.6 * Math.min(b.end - b.start, r[1] - r[0]))
+      const hit = open.find(
+        (b) => overlap(b.start, b.end, r[0], r[1]) >= 0.6 * Math.min(b.end - b.start, r[1] - r[0])
+      )
       if (hit) {
         hit.start = Math.min(hit.start, r[0])
         hit.end = Math.max(hit.end, r[1])
@@ -168,7 +177,10 @@ export function findWalls(g: Gray, opts: FindWallOpts): WallSeg[] {
     const areaB = (bb.x2 - bb.x1) * (bb.y2 - bb.y1)
     return inter / (areaA + areaB - inter)
   }
-  const withOpenings = [...h.segs.map((s) => ({ s, gap: h.openings.find((o) => o.seg === s) })), ...v.segs.map((s) => ({ s, gap: v.openings.find((o) => o.seg === s) }))]
+  const withOpenings = [
+    ...h.segs.map((s) => ({ s, gap: h.openings.find((o) => o.seg === s) })),
+    ...v.segs.map((s) => ({ s, gap: v.openings.find((o) => o.seg === s) })),
+  ]
   for (const { s, gap } of withOpenings) {
     if (all.some((k) => iou(k, s) > 0.8)) continue // H/V 이중 검출 제거
     if (gap) s.openingAfter = { at: gap.at, gapPx: gap.gapPx }
@@ -226,23 +238,31 @@ function rdp(pts: Pt[], eps: number): Pt[] {
 export function detectRooms(
   gray: Gray,
   walls: WallSeg[],
-  opts: { mmPerPx: number; minAreaM2: number },
+  opts: { mmPerPx: number; minAreaM2: number; includeSourceInk?: boolean }
 ): RoomOut[] {
   const { width: W, height: H } = gray
   // 1) 벽 마스크 래스터화 (문 갭 포함 채움 → 방이 새지 않게)
   const wall = new Uint8Array(W * H)
+  // 긴 직선 검출이 놓친 짧은 벽·기둥·ㄱ자 모서리는 전처리된 원본 잉크로
+  // 보완할 수 있다. 다만 컬러/주석이 많은 도면에서는 방을 과분할할 수 있어
+  // 호출부가 선분 전용 결과와 비교해 더 유용한 쪽을 선택한다.
+  if (opts.includeSourceInk)
+    for (let i = 0; i < gray.data.length; i++) if (gray.data[i]) wall[i] = 1
   const fillRect = (x1: number, y1: number, x2: number, y2: number) => {
     for (let y = Math.max(0, Math.floor(y1)); y <= Math.min(H - 1, Math.ceil(y2)); y++)
-      for (let x = Math.max(0, Math.floor(x1)); x <= Math.min(W - 1, Math.ceil(x2)); x++) wall[y * W + x] = 1
+      for (let x = Math.max(0, Math.floor(x1)); x <= Math.min(W - 1, Math.ceil(x2)); x++)
+        wall[y * W + x] = 1
   }
   for (const w of walls) {
     const t = w.thickness / 2
     if (w.y1 === w.y2) {
       fillRect(w.x1, w.y1 - t, w.x2, w.y1 + t)
-      if (w.openingAfter) fillRect(w.openingAfter.at, w.y1 - t, w.openingAfter.at + w.openingAfter.gapPx, w.y1 + t)
+      if (w.openingAfter)
+        fillRect(w.openingAfter.at, w.y1 - t, w.openingAfter.at + w.openingAfter.gapPx, w.y1 + t)
     } else {
       fillRect(w.x1 - t, w.y1, w.x1 + t, w.y2)
-      if (w.openingAfter) fillRect(w.x1 - t, w.openingAfter.at, w.x1 + t, w.openingAfter.at + w.openingAfter.gapPx)
+      if (w.openingAfter)
+        fillRect(w.x1 - t, w.openingAfter.at, w.x1 + t, w.openingAfter.at + w.openingAfter.gapPx)
     }
   }
 
@@ -290,7 +310,12 @@ export function detectRooms(
       cells.push(c)
       const x = c % W
       const y = (c / W) | 0
-      const nb = [x > 0 ? c - 1 : -1, x < W - 1 ? c + 1 : -1, y > 0 ? c - W : -1, y < H - 1 ? c + W : -1]
+      const nb = [
+        x > 0 ? c - 1 : -1,
+        x < W - 1 ? c + 1 : -1,
+        y > 0 ? c - W : -1,
+        y < H - 1 ? c + W : -1,
+      ]
       for (const n of nb) {
         if (n >= 0 && !wall[n] && label[n] === 0) {
           label[n] = id
@@ -313,8 +338,14 @@ export function detectRooms(
       const x = c % W
       const y = (c / W) | 0
       if (
-        x === 0 || y === 0 || x === W - 1 || y === H - 1 ||
-        !isRoom(c - 1) || !isRoom(c + 1) || !isRoom(c - W) || !isRoom(c + W)
+        x === 0 ||
+        y === 0 ||
+        x === W - 1 ||
+        y === H - 1 ||
+        !isRoom(c - 1) ||
+        !isRoom(c + 1) ||
+        !isRoom(c - W) ||
+        !isRoom(c + W)
       )
         boundary.push(c)
     }
@@ -384,16 +415,153 @@ export interface PlanVisionOpts {
 export interface RawPlan {
   wallHeight: number
   walls: { a: Pt; b: Pt; thickness: number }[]
-  openings: { type: 'door'; at: Pt; width: number }[]
+  openings: { type: 'door' | 'window'; at: Pt; width: number }[]
   rooms: { name: string; polygon: Pt[]; areaM2: number }[]
   mmPerPx: number
+}
+
+/** CNN door/window 의미 마스크의 연결요소를 가장 가까운 벽 위 Opening 후보로 변환한다. */
+export function vectorizeOpeningMask(
+  mask: Gray,
+  walls: RawPlan['walls'],
+  mmPerPx: number,
+  type: 'door' | 'window'
+): RawPlan['openings'] {
+  if (!walls.length || !Number.isFinite(mmPerPx) || mmPerPx <= 0) return []
+  const { width, height, data } = mask
+  const visited = new Uint8Array(data.length)
+  const queue = new Int32Array(data.length)
+  const minComponentPx = Math.max(6, Math.round(width * height * 0.00001))
+  const candidates: {
+    opening: RawPlan['openings'][number]
+    wallIndex: number
+    distance: number
+  }[] = []
+
+  for (let start = 0; start < data.length; start++) {
+    if (!data[start] || visited[start]) continue
+    let head = 0
+    let tail = 0
+    let count = 0
+    let sumX = 0
+    let sumY = 0
+    let minX = width
+    let maxX = 0
+    let minY = height
+    let maxY = 0
+    visited[start] = 1
+    queue[tail++] = start
+    while (head < tail) {
+      const index = queue[head++]
+      const x = index % width
+      const y = (index / width) | 0
+      count++
+      sumX += x
+      sumY += y
+      minX = Math.min(minX, x)
+      maxX = Math.max(maxX, x)
+      minY = Math.min(minY, y)
+      maxY = Math.max(maxY, y)
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+          const next = ny * width + nx
+          if (data[next] && !visited[next]) {
+            visited[next] = 1
+            queue[tail++] = next
+          }
+        }
+      }
+    }
+    if (count < minComponentPx) continue
+
+    const point = { x: (sumX / count) * mmPerPx, y: (sumY / count) * mmPerPx }
+    let best: { wallIndex: number; at: Pt; distance: number; horizontal: boolean } | undefined
+    walls.forEach((wall, wallIndex) => {
+      const dx = wall.b.x - wall.a.x
+      const dy = wall.b.y - wall.a.y
+      const length2 = dx * dx + dy * dy || 1
+      const t = Math.max(
+        0,
+        Math.min(1, ((point.x - wall.a.x) * dx + (point.y - wall.a.y) * dy) / length2)
+      )
+      const at = { x: wall.a.x + dx * t, y: wall.a.y + dy * t }
+      const distance = Math.hypot(point.x - at.x, point.y - at.y)
+      if (!best || distance < best.distance) {
+        best = { wallIndex, at, distance, horizontal: Math.abs(dx) >= Math.abs(dy) }
+      }
+    })
+    if (!best || best.distance > Math.max(800, mmPerPx * 48)) continue
+    const spanPx = best.horizontal ? maxX - minX + 1 : maxY - minY + 1
+    const rawWidth = spanPx * mmPerPx
+    const openingWidth =
+      type === 'door'
+        ? Math.max(500, Math.min(2200, rawWidth))
+        : Math.max(400, Math.min(5000, rawWidth))
+    candidates.push({
+      opening: { type, at: best.at, width: openingWidth },
+      wallIndex: best.wallIndex,
+      distance: best.distance,
+    })
+  }
+
+  candidates.sort((a, b) => a.distance - b.distance)
+  const kept: typeof candidates = []
+  for (const candidate of candidates) {
+    const duplicate = kept.some(
+      (other) =>
+        other.wallIndex === candidate.wallIndex &&
+        Math.hypot(
+          other.opening.at.x - candidate.opening.at.x,
+          other.opening.at.y - candidate.opening.at.y
+        ) <
+          Math.max(other.opening.width, candidate.opening.width) * 0.45
+    )
+    if (!duplicate) kept.push(candidate)
+  }
+  return kept.map((candidate) => candidate.opening)
+}
+
+/** 도면에 표기된 전체 가로 치수로 자동 축척을 보정한다. */
+export function rescalePlanToWidth(plan: RawPlan, knownWidthMm: number): RawPlan {
+  if (!Number.isFinite(knownWidthMm) || knownWidthMm <= 0 || plan.walls.length === 0) return plan
+  const xs = plan.walls.flatMap((wall) => [wall.a.x, wall.b.x])
+  const currentWidth = Math.max(...xs) - Math.min(...xs)
+  if (!Number.isFinite(currentWidth) || currentWidth <= 0) return plan
+  const factor = knownWidthMm / currentWidth
+  const scalePoint = (point: Pt): Pt => ({ x: point.x * factor, y: point.y * factor })
+
+  return {
+    ...plan,
+    walls: plan.walls.map((wall) => ({
+      a: scalePoint(wall.a),
+      b: scalePoint(wall.b),
+      thickness: wall.thickness * factor,
+    })),
+    openings: plan.openings.map((opening) => ({
+      ...opening,
+      at: scalePoint(opening.at),
+      width: opening.width * factor,
+    })),
+    rooms: plan.rooms.map((room) => ({
+      ...room,
+      polygon: room.polygon.map(scalePoint),
+      areaM2: room.areaM2 * factor * factor,
+    })),
+    mmPerPx: plan.mmPerPx * factor,
+  }
 }
 
 /** 전체 파이프라인 — Gray → 정규화 전 RawPlan (호출부가 normalizeAiPlan으로 검증) */
 export function buildPlanFromImage(inputGray: Gray, opts: PlanVisionOpts): RawPlan {
   let gray = inputGray
-  if (opts.morphCloseRadius && opts.morphCloseRadius > 0) gray = morphClose(gray, opts.morphCloseRadius)
-  if (opts.denoiseMinComponentPx && opts.denoiseMinComponentPx > 0) gray = removeSmallComponents(gray, opts.denoiseMinComponentPx)
+  if (opts.morphCloseRadius && opts.morphCloseRadius > 0)
+    gray = morphClose(gray, opts.morphCloseRadius)
+  if (opts.denoiseMinComponentPx && opts.denoiseMinComponentPx > 0)
+    gray = removeSmallComponents(gray, opts.denoiseMinComponentPx)
   const wallsPx = findWalls(gray, {
     minThicknessPx: opts.minThicknessPx,
     minLengthPx: opts.minLengthPx,
@@ -416,7 +584,22 @@ export function buildPlanFromImage(inputGray: Gray, opts: PlanVisionOpts): RawPl
       at: { x: w.openingAfter!.at * mmPerPx, y: w.y1 * mmPerPx },
       width: w.openingAfter!.gapPx * mmPerPx,
     }))
-  const roomList = detectRooms(gray, wallsPx, { mmPerPx, minAreaM2: opts.minRoomAreaM2 })
+  const findBestRooms = (minAreaM2: number) => {
+    const lineRooms = detectRooms(gray, wallsPx, { mmPerPx, minAreaM2 })
+    const inkRooms = detectRooms(gray, wallsPx, {
+      mmPerPx,
+      minAreaM2,
+      includeSourceInk: true,
+    })
+    return inkRooms.length > lineRooms.length ? inkRooms : lineRooms
+  }
+  let roomList = findBestRooms(opts.minRoomAreaM2)
+  // 외벽 두께만으로 축척을 추정하면 컬러/저해상도 도면에서 방 면적이 실제보다
+  // 작게 계산될 수 있다. 방이 거의 없을 때만 면적 문턱을 낮춰 한 번 더 탐색한다.
+  if (roomList.length < 2) {
+    const fallbackRooms = findBestRooms(Math.max(0.25, opts.minRoomAreaM2 * 0.2))
+    if (fallbackRooms.length >= 2 && fallbackRooms.length <= 20) roomList = fallbackRooms
+  }
   const names = ['안방', '방1', '방2', '방3', '방4', '방5', '방6', '방7', '방8']
   const rooms = [...roomList]
     .sort((a, b) => b.areaM2 - a.areaM2)
@@ -445,10 +628,22 @@ export function removeSmallComponents(gray: Gray, minSizePx: number): Gray {
       comp.push(c)
       const x = c % W
       const y = (c / W) | 0
-      if (x > 0 && gray.data[c - 1] && !visited[c - 1]) { visited[c - 1] = 1; queue[qe++] = c - 1 }
-      if (x < W - 1 && gray.data[c + 1] && !visited[c + 1]) { visited[c + 1] = 1; queue[qe++] = c + 1 }
-      if (y > 0 && gray.data[c - W] && !visited[c - W]) { visited[c - W] = 1; queue[qe++] = c - W }
-      if (y < H - 1 && gray.data[c + W] && !visited[c + W]) { visited[c + W] = 1; queue[qe++] = c + W }
+      if (x > 0 && gray.data[c - 1] && !visited[c - 1]) {
+        visited[c - 1] = 1
+        queue[qe++] = c - 1
+      }
+      if (x < W - 1 && gray.data[c + 1] && !visited[c + 1]) {
+        visited[c + 1] = 1
+        queue[qe++] = c + 1
+      }
+      if (y > 0 && gray.data[c - W] && !visited[c - W]) {
+        visited[c - W] = 1
+        queue[qe++] = c - W
+      }
+      if (y < H - 1 && gray.data[c + W] && !visited[c + W]) {
+        visited[c + W] = 1
+        queue[qe++] = c + W
+      }
     }
     if (comp.length < minSizePx) for (const c of comp) out[c] = 0
   }

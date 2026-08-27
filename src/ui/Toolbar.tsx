@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/store'
 import { normalizeAiPlan } from '../ai/normalizePlan'
-import { buildChatRequest, parseChatResponse } from '../ai/client'
+import { buildChatRequest, DEFAULT_AI_MODEL, parseChatResponse, resolveAiModel } from '../ai/client'
 import { PlanVisionModal as CvModal } from './PlanVisionModal'
 import { ProjectsModal } from './ProjectsModal'
 
@@ -10,16 +10,22 @@ function Btn({
   children,
   active,
   danger,
+  primary,
   title,
 }: {
   onClick?: () => void
   children: React.ReactNode
   active?: boolean
   danger?: boolean
+  primary?: boolean
   title?: string
 }) {
   return (
-    <button className={`tbtn${active ? ' active' : ''}${danger ? ' danger' : ''}`} onClick={onClick} title={title}>
+    <button
+      className={`tbtn${active ? ' active' : ''}${danger ? ' danger' : ''}${primary ? ' tbtn-core' : ''}`}
+      onClick={onClick}
+      title={title}
+    >
       {children}
     </button>
   )
@@ -69,15 +75,31 @@ export function Toolbar() {
         </Btn>
       </div>
 
+      <Btn
+        primary
+        onClick={() => setCvOpen(true)}
+        title="평면도 이미지를 업로드해 축척을 확인하고 2D·3D 공간으로 변환"
+      >
+        평면도 업로드 → 3D
+      </Btn>
+
       {s.mode === '3d' && (
         <div className="seg">
-          <Btn active={s.viewPreset === 'iso'} onClick={() => s.setViewPreset('iso')} title="아이소메트릭 뷰">
+          <Btn
+            active={s.viewPreset === 'iso'}
+            onClick={() => s.setViewPreset('iso')}
+            title="아이소메트릭 뷰"
+          >
             아이소
           </Btn>
           <Btn active={s.viewPreset === 'top'} onClick={() => s.setViewPreset('top')} title="탑뷰">
             탑뷰
           </Btn>
-          <Btn active={s.viewPreset === 'walk'} onClick={() => s.setViewPreset('walk')} title="1인칭: 드래그 시선 · WASD 이동 · Shift 달리기">
+          <Btn
+            active={s.viewPreset === 'walk'}
+            onClick={() => s.setViewPreset('walk')}
+            title="1인칭: 드래그 시선 · WASD 이동 · Shift 달리기"
+          >
             🚶 워크스루
           </Btn>
         </div>
@@ -126,9 +148,6 @@ export function Toolbar() {
       <Btn active={s.showDims3D} onClick={s.toggleDims3D} title="3D 외곽 가로·세로 실측 치수선">
         📐 치수선
       </Btn>
-      <Btn onClick={() => setCvOpen(true)} title="이미지 처리로 벽·방·문을 자동 검출 (LLM 불필요)">
-        🧮 도면 자동 변환
-      </Btn>
       <Btn onClick={() => setAiOpen(true)} title="도면 이미지를 AI로 해석">
         ✨ AI 도면 해석
       </Btn>
@@ -165,7 +184,8 @@ function VariantsModal({ onClose }: { onClose: () => void }) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>🗂 배치안 비교</h3>
         <p className="hint">
-          현재 배치({placementsCount}개 제품)를 저장해 두고, 여러 안을 오가며 비교하세요. 적용은 되돌리기(Ctrl+Z)로 취소할 수 있습니다.
+          현재 배치({placementsCount}개 제품)를 저장해 두고, 여러 안을 오가며 비교하세요. 적용은
+          되돌리기(Ctrl+Z)로 취소할 수 있습니다.
         </p>
         <div style={{ display: 'flex', gap: 8, margin: '10px 0' }}>
           <input
@@ -179,7 +199,13 @@ function VariantsModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         {variants.length === 0 && <p className="hint">저장된 배치안이 없습니다.</p>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+            gap: 10,
+          }}
+        >
           {variants.map((v, i) => (
             <div key={v.id} className="variant-card">
               {v.thumb ? (
@@ -211,16 +237,6 @@ async function screenshot() {
   screenshot3d()
 }
 
-const SCHEMA_PROMPT = `너는 건축 평면도 이미지 해석 전문가다. 이미지의 아파트 평면도를 분석하여 다음 JSON만 출력하라 (설명 금지, 코드펜스 금지).
-규칙:
-- 단위는 전부 mm. 원점은 도면 좌상단, x=우측+, y=하단+.
-- 도면에 적힌 치수 숫자를 최우선 사용. 치수가 없으면 문 폭 900mm 등 일반 규격으로 비율 추정.
-- walls: 각 벽을 선분 {id:"w1"...,"a":{x,y},"b":{x,y},"thickness} 로. 외벽 200, 내벽 120 권장.
-- openings: 문/창문. {wallId, type:"door"|"window"|"entry", offset(벽 시작점부터 거리), width, height, sill}. door height 2000~2100 sill 0 / window sill 900~1000.
-- rooms: 방 이름(한글: 안방,방1,방2,주방,거실,욕실,현관 등)과 polygon(꼭짓점 배열, 닫힌 영역).
-출력 형식:
-{"wallHeight":2400,"walls":[...],"openings":[...],"rooms":[{"name":"...","polygon":[{x,y},...]},...]}`
-
 function AiModal({ onClose }: { onClose: () => void }) {
   const ai = useStore((s) => s.ai)
   const [dataUrl, setDataUrl] = useState<string | null>(null)
@@ -241,7 +257,7 @@ function AiModal({ onClose }: { onClose: () => void }) {
       setStatus('API 키 미설정 — ⚙️ 설정에서 입력하세요')
       return
     }
-    // 429(업스트림 한도)는 자동 재시도 — Ox Alpha 등 공유 풀 모델에서 흔함
+    // 공유 풀 모델의 일시적인 429 응답은 자동 재시도
     const delays = [0, 6000, 18000]
     let lastStatus = 0
     setStatus('해석 중… (수십 초 소요)')
@@ -249,7 +265,9 @@ function AiModal({ onClose }: { onClose: () => void }) {
       const req = buildChatRequest(ai, dataUrl)
       for (let attempt = 0; attempt < delays.length; attempt++) {
         if (delays[attempt] > 0) {
-          setStatus(`한도 초과(429) — ${delays[attempt] / 1000}초 후 재시도… (${attempt + 1}/${delays.length - 1})`)
+          setStatus(
+            `한도 초과(429) — ${delays[attempt] / 1000}초 후 재시도… (${attempt + 1}/${delays.length - 1})`
+          )
           await new Promise((r) => setTimeout(r, delays[attempt]))
           setStatus('해석 중… (재시도)')
         }
@@ -308,12 +326,20 @@ function AiModal({ onClose }: { onClose: () => void }) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>✨ AI 도면 해석 (OpenAI 호환 Vision)</h3>
         <p className="hint">
-          치수가 적힌 평면도 이미지를 올리면 벽·문·창문·방 구조를 JSON으로 변환합니다.
-          결과는 반드시 <b>2D 편집기에서 보정</b>하세요. (아키스케치류 상용 서비스도 표준오차 50~80mm)
+          치수가 적힌 평면도 이미지를 올리면 벽·문·창문·방 구조를 JSON으로 변환합니다. 결과는 반드시{' '}
+          <b>2D 편집기에서 보정</b>하세요. (아키스케치류 상용 서비스도 표준오차 50~80mm)
         </p>
-        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])}
+        />
         {dataUrl && (
-          <img src={dataUrl} alt="도면 미리보기" style={{ maxWidth: '100%', maxHeight: 200, marginTop: 8, border: '1px solid #333' }} />
+          <img
+            src={dataUrl}
+            alt="도면 미리보기"
+            style={{ maxWidth: '100%', maxHeight: 200, marginTop: 8, border: '1px solid #333' }}
+          />
         )}
         <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
           <button className="primary" disabled={!dataUrl} onClick={run}>
@@ -338,7 +364,10 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('hp3d.ai')
-      if (saved) setForm(JSON.parse(saved))
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setForm({ ...parsed, model: resolveAiModel(parsed.model ?? '') })
+      }
     } catch {
       /* 무시 */
     }
@@ -348,25 +377,36 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
     setAi(form)
     localStorage.setItem('hp3d.ai', JSON.stringify(form))
     onClose()
-  }  return (
+  }
+  return (
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>⚙️ AI 설정 (OpenAI 호환)</h3>
         <div className="presets">
           <button
-            onClick={() => setForm({ ...form, baseUrl: 'https://openrouter.ai/api/v1', model: 'stealth/ox-alpha' })}
-            title="OpenRouter — Ox Alpha (vision)"
+            onClick={() =>
+              setForm({
+                ...form,
+                baseUrl: 'https://openrouter.ai/api/v1',
+                model: DEFAULT_AI_MODEL,
+              })
+            }
+            title={`OpenRouter — ${DEFAULT_AI_MODEL}`}
           >
-            Ox Alpha
+            Gemma 4 무료
           </button>
           <button
-            onClick={() => setForm({ ...form, baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o' })}
+            onClick={() =>
+              setForm({ ...form, baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o' })
+            }
             title="OpenRouter — openai/gpt-4o"
           >
             OpenRouter · GPT-4o
           </button>
           <button
-            onClick={() => setForm({ ...form, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o' })}
+            onClick={() =>
+              setForm({ ...form, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o' })
+            }
             title="OpenAI 공식 API"
           >
             OpenAI 직접
@@ -374,17 +414,33 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
         </div>
         <label>
           Base URL
-          <input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" />
+          <input
+            value={form.baseUrl}
+            onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
+            placeholder="https://api.openai.com/v1"
+          />
         </label>
         <label>
           모델
-          <input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="gpt-4o" />
+          <input
+            value={form.model}
+            onChange={(e) => setForm({ ...form, model: e.target.value })}
+            placeholder="gpt-4o"
+          />
         </label>
         <label>
           API Key
-          <input type="password" value={form.apiKey} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} placeholder="sk-..." />
+          <input
+            type="password"
+            value={form.apiKey}
+            onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+            placeholder="sk-..."
+          />
         </label>
-        <p className="hint">키는 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다. LM Studio/Ollama 등 로컬 엔드포인트도 가능.</p>
+        <p className="hint">
+          키는 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다. LM Studio/Ollama 등
+          로컬 엔드포인트도 가능.
+        </p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="primary" onClick={save}>
             저장

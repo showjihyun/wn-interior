@@ -56,14 +56,22 @@ export function resolveWalkMove(
   dx: number,
   dz: number,
   radius: number,
-  bounds: WalkBounds,
+  bounds: WalkBounds
 ): { x: number; z: number } {
   let { x, z } = from
   const nx = x + dx
-  if (!hitWall(walls, nx, z, radius) && !blockedByObstacles(obstacles, nx, z, radius) && inBounds(bounds, nx, z, radius))
+  if (
+    !hitWall(walls, nx, z, radius) &&
+    !blockedByObstacles(obstacles, nx, z, radius) &&
+    inBounds(bounds, nx, z, radius)
+  )
     x = nx
   const nz = z + dz
-  if (!hitWall(walls, x, nz, radius) && !blockedByObstacles(obstacles, x, nz, radius) && inBounds(bounds, x, nz, radius))
+  if (
+    !hitWall(walls, x, nz, radius) &&
+    !blockedByObstacles(obstacles, x, nz, radius) &&
+    inBounds(bounds, x, nz, radius)
+  )
     z = nz
   return { x, z }
 }

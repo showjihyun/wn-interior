@@ -1,6 +1,6 @@
-// TDD RED — OpenRouter(OpenAI 호환) 채팅 요청 빌더 & 응답 파서
+// 계약 테스트 — OpenRouter(OpenAI 호환) 요청 빌더와 응답 파서
 import { describe, it, expect } from 'vitest'
-import { buildChatRequest, parseChatResponse } from './client'
+import { buildChatRequest, DEFAULT_AI_MODEL, parseChatResponse, resolveAiModel } from './client'
 import type { AiSettings } from '../types'
 
 const settings: AiSettings = {
@@ -33,8 +33,22 @@ describe('buildChatRequest', () => {
   })
 
   it('baseUrl 끝 슬래시를 정규화한다', () => {
-    const req = buildChatRequest({ ...settings, baseUrl: 'https://openrouter.ai/api/v1/' }, 'data:image/png;base64,A')
+    const req = buildChatRequest(
+      { ...settings, baseUrl: 'https://openrouter.ai/api/v1/' },
+      'data:image/png;base64,A'
+    )
     expect(req.url).not.toContain('//chat')
+  })
+
+  it('빈 모델과 폐기된 모델은 현재 기본 vision 모델로 대체한다', () => {
+    expect(resolveAiModel('')).toBe(DEFAULT_AI_MODEL)
+    expect(resolveAiModel('stealth/ox-alpha')).toBe(DEFAULT_AI_MODEL)
+
+    const req = buildChatRequest(
+      { ...settings, model: 'stealth/ox-alpha' },
+      'data:image/png;base64,A'
+    )
+    expect(JSON.parse(req.init.body).model).toBe(DEFAULT_AI_MODEL)
   })
 })
 

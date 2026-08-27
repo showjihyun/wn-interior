@@ -52,10 +52,37 @@ const CATEGORIES: CategoryId[] = [
 ]
 
 const SHAPES = new Set([
-  'box', 'sofa3', 'armchair', 'coffeeTable', 'diningTable', 'chair', 'bed', 'wardrobe',
-  'dresser', 'sideTable', 'tvStand', 'tvWall', 'sinkLower', 'sinkUpper', 'fridge', 'rug',
-  'shoeCabinet', 'desk', 'shelfWall', 'washer', 'ac', 'pendant', 'floorLamp', 'toilet',
-  'washbasin', 'mirror', 'microwave', 'islandBar', 'robotVacuum', 'airPurifier', 'tvOled',
+  'box',
+  'sofa3',
+  'armchair',
+  'coffeeTable',
+  'diningTable',
+  'chair',
+  'bed',
+  'wardrobe',
+  'dresser',
+  'sideTable',
+  'tvStand',
+  'tvWall',
+  'sinkLower',
+  'sinkUpper',
+  'fridge',
+  'rug',
+  'shoeCabinet',
+  'desk',
+  'shelfWall',
+  'washer',
+  'ac',
+  'pendant',
+  'floorLamp',
+  'toilet',
+  'washbasin',
+  'mirror',
+  'microwave',
+  'islandBar',
+  'robotVacuum',
+  'airPurifier',
+  'tvOled',
 ])
 
 export interface ValidateResult {
@@ -81,7 +108,10 @@ export function validateBrandProduct(raw: RawBrandProduct): ValidateResult {
   const category: CategoryId = CATEGORIES.includes(raw.category as CategoryId)
     ? (raw.category as CategoryId)
     : 'custom'
-  const mount = raw.mount === 'wall-mount' || raw.mount === 'ceiling' || raw.mount === 'wall' ? raw.mount : 'floor'
+  const mount =
+    raw.mount === 'wall-mount' || raw.mount === 'ceiling' || raw.mount === 'wall'
+      ? raw.mount
+      : 'floor'
 
   const product: Product = {
     id,
@@ -129,5 +159,11 @@ export function loadBrandProducts(): Product[] {
 
 /** 브랜드 필터 칩용 — 실측 DB 브랜드만 유니크·정렬 추출 (일반 규격 제외) */
 export function getBrandList(): string[] {
-  return [...new Set(loadBrandProducts().map((p) => p.brand).filter(Boolean) as string[])].sort()
+  return [
+    ...new Set(
+      loadBrandProducts()
+        .map((p) => p.brand)
+        .filter(Boolean) as string[]
+    ),
+  ].sort()
 }

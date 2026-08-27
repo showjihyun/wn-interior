@@ -23,7 +23,7 @@ export function canDropAt(
   x: number,
   z: number,
   rotY: number,
-  productOf: (id: string) => Product | undefined,
+  productOf: (id: string) => Product | undefined
 ): DropResult {
   if (!roomAt(plan, x, z)) return { ok: false, reason: 'out-of-room' }
 

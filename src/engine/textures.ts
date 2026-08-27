@@ -31,7 +31,10 @@ function shade(hex: string, amt: number): string {
   return `rgb(${r},${g},${b})`
 }
 
-const generators: Record<FinishMaterial['tex'], (ctx: CanvasRenderingContext2D, base: string) => void> = {
+const generators: Record<
+  FinishMaterial['tex'],
+  (ctx: CanvasRenderingContext2D, base: string) => void
+> = {
   vinyl600: (ctx, base) => {
     ctx.fillStyle = base
     ctx.fillRect(0, 0, S, S)
@@ -73,8 +76,14 @@ const generators: Record<FinishMaterial['tex'], (ctx: CanvasRenderingContext2D, 
     ctx.strokeStyle = 'rgba(0,0,0,0.06)'
     ctx.lineWidth = 1
     for (let i = 0; i < S; i += 4) {
-      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, S); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(S, i); ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(i, 0)
+      ctx.lineTo(i, S)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(0, i)
+      ctx.lineTo(S, i)
+      ctx.stroke()
     }
     noise(ctx, 0.04)
   },
@@ -145,8 +154,14 @@ function gridTile(ctx: CanvasRenderingContext2D, base: string, cells: number) {
   ctx.lineWidth = 3
   const step = S / cells
   for (let i = 0; i <= cells; i++) {
-    ctx.beginPath(); ctx.moveTo(i * step, 0); ctx.lineTo(i * step, S); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(0, i * step); ctx.lineTo(S, i * step); ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(i * step, 0)
+    ctx.lineTo(i * step, S)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(0, i * step)
+    ctx.lineTo(S, i * step)
+    ctx.stroke()
   }
 }
 

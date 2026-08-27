@@ -1,14 +1,42 @@
-// TDD RED — Drop 유효성 검사 (아직 구현 없음)
+// 계약 테스트 — 배치 확정의 방 경계·충돌·예외 규칙
 import { describe, it, expect } from 'vitest'
 import { canDropAt } from './drop'
 import { SAMPLE_PLAN } from '../data/samplePlan'
 import type { Placement, Product } from '../types'
 
-const sofa: Product = { id: 'p-sofa3', name: '소파', category: 'living', dims: { w: 2100, d: 950, h: 850 }, mount: 'floor', shape: 'sofa3' }
-const rug: Product = { id: 'p-rug', name: '러그', category: 'living', dims: { w: 2900, d: 2000, h: 15 }, mount: 'floor', shape: 'rug' }
-const tvWall: Product = { id: 'p-tv-wall', name: '벽걸이TV', category: 'appliance', dims: { w: 1670, d: 90, h: 970 }, mount: 'wall-mount', snapToWall: true, defaultElevation: 900, shape: 'tvWall' }
+const sofa: Product = {
+  id: 'p-sofa3',
+  name: '소파',
+  category: 'living',
+  dims: { w: 2100, d: 950, h: 850 },
+  mount: 'floor',
+  shape: 'sofa3',
+}
+const rug: Product = {
+  id: 'p-rug',
+  name: '러그',
+  category: 'living',
+  dims: { w: 2900, d: 2000, h: 15 },
+  mount: 'floor',
+  shape: 'rug',
+}
+const tvWall: Product = {
+  id: 'p-tv-wall',
+  name: '벽걸이TV',
+  category: 'appliance',
+  dims: { w: 1670, d: 90, h: 970 },
+  mount: 'wall-mount',
+  snapToWall: true,
+  defaultElevation: 900,
+  shape: 'tvWall',
+}
 
-const self: Placement = { id: 'self', productId: 'p-sofa3', pos: { x: 6800, y: 0, z: 4300 }, rotY: 0 }
+const self: Placement = {
+  id: 'self',
+  productId: 'p-sofa3',
+  pos: { x: 6800, y: 0, z: 4300 },
+  rotY: 0,
+}
 const rugPl: Placement = { id: 'rug', productId: 'p-rug', pos: { x: 6800, y: 0, z: 3000 }, rotY: 0 }
 
 describe('canDropAt (이동 확정 검사)', () => {
@@ -27,20 +55,30 @@ describe('canDropAt (이동 확정 검사)', () => {
     // productOf 콜백은 productId를 받는다
     // 소파가 러그 위로 이동 → 러그는 겹침 예외라 통과
     const ok = canDropAt(SAMPLE_PLAN, sofa, [self, rugPl], 'self', 6800, 3000, 0, (pid) =>
-      pid === 'p-rug' ? rug : sofa,
+      pid === 'p-rug' ? rug : sofa
     )
     expect(ok.ok).toBe(true)
     // 소파끼리 겹침 → 거절
-    const other: Placement = { id: 'other', productId: 'p-sofa3', pos: { x: 9000, y: 0, z: 5000 }, rotY: 0 }
+    const other: Placement = {
+      id: 'other',
+      productId: 'p-sofa3',
+      pos: { x: 9000, y: 0, z: 5000 },
+      rotY: 0,
+    }
     const bad = canDropAt(SAMPLE_PLAN, sofa, [self, other], 'self', 9000, 5000, 0, () => sofa)
     expect(bad.ok).toBe(false)
     expect(bad.reason).toBe('collision')
   })
 
   it('wall-mount 제품은 충돌 판정에서 제외된다', () => {
-    const tv: Placement = { id: 'tv', productId: 'p-tv-wall', pos: { x: 4780, y: 900, z: 4300 }, rotY: 90 }
+    const tv: Placement = {
+      id: 'tv',
+      productId: 'p-tv-wall',
+      pos: { x: 4780, y: 900, z: 4300 },
+      rotY: 90,
+    }
     const r = canDropAt(SAMPLE_PLAN, sofa, [self, tv], 'self', 6800, 4300, 0, (pid) =>
-      pid === 'p-tv-wall' ? tvWall : sofa,
+      pid === 'p-tv-wall' ? tvWall : sofa
     )
     expect(r.ok).toBe(true)
   })

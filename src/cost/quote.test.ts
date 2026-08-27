@@ -1,13 +1,35 @@
-﻿// TDD RED - 견적서 텍스트 생성 (아직 구현 없음)
+﻿// 계약 테스트 — 견적서 텍스트 생성 규칙
 import { describe, it, expect } from 'vitest'
 import { buildQuoteText } from './quote'
 import { buildCostReport } from './costs'
 import type { FloorPlan, Placement, Product } from '../types'
 
-const sofa: Product = { id: 'p-sofa3', name: '3인 소파', brand: '일반규격', category: 'living', dims: { w: 1, d: 1, h: 1 }, mount: 'floor', shape: 'sofa3', price: 500000 }
-const rug: Product = { id: 'p-rug', name: '러그', category: 'living', dims: { w: 1, d: 1, h: 1 }, mount: 'floor', shape: 'rug' }
-const productOf = (pid: string) => ({ 'p-sofa3': sofa, 'p-rug': rug } as Record<string, Product>)[pid]
-const P = (id: string, productId: string): Placement => ({ id, productId, pos: { x: 0, y: 0, z: 0 }, rotY: 0 })
+const sofa: Product = {
+  id: 'p-sofa3',
+  name: '3인 소파',
+  brand: '일반규격',
+  category: 'living',
+  dims: { w: 1, d: 1, h: 1 },
+  mount: 'floor',
+  shape: 'sofa3',
+  price: 500000,
+}
+const rug: Product = {
+  id: 'p-rug',
+  name: '러그',
+  category: 'living',
+  dims: { w: 1, d: 1, h: 1 },
+  mount: 'floor',
+  shape: 'rug',
+}
+const productOf = (pid: string) =>
+  (({ 'p-sofa3': sofa, 'p-rug': rug }) as Record<string, Product>)[pid]
+const P = (id: string, productId: string): Placement => ({
+  id,
+  productId,
+  pos: { x: 0, y: 0, z: 0 },
+  rotY: 0,
+})
 
 const plan: FloorPlan = {
   unit: 'mm',
@@ -15,13 +37,27 @@ const plan: FloorPlan = {
   walls: [],
   openings: [],
   rooms: [
-    { id: 'r1', name: '안방', polygon: [{ x: 0, y: 0 }, { x: 4000, y: 0 }, { x: 4000, y: 3000 }, { x: 0, y: 3000 }], floorMaterialId: 'f-wood-natural', wallMaterialId: 'w-silk-white' },
+    {
+      id: 'r1',
+      name: '안방',
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 4000, y: 0 },
+        { x: 4000, y: 3000 },
+        { x: 0, y: 3000 },
+      ],
+      floorMaterialId: 'f-wood-natural',
+      wallMaterialId: 'w-silk-white',
+    },
   ],
 }
 
 describe('buildQuoteText (견적서 마크다운)', () => {
   it('프로젝트명/날짜/면적/제품 합계/미확인/마감재가 모두 포함된다', () => {
-    const report = buildCostReport([P('a', 'p-sofa3'), P('b', 'p-sofa3'), P('c', 'p-rug')], productOf)
+    const report = buildCostReport(
+      [P('a', 'p-sofa3'), P('b', 'p-sofa3'), P('c', 'p-rug')],
+      productOf
+    )
     const text = buildQuoteText('우리집', report, plan)
     expect(text).toContain('우리집')
     expect(text).toContain('견적서')

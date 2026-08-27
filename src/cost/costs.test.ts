@@ -1,14 +1,46 @@
-// TDD RED — 가격 합산 리포트 (아직 구현 없음)
+// 계약 테스트 — 가격 합산과 미확인 가격 분리 규칙
 import { describe, it, expect } from 'vitest'
 import { buildCostReport } from './costs'
 import type { Placement, Product } from '../types'
 
-const sofa: Product = { id: 'p-sofa3', name: '3인 소파', category: 'living', dims: { w: 1, d: 1, h: 1 }, mount: 'floor', shape: 'sofa3', price: 500000, sourceUrl: 'https://x/1' }
-const rug: Product = { id: 'p-rug', name: '러그', category: 'living', dims: { w: 1, d: 1, h: 1 }, mount: 'floor', shape: 'rug' } // 가격 미확인
-const tv: Product = { id: 'lg-tv', name: 'OLED TV', brand: 'LG전자', category: 'appliance', dims: { w: 1, d: 1, h: 1 }, mount: 'floor', shape: 'tvOled', price: 1500000, sourceUrl: 'https://x/2' }
+const sofa: Product = {
+  id: 'p-sofa3',
+  name: '3인 소파',
+  category: 'living',
+  dims: { w: 1, d: 1, h: 1 },
+  mount: 'floor',
+  shape: 'sofa3',
+  price: 500000,
+  sourceUrl: 'https://x/1',
+}
+const rug: Product = {
+  id: 'p-rug',
+  name: '러그',
+  category: 'living',
+  dims: { w: 1, d: 1, h: 1 },
+  mount: 'floor',
+  shape: 'rug',
+} // 가격 미확인
+const tv: Product = {
+  id: 'lg-tv',
+  name: 'OLED TV',
+  brand: 'LG전자',
+  category: 'appliance',
+  dims: { w: 1, d: 1, h: 1 },
+  mount: 'floor',
+  shape: 'tvOled',
+  price: 1500000,
+  sourceUrl: 'https://x/2',
+}
 
-const P = (id: string, productId: string): Placement => ({ id, productId, pos: { x: 0, y: 0, z: 0 }, rotY: 0 })
-const productOf = (pid: string) => ({ 'p-sofa3': sofa, 'p-rug': rug, 'lg-tv': tv } as Record<string, Product>)[pid]
+const P = (id: string, productId: string): Placement => ({
+  id,
+  productId,
+  pos: { x: 0, y: 0, z: 0 },
+  rotY: 0,
+})
+const productOf = (pid: string) =>
+  (({ 'p-sofa3': sofa, 'p-rug': rug, 'lg-tv': tv }) as Record<string, Product>)[pid]
 
 describe('buildCostReport (배치 제품 가격 합산)', () => {
   it('동일 제품은 수량 집계, 소계 = 단가×수량', () => {

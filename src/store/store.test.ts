@@ -105,7 +105,13 @@ describe('스토어 — 커스텀 제품', () => {
 
   it('기본 카탈로그와 합쳐져 총 개수가 증가한다', () => {
     const base = CATALOG.length
-    S().addCustomProduct({ name: 't1', category: 'custom', dims: { w: 1, d: 1, h: 1 }, mount: 'floor', shape: 'box' })
+    S().addCustomProduct({
+      name: 't1',
+      category: 'custom',
+      dims: { w: 1, d: 1, h: 1 },
+      mount: 'floor',
+      shape: 'box',
+    })
     expect(base + S().customProducts.length).toBeGreaterThan(base)
   })
 })

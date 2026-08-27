@@ -8,7 +8,13 @@ import { resolveDims } from '../engine/dims'
 export function InspectorPanel() {
   const selectedId = useStore((s) => s.selectedId)
   const placement = useStore((s) => s.placements.find((p) => p.id === s.selectedId))
-  const product = useStore((s) => (selectedId ? s.productById(selectedId ? s.placements.find((p) => p.id === selectedId)?.productId ?? '' : '') : undefined))
+  const product = useStore((s) =>
+    selectedId
+      ? s.productById(
+          selectedId ? (s.placements.find((p) => p.id === selectedId)?.productId ?? '') : ''
+        )
+      : undefined
+  )
   const plan = useStore((s) => s.plan)
   const updatePlacement = useStore((s) => s.updatePlacement)
   const removePlacement = useStore((s) => s.removePlacement)
@@ -32,7 +38,9 @@ export function InspectorPanel() {
           <div>방 개수</div>
           <b>{plan.rooms.length}개</b>
           <div>연면적</div>
-          <b>{totalM2.toFixed(1)}㎡ ({(totalM2 / 3.3058).toFixed(1)}평)</b>
+          <b>
+            {totalM2.toFixed(1)}㎡ ({(totalM2 / 3.3058).toFixed(1)}평)
+          </b>
           <div>벽 높이</div>
           <b>{plan.wallHeight}mm</b>
           <div>배치 제품</div>
@@ -134,16 +142,30 @@ export function InspectorPanel() {
 
       <label className="lbl">회전 ({Math.round(placement.rotY)}°)</label>
       <div className="rowbtns">
-        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY - 90 })}>-90°</button>
-        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY - 15 })}>-15°</button>
-        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY + 15 })}>+15°</button>
-        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY + 90 })}>+90°</button>
+        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY - 90 })}>
+          -90°
+        </button>
+        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY - 15 })}>
+          -15°
+        </button>
+        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY + 15 })}>
+          +15°
+        </button>
+        <button onClick={() => updatePlacement(placement.id, { rotY: placement.rotY + 90 })}>
+          +90°
+        </button>
       </div>
 
       {(product.mount === 'wall-mount' || product.mount === 'ceiling') && (
         <>
           <label className="lbl">
-            설치 높이 — 바닥에서 {Math.round(product.mount === 'ceiling' ? plan.wallHeight + (placement.elevationOverride ?? 0) : elev)}mm
+            설치 높이 — 바닥에서{' '}
+            {Math.round(
+              product.mount === 'ceiling'
+                ? plan.wallHeight + (placement.elevationOverride ?? 0)
+                : elev
+            )}
+            mm
           </label>
           <input
             type="range"
@@ -151,7 +173,9 @@ export function InspectorPanel() {
             max={plan.wallHeight}
             step={50}
             value={elev}
-            onChange={(e) => updatePlacement(placement.id, { elevationOverride: parseInt(e.target.value) })}
+            onChange={(e) =>
+              updatePlacement(placement.id, { elevationOverride: parseInt(e.target.value) })
+            }
           />
         </>
       )}
@@ -162,13 +186,21 @@ export function InspectorPanel() {
           type="number"
           step={10}
           value={Math.round(placement.pos.x)}
-          onChange={(e) => updatePlacement(placement.id, { pos: { ...placement.pos, x: parseInt(e.target.value) || 0 } })}
+          onChange={(e) =>
+            updatePlacement(placement.id, {
+              pos: { ...placement.pos, x: parseInt(e.target.value) || 0 },
+            })
+          }
         />
         <input
           type="number"
           step={10}
           value={Math.round(placement.pos.z)}
-          onChange={(e) => updatePlacement(placement.id, { pos: { ...placement.pos, z: parseInt(e.target.value) || 0 } })}
+          onChange={(e) =>
+            updatePlacement(placement.id, {
+              pos: { ...placement.pos, z: parseInt(e.target.value) || 0 },
+            })
+          }
         />
       </div>
 

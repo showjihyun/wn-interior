@@ -1,13 +1,7 @@
-import { test, expect, type Page } from '@playwright/test'
+﻿import { test, expect, type Page } from '@playwright/test'
 
-type AnyStore = {
-  getState: () => Record<string, any>
-}
-
-async function st(page: Page): Promise<AnyStore> {
-  return page.evaluate(() => (window as any).__hp3d_store)
-}
-const S = async (page: Page, expr: string) => page.evaluate(`(window.__hp3d_store.getState())${expr}`)
+const S = async (page: Page, expr: string) =>
+  page.evaluate(`(window.__hp3d_store.getState())${expr}`)
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear())
@@ -55,7 +49,9 @@ test('인스펙터 회전 버튼이 rotY를 정확히 변경한다', async ({ pa
 })
 
 test('색상 스와치가 colorway를 변경한다', async ({ page }) => {
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
+  )
   await page.locator('.swatches .sw').nth(2).click()
   const color = ((await S(page, '.placements.at(-1).colorway')) as string).toLowerCase()
   const expected = (
@@ -65,7 +61,9 @@ test('색상 스와치가 colorway를 변경한다', async ({ page }) => {
 })
 
 test('벽걸이 TV 설치 높이 슬라이더가 elevationOverride를 변경한다', async ({ page }) => {
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-tv-wall', { x: 6800, z: 200 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-tv-wall', { x: 6800, z: 200 })
+  )
   await expect(page.locator('.inspector h4')).toContainText('벽걸이')
   const slider = page.locator('.inspector input[type=range]')
   await slider.fill('1200')
@@ -73,7 +71,9 @@ test('벽걸이 TV 설치 높이 슬라이더가 elevationOverride를 변경한�
 })
 
 test('Delete 키로 선택 제품이 삭제되고 Undo로 복원된다', async ({ page }) => {
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-chair', { x: 7000, z: 3000 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-chair', { x: 7000, z: 3000 })
+  )
   const n = await S(page, '.placements.length')
   await page.keyboard.press('Delete')
   expect(await S(page, '.placements.length')).toBe(n - 1)
@@ -84,7 +84,10 @@ test('Delete 키로 선택 제품이 삭제되고 Undo로 복원된다', async (
 })
 
 test('커스텀 실측 제품 등록 → 카탈로그 등장 → 배치 성공', async ({ page }) => {
-  await page.getByRole('button', { name: /내 가구/ }).first().click()
+  await page
+    .getByRole('button', { name: /내 가구/ })
+    .first()
+    .click()
   await page.getByPlaceholder(/우리집 소파/).fill('E2E 테스트 의자')
   await page.getByPlaceholder('가로 mm').fill('500')
   await page.getByPlaceholder('세로 mm').fill('550')
@@ -146,7 +149,9 @@ test('2D에서 문 배치 후 폭을 조절하면 store에 반영된다', async 
   // 새 개구부를 testid로 결정론적으로 선택 — 회전된 g의 bbox 중심이 아닌 흰 몸체(rect) 클릭
   const oid = await S(page, '.plan.openings.at(-1).id')
   const center = await page.evaluate((id) => {
-    const r = document.querySelector(`[data-testid="opening-${id}"] > rect`)!.getBoundingClientRect()
+    const r = document
+      .querySelector(`[data-testid="opening-${id}"] > rect`)!
+      .getBoundingClientRect()
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 }
   }, oid)
   await page.mouse.click(center.x, center.y)
@@ -155,7 +160,7 @@ test('2D에서 문 배치 후 폭을 조절하면 store에 반영된다', async 
   await page.locator('.floating-panel input[type=number]').first().fill('950')
   const width = await page.evaluate(
     (id) => window.__hp3d_store.getState().plan.openings.find((o: any) => o.id === id).width,
-    oid,
+    oid
   )
   expect(width).toBe(950)
 })
@@ -167,7 +172,9 @@ test('배치안 저장 → 적용 흐름이 동작하고 Undo 가능하다', asy
   await modal.getByPlaceholder(/배치안 이름/).fill('A안 — 테스트')
   await modal.getByRole('button', { name: '현재 상태 저장' }).click()
   await expect(modal.getByText('A안 — 테스트')).toBeVisible()
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-armchair', { x: 9500, z: 6000 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-armchair', { x: 9500, z: 6000 })
+  )
   expect(await S(page, '.placements.length')).toBe(base + 1)
   await modal.getByRole('button', { name: '적용' }).first().click()
   expect(await S(page, '.placements.length')).toBe(base)
@@ -176,11 +183,15 @@ test('배치안 저장 → 적용 흐름이 동작하고 Undo 가능하다', asy
 })
 
 test('자동저장: 새로고침 후에도 배치가 유지된다', async ({ page }) => {
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-fridge', { x: 10000, z: 1000 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-fridge', { x: 10000, z: 1000 })
+  )
   await page.waitForTimeout(900) // debounce 600ms
   await page.reload()
   await page.waitForFunction(() => !!(window as any).__hp3d_store)
-  const ids = await page.evaluate(() => window.__hp3d_store.getState().placements.map((p: any) => p.productId))
+  const ids = await page.evaluate(() =>
+    window.__hp3d_store.getState().placements.map((p: any) => p.productId)
+  )
   expect(ids).toContain('p-fridge')
 })
 
@@ -202,7 +213,9 @@ test('시점 프리셋: 탑뷰 ↔ 워크스루 ↔ 아이소 전환', async ({ 
 
 test('3D에서 제품 선택 시 좌측 카탈로그 카드도 하이라이트된다', async ({ page }) => {
   // 배치 + 선택 (스토어 직접)
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
+  )
   await expect(page.locator('.pcard.sel')).toHaveCount(0) // 거실 탭이 아니면 미표시
   await page.getByRole('button', { name: /거실/ }).click()
   const sel = page.locator('.pcard.sel')
@@ -213,7 +226,9 @@ test('3D에서 제품 선택 시 좌측 카탈로그 카드도 하이라이트�
   await expect(page.locator('.pcard.sel')).toHaveCount(0)
 })
 
-test('단순 클릭 선택은 이동 모드 진입이 아니며, 이어서 드래그하면 바로 이동된다 (버그 회귀)', async ({ page }) => {
+test('단순 클릭 선택은 이동 모드 진입이 아니며, 이어서 드래그하면 바로 이동된다 (버그 회귀)', async ({
+  page,
+}) => {
   await page.evaluate(() => {
     const s = window.__hp3d_store.getState()
     s.commit((d) => {
@@ -326,7 +341,9 @@ test('가격 탭: 배치 제품 합산 + 미확인 분리 + 출처 새창 링크
   await expect(r5line).toContainText('900,000원 × 2')
   await expect(r5line.locator('.src')).toBeVisible() // 출처 ↗ (target=_blank)
   await expect(r5line.locator('.src')).toHaveAttribute('target', '_blank')
-  await expect(page.locator('.cost-line', { hasText: '3인용 패브릭 소파' })).toContainText('견적 필요')
+  await expect(page.locator('.cost-line', { hasText: '3인용 패브릭 소파' })).toContainText(
+    '견적 필요'
+  )
 })
 
 // ── M14: 오늘의집 벤치마크 반영 ──
@@ -350,14 +367,20 @@ test('카탈로그 카드에 색상 스와철과 "배치 N개" 뱃지가 표시�
   await expect(card.locator('.card-swatches .card-sw')).toHaveCount(4) // colorways 미리보기
   await expect(card.locator('.placed-badge')).toHaveCount(0)
 
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
+  )
   await expect(card.locator('.placed-badge')).toHaveText('배치 1개')
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 3500 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 3500 })
+  )
   await expect(card.locator('.placed-badge')).toHaveText('배치 2개')
 })
 
 test('인스펙터 치수 오버라이드: 유사 제품을 실측에 맞게 조정 + 실측 복귀', async ({ page }) => {
-  await page.evaluate(() => window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 }))
+  await page.evaluate(() =>
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
+  )
   await expect(page.locator('.inspector h4')).toContainText('소파')
 
   // W 2100 → 1800 오버라이드
@@ -383,7 +406,9 @@ test('조명 강도 슬라이더가 store에 반영된다', async ({ page }) => 
 
 // ── 세션별 다중 프로젝트 ──
 
-test('다중 프로젝트: 새 프로젝트 생성 → 도면 그리기 → 전환 → 복귀 시 데이터 유지', async ({ page }) => {
+test('다중 프로젝트: 새 프로젝트 생성 → 도면 그리기 → 전환 → 복귀 시 데이터 유지', async ({
+  page,
+}) => {
   // 현재(샘플)에서 새 프로젝트 생성
   await page.getByRole('button', { name: /📁 프로젝트/ }).click()
   const modal = page.locator('.modal')
@@ -407,10 +432,12 @@ test('다중 프로젝트: 새 프로젝트 생성 → 도면 그리기 → 전�
 
   // 복귀 → 벽 유지 (세션 격리 + 저장 확인)
   await page.getByRole('button', { name: /📁 프로젝트/ }).click()
-  await page.locator('.proj-item', { hasText: '새 프로젝트' }).first().getByRole('button', { name: '열기' }).click()
-  const walls = await page.evaluate(() =>
-    window.__hp3d_store.getState().projects.length,
-  )
+  await page
+    .locator('.proj-item', { hasText: '새 프로젝트' })
+    .first()
+    .getByRole('button', { name: '열기' })
+    .click()
+  const walls = await page.evaluate(() => window.__hp3d_store.getState().projects.length)
   expect(walls).toBeGreaterThanOrEqual(2)
 })
 
@@ -423,12 +450,18 @@ test('기존 단일 슬롯 데이터는 첫 로드 시 마이그레이션된다'
       JSON.stringify({
         version: 1,
         name: '구버전 우리집',
-        plan: { unit: 'mm', wallHeight: 2400, walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 1000, y: 0 }, thickness: 120 }], openings: [], rooms: [] },
+        plan: {
+          unit: 'mm',
+          wallHeight: 2400,
+          walls: [{ id: 'w1', a: { x: 0, y: 0 }, b: { x: 1000, y: 0 }, thickness: 120 }],
+          openings: [],
+          rooms: [],
+        },
         placements: [],
         customProducts: [],
         createdAt: '2020-01-01T00:00:00Z',
         updatedAt: '2020-01-01T00:00:00Z',
-      }),
+      })
     )
   })
   await page.goto('/')
@@ -466,10 +499,14 @@ test('M12: 5개 브랜드 DB가 로드되고 브랜드 칩이 동적으로 생�
     expect(chipTexts).toContain(b)
   }
   // 삼성 비스포크 냉장고 실측
-  const ss = await page.evaluate(() => window.__hp3d_store.getState().productById('ss-bespoke-fridge-875'))
+  const ss = await page.evaluate(() =>
+    window.__hp3d_store.getState().productById('ss-bespoke-fridge-875')
+  )
   expect(ss.dims).toEqual({ w: 912, d: 930, h: 1853 })
   // IKEA KIVIK
-  const kivik = await page.evaluate(() => window.__hp3d_store.getState().productById('ik-kivik-3seat'))
+  const kivik = await page.evaluate(() =>
+    window.__hp3d_store.getState().productById('ik-kivik-3seat')
+  )
   expect(kivik.dims).toEqual({ w: 2280, d: 950, h: 830 })
 })
 
@@ -504,7 +541,9 @@ test('M12: IKEA KIVIK 소파를 배치하고 시몬스 퀸 침대 실측을 확�
 })
 
 test('M12: 삼성 The Frame 벽걸이가 wall-mount로 등록된다', async ({ page }) => {
-  const frame = await page.evaluate(() => window.__hp3d_store.getState().productById('ss-frame-65-wall'))
+  const frame = await page.evaluate(() =>
+    window.__hp3d_store.getState().productById('ss-frame-65-wall')
+  )
   expect(frame.mount).toBe('wall-mount')
   expect(frame.snapToWall).toBe(true)
   expect(frame.defaultElevation).toBe(950)
@@ -516,13 +555,14 @@ test('M12: 삼성 The Frame 벽걸이가 wall-mount로 등록된다', async ({ p
   await expect(card.locator('.src')).toBeVisible()
 })
 
-
 test('브랜드 DB가 카탈로그에 로드되고 브랜드 태그·출처가 표시된다', async ({ page }) => {
   const lg = await page.evaluate(() => window.__hp3d_store.getState().productById('lg-cordzero-r5'))
   expect(lg.brand).toBe('LG전자')
   expect(lg.dims).toEqual({ w: 342, d: 342, h: 95 })
   expect(lg.sourceUrl).toMatch(/^https:/)
-  const hs = await page.evaluate(() => window.__hp3d_store.getState().productById('hs-sliding-wardrobe-2400'))
+  const hs = await page.evaluate(() =>
+    window.__hp3d_store.getState().productById('hs-sliding-wardrobe-2400')
+  )
   expect(hs.brand).toBe('한샘')
   expect(hs.snapToWall).toBe(true)
 
@@ -587,7 +627,12 @@ test('한샘 슬라이딩 붙박이장은 벽자석 스냅으로 배치된다', 
   const last = await page.evaluate(() => {
     const s = window.__hp3d_store.getState()
     const p = s.placements.at(-1)
-    return { productId: p?.productId, rotY: p?.rotY, z: p?.pos.z, dims: s.productById(p.productId).dims }
+    return {
+      productId: p?.productId,
+      rotY: p?.rotY,
+      z: p?.pos.z,
+      dims: s.productById(p.productId).dims,
+    }
   })
   expect(last.productId).toBe('hs-sliding-wardrobe-2400')
   expect(last.dims).toEqual({ w: 2400, d: 700, h: 2200 })

@@ -3,10 +3,9 @@
 // ─────────────────────────────────────────────────────────────
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import type { FloorPlan } from '../types'
 import { useStore } from '../store/store'
 import { Floors3D, Walls3D } from './Structure'
 import { FurnitureAll, planCenter } from './Furniture3D'
@@ -91,7 +90,12 @@ export function Scene3D() {
       shadows
       dpr={[1, 2]}
       gl={{ preserveDrawingBuffer: true, antialias: true }}
-      camera={{ fov: 50, near: 50, far: 300000, position: [center.x - 9000, 9500, center.y + 11000] }}
+      camera={{
+        fov: 50,
+        near: 50,
+        far: 300000,
+        position: [center.x - 9000, 9500, center.y + 11000],
+      }}
       onPointerMissed={() => {
         const st = useStore.getState()
         if (st.moving) {
@@ -125,8 +129,7 @@ export function Scene3D() {
 /** 현재 3D 뷰를 dataURL로 캡처 (배치안 썸네일 등) */
 export function captureThumb(width = 280): string | undefined {
   const gl = (window as unknown as Record<string, unknown>).__hp3d_gl as
-    | (THREE.WebGLRenderer & { domElement: HTMLCanvasElement })
-    | undefined
+    (THREE.WebGLRenderer & { domElement: HTMLCanvasElement }) | undefined
   if (!gl) return undefined
   try {
     const src = gl.domElement
@@ -146,8 +149,7 @@ export function captureThumb(width = 280): string | undefined {
 /** 고해상도 스크린샷 다운로드 */
 export function screenshot3d(filename = 'homeplan3d.png') {
   const gl = (window as unknown as Record<string, unknown>).__hp3d_gl as
-    | (THREE.WebGLRenderer & { domElement: HTMLCanvasElement })
-    | undefined
+    (THREE.WebGLRenderer & { domElement: HTMLCanvasElement }) | undefined
   if (!gl) return
   const url = gl.domElement.toDataURL('image/png')
   const a = document.createElement('a')

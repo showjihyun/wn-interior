@@ -21,7 +21,11 @@ export function pointOnWall(w: Wall, offset: number): Pt {
 }
 
 /** 점→선분 투영 */
-export function projectOnSegment(p: Pt, a: Pt, b: Pt): { dist: number; t: number; cx: number; cy: number } {
+export function projectOnSegment(
+  p: Pt,
+  a: Pt,
+  b: Pt
+): { dist: number; t: number; cx: number; cy: number } {
   const abx = b.x - a.x
   const aby = b.y - a.y
   const len2 = abx * abx + aby * aby || 1
@@ -44,13 +48,7 @@ export interface AABB {
   maxZ: number
 }
 
-export function footprintAABB(
-  w: number,
-  d: number,
-  cx: number,
-  cz: number,
-  rotYDeg: number,
-): AABB {
+export function footprintAABB(w: number, d: number, cx: number, cz: number, rotYDeg: number): AABB {
   const r = (rotYDeg * Math.PI) / 180
   const cos = Math.abs(Math.cos(r))
   const sin = Math.abs(Math.sin(r))
@@ -132,7 +130,9 @@ export function roomAt(plan: FloorPlan, x: number, z: number) {
 }
 
 export const fmtMm = (v: number) =>
-  v >= 1000 ? `${(v / 1000).toFixed(2).replace(/\.?0+$/, '')}m` : `${Math.round(v)}cm`.replace('cm', 'cm')
+  v >= 1000
+    ? `${(v / 1000).toFixed(2).replace(/\.?0+$/, '')}m`
+    : `${Math.round(v)}cm`.replace('cm', 'cm')
 
 export interface SnapResult {
   x: number
@@ -152,7 +152,7 @@ export function snapPlacement(
   prod: Product,
   x: number,
   z: number,
-  currentRotY: number,
+  currentRotY: number
 ): SnapResult {
   let rx = snapGrid(x, 25)
   let rz = snapGrid(z, 25)

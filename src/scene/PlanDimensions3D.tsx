@@ -52,23 +52,105 @@ export function PlanDimensions3D({ plan }: { plan: FloorPlan }) {
   return (
     <group>
       {/* ── 가로 (폭) ── */}
-      <Line points={[[minX, y, zH], [maxX, y, zH]]} color={BLUE} lineWidth={1.5} />
-      <Line points={[[minX, y, zH - tick], [minX, y, zH + tick]]} color={BLUE} lineWidth={1.5} />
-      <Line points={[[maxX, y, zH - tick], [maxX, y, zH + tick]]} color={BLUE} lineWidth={1.5} />
+      <Line
+        points={[
+          [minX, y, zH],
+          [maxX, y, zH],
+        ]}
+        color={BLUE}
+        lineWidth={1.5}
+      />
+      <Line
+        points={[
+          [minX, y, zH - tick],
+          [minX, y, zH + tick],
+        ]}
+        color={BLUE}
+        lineWidth={1.5}
+      />
+      <Line
+        points={[
+          [maxX, y, zH - tick],
+          [maxX, y, zH + tick],
+        ]}
+        color={BLUE}
+        lineWidth={1.5}
+      />
       {/* 연장선: 코너 → 치수선 */}
-      <Line points={[[minX, y, maxY + 60], [minX, y, zH + tick]]} color={EXT} lineWidth={1} dashed dashSize={80} gapSize={60} />
-      <Line points={[[maxX, y, maxY + 60], [maxX, y, zH + tick]]} color={EXT} lineWidth={1} dashed dashSize={80} gapSize={60} />
-      <Html position={[minX + width / 2, y, zH + 10]} center zIndexRange={[100, 0]}>
+      <Line
+        points={[
+          [minX, y, maxY + 60],
+          [minX, y, zH + tick],
+        ]}
+        color={EXT}
+        lineWidth={1}
+        dashed
+        dashSize={80}
+        gapSize={60}
+      />
+      <Line
+        points={[
+          [maxX, y, maxY + 60],
+          [maxX, y, zH + tick],
+        ]}
+        color={EXT}
+        lineWidth={1}
+        dashed
+        dashSize={80}
+        gapSize={60}
+      />
+      <Html position={[minX + width / 2, y, zH + 10]} center zIndexRange={[9, 0]}>
         <div className="dim3d-label">{fmtMm(width)}</div>
       </Html>
 
       {/* ── 세로 (깊이) ── */}
-      <Line points={[[xV, y, minY], [xV, y, maxY]]} color={BLUE} lineWidth={1.5} />
-      <Line points={[[xV - tick, y, minY], [xV + tick, y, minY]]} color={BLUE} lineWidth={1.5} />
-      <Line points={[[xV - tick, y, maxY], [xV + tick, y, maxY]]} color={BLUE} lineWidth={1.5} />
-      <Line points={[[maxX + 60, y, minY], [xV + tick, y, minY]]} color={EXT} lineWidth={1} dashed dashSize={80} gapSize={60} />
-      <Line points={[[maxX + 60, y, maxY], [xV + tick, y, maxY]]} color={EXT} lineWidth={1} dashed dashSize={80} gapSize={60} />
-      <Html position={[xV + 10, y, minY + depth / 2]} center zIndexRange={[100, 0]}>
+      <Line
+        points={[
+          [xV, y, minY],
+          [xV, y, maxY],
+        ]}
+        color={BLUE}
+        lineWidth={1.5}
+      />
+      <Line
+        points={[
+          [xV - tick, y, minY],
+          [xV + tick, y, minY],
+        ]}
+        color={BLUE}
+        lineWidth={1.5}
+      />
+      <Line
+        points={[
+          [xV - tick, y, maxY],
+          [xV + tick, y, maxY],
+        ]}
+        color={BLUE}
+        lineWidth={1.5}
+      />
+      <Line
+        points={[
+          [maxX + 60, y, minY],
+          [xV + tick, y, minY],
+        ]}
+        color={EXT}
+        lineWidth={1}
+        dashed
+        dashSize={80}
+        gapSize={60}
+      />
+      <Line
+        points={[
+          [maxX + 60, y, maxY],
+          [xV + tick, y, maxY],
+        ]}
+        color={EXT}
+        lineWidth={1}
+        dashed
+        dashSize={80}
+        gapSize={60}
+      />
+      <Html position={[xV + 10, y, minY + depth / 2]} center zIndexRange={[9, 0]}>
         <div className="dim3d-label">{fmtMm(depth)}</div>
       </Html>
     </group>

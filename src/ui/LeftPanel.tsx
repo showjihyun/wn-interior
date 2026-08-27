@@ -13,7 +13,15 @@ const BRANDS = ['전체', ...getBrandList()] as const
 const fmt = (v: number) => (v >= 1000 ? `${(v / 10).toFixed(0)}cm` : `${v}mm`)
 const won = (v: number) => v.toLocaleString('ko-KR') + '원'
 
-function ProductCard({ p, selected, placedCount }: { p: Product; selected?: boolean; placedCount?: number }) {
+function ProductCard({
+  p,
+  selected,
+  placedCount,
+}: {
+  p: Product
+  selected?: boolean
+  placedCount?: number
+}) {
   const setPending = useStore((s) => s.setPending)
   const setMode = useStore((s) => s.setMode)
   const ref = useRef<HTMLDivElement>(null)
@@ -80,7 +88,8 @@ function CatalogTab() {
   const selectedProductId = placements.find((p) => p.id === selectedId)?.productId
   // 제품별 현재 배치 수 ("배치 N개" 뱃지)
   const placedCount = new Map<string, number>()
-  for (const pl of placements) placedCount.set(pl.productId, (placedCount.get(pl.productId) ?? 0) + 1)
+  for (const pl of placements)
+    placedCount.set(pl.productId, (placedCount.get(pl.productId) ?? 0) + 1)
 
   return (
     <>
@@ -95,7 +104,11 @@ function CatalogTab() {
       </div>
       <div className="brandbar">
         {BRANDS.map((b) => (
-          <button key={b} className={`bchip${brand === b ? ' on' : ''}`} onClick={() => setBrand(b)}>
+          <button
+            key={b}
+            className={`bchip${brand === b ? ' on' : ''}`}
+            onClick={() => setBrand(b)}
+          >
             {b}
           </button>
         ))}
@@ -103,11 +116,18 @@ function CatalogTab() {
       <div className="plist">
         {list.length === 0 && (
           <p className="hint" style={{ padding: 12 }}>
-            {brand !== '전체' ? `${brand} 제품이 없는 카테고리입니다.` : '아래 "+ 등록"으로 내 가구를 추가하세요.'}
+            {brand !== '전체'
+              ? `${brand} 제품이 없는 카테고리입니다.`
+              : '아래 "+ 등록"으로 내 가구를 추가하세요.'}
           </p>
         )}
         {list.map((p) => (
-          <ProductCard key={p.id} p={p} selected={p.id === selectedProductId} placedCount={placedCount.get(p.id)} />
+          <ProductCard
+            key={p.id}
+            p={p}
+            selected={p.id === selectedProductId}
+            placedCount={placedCount.get(p.id)}
+          />
         ))}
       </div>
       {cat === 'custom' && <CustomForm />}
@@ -154,11 +174,30 @@ function CustomForm() {
   return (
     <div className="custom-form">
       <b>📏 실측 제품 등록</b>
-      <input placeholder="제품명 (예: 우리집 소파)" value={name} onChange={(e) => setName(e.target.value)} />
+      <input
+        placeholder="제품명 (예: 우리집 소파)"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
       <div className="row3">
-        <input placeholder="가로 mm" value={w} onChange={(e) => setW(e.target.value)} inputMode="numeric" />
-        <input placeholder="세로 mm" value={d} onChange={(e) => setD(e.target.value)} inputMode="numeric" />
-        <input placeholder="높이 mm" value={h} onChange={(e) => setH(e.target.value)} inputMode="numeric" />
+        <input
+          placeholder="가로 mm"
+          value={w}
+          onChange={(e) => setW(e.target.value)}
+          inputMode="numeric"
+        />
+        <input
+          placeholder="세로 mm"
+          value={d}
+          onChange={(e) => setD(e.target.value)}
+          inputMode="numeric"
+        />
+        <input
+          placeholder="높이 mm"
+          value={h}
+          onChange={(e) => setH(e.target.value)}
+          inputMode="numeric"
+        />
       </div>
       <input
         placeholder="GLTF 모델 URL (선택 — 예: https://.../chair.glb)"
@@ -182,7 +221,10 @@ function MaterialTab() {
           <b>{r.name}</b>
           <label>
             바닥재
-            <select value={r.floorMaterialId ?? ''} onChange={(e) => setRoomMaterial(r.id, 'floorMaterialId', e.target.value)}>
+            <select
+              value={r.floorMaterialId ?? ''}
+              onChange={(e) => setRoomMaterial(r.id, 'floorMaterialId', e.target.value)}
+            >
               {FLOOR_MATERIALS.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
@@ -192,7 +234,10 @@ function MaterialTab() {
           </label>
           <label>
             벽지
-            <select value={r.wallMaterialId ?? ''} onChange={(e) => setRoomMaterial(r.id, 'wallMaterialId', e.target.value)}>
+            <select
+              value={r.wallMaterialId ?? ''}
+              onChange={(e) => setRoomMaterial(r.id, 'wallMaterialId', e.target.value)}
+            >
               {WALL_MATERIALS.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
@@ -229,11 +274,17 @@ function CostTab() {
         <span>참고 가격 합계</span>
         <b>{won(r.pricedTotal)}</b>
       </div>
-      <button className="quote-btn" onClick={downloadQuoteFile} title="방 면적·마감재·제품 합계를 마크다운 견적서로 저장">
+      <button
+        className="quote-btn"
+        onClick={downloadQuoteFile}
+        title="방 면적·마감재·제품 합계를 마크다운 견적서로 저장"
+      >
         📄 견적서 다운로드 (.md)
       </button>
       {r.lines.length === 0 && r.unpriced.length === 0 && (
-        <p className="hint" style={{ padding: 12 }}>배치된 제품이 없습니다.</p>
+        <p className="hint" style={{ padding: 12 }}>
+          배치된 제품이 없습니다.
+        </p>
       )}
       {r.lines.map((l) => (
         <div key={l.productId} className="cost-line">
@@ -247,7 +298,13 @@ function CostTab() {
             </span>
             <b>{won(l.subtotal)}</b>
             {l.sourceUrl && (
-              <a className="src" href={l.sourceUrl} target="_blank" rel="noreferrer" title="출처 (가격 스펙 페이지)">
+              <a
+                className="src"
+                href={l.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                title="출처 (가격 스펙 페이지)"
+              >
                 ↗ 출처
               </a>
             )}

@@ -1,14 +1,6 @@
-// TDD RED — 브랜드 DB 로더/검증 (아직 구현 없음)
+﻿// 계약 테스트 — 브랜드 DB 로더와 입력 검증 규칙
 import { describe, it, expect } from 'vitest'
 import { loadBrandProducts, validateBrandProduct, getBrandList } from './brandCatalog'
-
-interface RawWithSource {
-  id?: string
-  name?: string
-  model?: string
-  sourceUrl?: string
-  sourcedAt?: string
-}
 
 describe('validateBrandProduct (DB 항목 검증)', () => {
   const valid = {
@@ -75,7 +67,11 @@ describe('loadBrandProducts (JSON DB → Product[] 병합)', () => {
       expect(brands.has(b)).toBe(true)
     }
     // 대표 제품 실측 스팟 체크
-    expect(all.find((p) => p.id === 'ss-bespoke-fridge-875')!.dims).toEqual({ w: 912, d: 930, h: 1853 })
+    expect(all.find((p) => p.id === 'ss-bespoke-fridge-875')!.dims).toEqual({
+      w: 912,
+      d: 930,
+      h: 1853,
+    })
     expect(all.find((p) => p.id === 'ik-kivik-3seat')!.dims).toEqual({ w: 2280, d: 950, h: 830 })
     expect(all.find((p) => p.id === 'sm-queen-set')!.dims).toEqual({ w: 1600, d: 2110, h: 1000 })
   })

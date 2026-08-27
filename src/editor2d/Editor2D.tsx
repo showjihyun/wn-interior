@@ -27,6 +27,7 @@ const OPEN_DEFAULT = {
 export function Editor2D() {
   const svgRef = useRef<SVGSVGElement>(null)
   const plan = useStore((s) => s.plan)
+  const projectName = useStore((s) => s.projectName)
   const placements = useStore((s) => s.placements)
   const productOf = useStore((s) => s.productById)
   const selectedId = useStore((s) => s.selectedId)
@@ -47,6 +48,7 @@ export function Editor2D() {
   const [selOpening, setSelOpening] = useState<string | null>(null)
   const [trace, setTrace] = useState<TraceImg | null>(null)
   const [calib, setCalib] = useState<{ pts: Pt[] }>({ pts: [] })
+  const [showDraftGuide, setShowDraftGuide] = useState(true)
   const draggingPl = useRef<string | null>(null)
   const dragVertex = useRef<{ wallId: string; end: 'a' | 'b' } | null>(null)
 
@@ -157,31 +159,27 @@ export function Editor2D() {
     setTool('select')
   }
 
-  function calibrate(realMm: number) {
-    if (!trace || calib.pts.length < 2) return
-    const [a, b] = calib.pts
-    const dPx = Math.hypot(b.x - a.x, b.y - a.y) / trace.scale
-    if (dPx < 5) return
-    const ns = realMm / dPx
-    // 첫 클릭점 고정
-    setTrace({
-      ...trace,
-      scale: ns,
-      ox: calib.pts[0].x - ((calib.pts[0].x - trace.ox) / trace.scale) * ns,
-      oy: calib.pts[0].y - ((calib.pts[0].y - trace.oy) / trace.scale) * ns,
-    })
-    setCalib({ pts: [] })
-  }
-
   // ── 렌더 헬퍼 ──
   const wallColor = '#3b4046'
   return (
     <div className="ed2d">
       <div className="ed2d-bar">
-        <button className={tool === 'select' ? 'on' : ''} onClick={() => { setTool('select'); setChain([]) }}>
+        <button
+          className={tool === 'select' ? 'on' : ''}
+          onClick={() => {
+            setTool('select')
+            setChain([])
+          }}
+        >
           ⬚ 선택/이동
         </button>
-        <button className={tool === 'wall' ? 'on' : ''} onClick={() => { setTool('wall'); setChain([]) }}>
+        <button
+          className={tool === 'wall' ? 'on' : ''}
+          onClick={() => {
+            setTool('wall')
+            setChain([])
+          }}
+        >
           ／ 벽 그리기
         </button>
         <select value={thickness} onChange={(e) => setThickness(parseInt(e.target.value))}>
@@ -203,39 +201,87 @@ export function Editor2D() {
         </button>
         <span className="sep" />
         <label className="chk">
-          <input type="checkbox" checked={showDims} onChange={(e) => setShowDims(e.target.checked)} /> 치수
+          <input
+            type="checkbox"
+            checked={showDims}
+            onChange={(e) => setShowDims(e.target.checked)}
+          />{' '}
+          치수
         </label>
-        <TraceControls trace={trace} calibCount={calib.pts.length} onPick={(f) => {
-          const url = URL.createObjectURL(f)
-          const im = new Image()
-          im.onload = () => setTrace({ url, ox: minX, oy: minY, natW: im.naturalWidth, natH: im.naturalHeight, scale: Math.max((maxX - minX) / im.naturalWidth, 1) })
-          im.src = url
-        }} onCalibClick={() => {
-          // 다음 두 번의 클릭을 캘리브레이션으로 사용
-          setCalib({ pts: [] })
-          const handler = (ev: MouseEvent) => {
-            const svg = svgRef.current
-            if (!svg) return
-            const ctm = svg.getScreenCTM()
-            if (!ctm) return
-            const pt = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(ctm.inverse())
-            setCalib((c) => {
-              const pts = [...c.pts, { x: pt.x, y: pt.y }]
-              if (pts.length >= 2) {
-                window.removeEventListener('click', handler)
-                const mm = parseFloat(prompt('두 점 사이의 실제 길이(mm)? 예) 2400', '2400') ?? '')
-                if (!isNaN(mm) && mm > 0) setTimeout(() => calibrateWith(pts, mm), 0)
-              }
-              return { pts }
-            })
-          }
-          window.addEventListener('click', handler)
-        }} />
-        {(chain.length > 0 || tool !== 'select') && (
-          <button onClick={cancel}>취소(Esc)</button>
+        <TraceControls
+          trace={trace}
+          calibCount={calib.pts.length}
+          onPick={(f) => {
+            const url = URL.createObjectURL(f)
+            const im = new Image()
+            im.onload = () =>
+              setTrace({
+                url,
+                ox: minX,
+                oy: minY,
+                natW: im.naturalWidth,
+                natH: im.naturalHeight,
+                scale: Math.max((maxX - minX) / im.naturalWidth, 1),
+              })
+            im.src = url
+          }}
+          onCalibClick={() => {
+            // 다음 두 번의 클릭을 캘리브레이션으로 사용
+            setCalib({ pts: [] })
+            const handler = (ev: MouseEvent) => {
+              const svg = svgRef.current
+              if (!svg) return
+              const ctm = svg.getScreenCTM()
+              if (!ctm) return
+              const pt = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(ctm.inverse())
+              setCalib((c) => {
+                const pts = [...c.pts, { x: pt.x, y: pt.y }]
+                if (pts.length >= 2) {
+                  window.removeEventListener('click', handler)
+                  const mm = parseFloat(
+                    prompt('두 점 사이의 실제 길이(mm)? 예) 2400', '2400') ?? ''
+                  )
+                  if (!isNaN(mm) && mm > 0) setTimeout(() => calibrateWith(pts, mm), 0)
+                }
+                return { pts }
+              })
+            }
+            window.addEventListener('click', handler)
+          }}
+        />
+        {(chain.length > 0 || tool !== 'select') && <button onClick={cancel}>취소(Esc)</button>}
+        {chain.length >= 2 && (
+          <button className="primary" onClick={finishChain}>
+            벽 완성
+          </button>
         )}
-        {chain.length >= 2 && <button className="primary" onClick={finishChain}>벽 완성</button>}
       </div>
+
+      {projectName === 'CV 도면 변환' && showDraftGuide && (
+        <aside className="ed2d-review-guide" aria-label="변환 초안 검수">
+          <div>
+            <b>변환 초안 검수</b>
+            <span>가구를 배치하기 전에 원본 도면과 아래 항목을 비교하세요.</span>
+          </div>
+          <ol>
+            <li>
+              <span>1</span>벽 연결
+            </li>
+            <li>
+              <span>2</span>방 경계
+            </li>
+            <li>
+              <span>3</span>문·창문
+            </li>
+            <li>
+              <span>4</span>실측 치수
+            </li>
+          </ol>
+          <button aria-label="변환 초안 검수 닫기" onClick={() => setShowDraftGuide(false)}>
+            ×
+          </button>
+        </aside>
+      )}
 
       <svg
         ref={svgRef}
@@ -245,7 +291,7 @@ export function Editor2D() {
           if (calib.pts.length > 0 && calib.pts.length < 2) return // 캘리브레이션 중 글로벌 핸들러가 처리
           svgClick(e)
         }}
-        onDoubleClick={(() => {})}
+        onDoubleClick={() => {}}
         onContextMenu={(e) => {
           e.preventDefault()
           finishChain()
@@ -292,7 +338,15 @@ export function Editor2D() {
           const L = wallLength(w)
           return (
             <g key={w.id}>
-              <line x1={w.a.x} y1={w.a.y} x2={w.b.x} y2={w.b.y} stroke={wallColor} strokeWidth={w.thickness} strokeLinecap="butt" />
+              <line
+                x1={w.a.x}
+                y1={w.a.y}
+                x2={w.b.x}
+                y2={w.b.y}
+                stroke={wallColor}
+                strokeWidth={w.thickness}
+                strokeLinecap="butt"
+              />
               <line
                 x1={w.a.x}
                 y1={w.a.y}
@@ -328,12 +382,22 @@ export function Editor2D() {
                   />
                 ))}
               {selectedId === `wall:${w.id}` && (
-                <text x={(w.a.x + w.b.x) / 2} y={(w.a.y + w.b.y) / 2 - w.thickness / 2 - 60} textAnchor="middle" className="dim-label sel">
+                <text
+                  x={(w.a.x + w.b.x) / 2}
+                  y={(w.a.y + w.b.y) / 2 - w.thickness / 2 - 60}
+                  textAnchor="middle"
+                  className="dim-label sel"
+                >
                   {L.toFixed(0)}mm ▸Del 삭제
                 </text>
               )}
               {showDims && selectedId !== `wall:${w.id}` && (
-                <text x={(w.a.x + w.b.x) / 2} y={(w.a.y + w.b.y) / 2 - w.thickness / 2 - 60} textAnchor="middle" className="dim-label">
+                <text
+                  x={(w.a.x + w.b.x) / 2}
+                  y={(w.a.y + w.b.y) / 2 - w.thickness / 2 - 60}
+                  textAnchor="middle"
+                  className="dim-label"
+                >
                   {L.toFixed(0)}
                 </text>
               )}
@@ -352,10 +416,13 @@ export function Editor2D() {
             (() => {
               const len = wallLength(w) || 1
               const t = o.offset + o.width / 2 / len
-              return { x: w.a.x + (w.b.x - w.a.x) * Math.min(1, t), y: w.a.y + (w.b.y - w.a.y) * Math.min(1, t) }
+              return {
+                x: w.a.x + (w.b.x - w.a.x) * Math.min(1, t),
+                y: w.a.y + (w.b.y - w.a.y) * Math.min(1, t),
+              }
             })(),
             w.a,
-            w.b,
+            w.b
           )
           void cx
           void cy
@@ -375,17 +442,53 @@ export function Editor2D() {
               }}
               style={{ cursor: 'pointer' }}
             >
-              <rect x={-o.width / 2} y={-w.thickness / 2 - 10} width={o.width} height={w.thickness + 20} fill="#fff" stroke={isSel ? '#ff9800' : '#c9ced4'} strokeWidth={isSel ? 24 : 12} />
+              <rect
+                x={-o.width / 2}
+                y={-w.thickness / 2 - 10}
+                width={o.width}
+                height={w.thickness + 20}
+                fill="#fff"
+                stroke={isSel ? '#ff9800' : '#c9ced4'}
+                strokeWidth={isSel ? 24 : 12}
+              />
               {o.type === 'window' && (
                 <>
-                  <line x1={-o.width / 2} y1={0} x2={o.width / 2} y2={0} stroke="#4a90c2" strokeWidth={16} />
-                  <line x1={-o.width / 2} y1={-w.thickness / 4} x2={o.width / 2} y2={-w.thickness / 4} stroke="#7db4d8" strokeWidth={8} />
-                  <line x1={-o.width / 2} y1={w.thickness / 4} x2={o.width / 2} y2={w.thickness / 4} stroke="#7db4d8" strokeWidth={8} />
+                  <line
+                    x1={-o.width / 2}
+                    y1={0}
+                    x2={o.width / 2}
+                    y2={0}
+                    stroke="#4a90c2"
+                    strokeWidth={16}
+                  />
+                  <line
+                    x1={-o.width / 2}
+                    y1={-w.thickness / 4}
+                    x2={o.width / 2}
+                    y2={-w.thickness / 4}
+                    stroke="#7db4d8"
+                    strokeWidth={8}
+                  />
+                  <line
+                    x1={-o.width / 2}
+                    y1={w.thickness / 4}
+                    x2={o.width / 2}
+                    y2={w.thickness / 4}
+                    stroke="#7db4d8"
+                    strokeWidth={8}
+                  />
                 </>
               )}
               {(o.type === 'door' || o.type === 'entry') && (
                 <>
-                  <line x1={-o.width / 2} y1={0} x2={-o.width / 2} y2={o.width} stroke="#5a4634" strokeWidth={14} />
+                  <line
+                    x1={-o.width / 2}
+                    y1={0}
+                    x2={-o.width / 2}
+                    y2={o.width}
+                    stroke="#5a4634"
+                    strokeWidth={14}
+                  />
                   <path
                     d={`M ${-o.width / 2} ${o.width} A ${o.width} ${o.width} 0 0 1 ${o.width / 2} 0`}
                     fill="none"
@@ -397,7 +500,15 @@ export function Editor2D() {
             </g>
           )
         })}
-        {selOpening && <DeleteHint onDelete={() => { removeOpening(selOpening); setSelOpening(null) }} label="선택된 개구부 삭제" />}
+        {selOpening && (
+          <DeleteHint
+            onDelete={() => {
+              removeOpening(selOpening)
+              setSelOpening(null)
+            }}
+            label="선택된 개구부 삭제"
+          />
+        )}
 
         {/* 가구 탑뷰 */}
         {placements.map((pl) => {
@@ -434,11 +545,28 @@ export function Editor2D() {
             ))}
             {chain.map((p, i) =>
               i < chain.length - 1 ? (
-                <line key={`l${i}`} x1={p.x} y1={p.y} x2={chain[i + 1].x} y2={chain[i + 1].y} stroke="#ff9800" strokeWidth={thickness} opacity={0.85} />
-              ) : null,
+                <line
+                  key={`l${i}`}
+                  x1={p.x}
+                  y1={p.y}
+                  x2={chain[i + 1].x}
+                  y2={chain[i + 1].y}
+                  stroke="#ff9800"
+                  strokeWidth={thickness}
+                  opacity={0.85}
+                />
+              ) : null
             )}
             {cursor && chain.length > 0 && (
-              <line x1={chain[chain.length - 1].x} y1={chain[chain.length - 1].y} x2={cursor.x} y2={cursor.y} stroke="#ffb74d" strokeWidth={thickness} opacity={0.5} />
+              <line
+                x1={chain[chain.length - 1].x}
+                y1={chain[chain.length - 1].y}
+                x2={cursor.x}
+                y2={cursor.y}
+                stroke="#ffb74d"
+                strokeWidth={thickness}
+                opacity={0.5}
+              />
             )}
           </g>
         )}
@@ -540,10 +668,19 @@ function TraceControls({
   const fileRef = useRef<HTMLInputElement>(null)
   return (
     <>
-      <button onClick={() => fileRef.current?.click()} title="도면 이미지를 배경에 깔고 따라 그립니다">
+      <button
+        onClick={() => fileRef.current?.click()}
+        title="도면 이미지를 배경에 깔고 따라 그립니다"
+      >
         🖼️ 트레이싱 {trace ? '●' : ''}
       </button>
-      <input hidden type="file" accept="image/*" ref={fileRef} onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])} />
+      <input
+        hidden
+        type="file"
+        accept="image/*"
+        ref={fileRef}
+        onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])}
+      />
       {trace && (
         <button onClick={onCalibClick} title="이미지 위 실측 구간 두 점 클릭 → 실제 길이 입력">
           📐 스케일 보정{calibCount > 0 ? ` (${calibCount}/2)` : ''}

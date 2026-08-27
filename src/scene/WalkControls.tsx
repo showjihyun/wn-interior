@@ -141,10 +141,22 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
     const r = { x: Math.cos(yaw.current), z: -Math.sin(yaw.current) }
     let dx = 0
     let dz = 0
-    if (k.KeyW || k.ArrowUp) { dx += f.x; dz += f.z }
-    if (k.KeyS || k.ArrowDown) { dx -= f.x; dz -= f.z }
-    if (k.KeyD || k.ArrowRight) { dx += r.x; dz += r.z }
-    if (k.KeyA || k.ArrowLeft) { dx -= r.x; dz -= r.z }
+    if (k.KeyW || k.ArrowUp) {
+      dx += f.x
+      dz += f.z
+    }
+    if (k.KeyS || k.ArrowDown) {
+      dx -= f.x
+      dz -= f.z
+    }
+    if (k.KeyD || k.ArrowRight) {
+      dx += r.x
+      dz += r.z
+    }
+    if (k.KeyA || k.ArrowLeft) {
+      dx -= r.x
+      dz -= r.z
+    }
     const radius = characterRadius(cfgRef.current.weightKg)
     if (dx !== 0 || dz !== 0) {
       const moved = resolveWalkMove(
@@ -154,7 +166,7 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
         dx * speed,
         dz * speed,
         radius,
-        boundsRef.current,
+        boundsRef.current
       )
       pos.current = moved
     }
@@ -180,7 +192,15 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
     }
   })
 
-  return <CharacterAvatar pos={pos} yaw={yaw} visible={walkView === 'tp'} heightMm={walkConfig.heightCm * 10} radiusMm={characterRadius(walkConfig.weightKg)} />
+  return (
+    <CharacterAvatar
+      pos={pos}
+      yaw={yaw}
+      visible={walkView === 'tp'}
+      heightMm={walkConfig.heightCm * 10}
+      radiusMm={characterRadius(walkConfig.weightKg)}
+    />
+  )
 }
 
 function CharacterAvatar({

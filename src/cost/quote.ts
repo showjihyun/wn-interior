@@ -25,7 +25,9 @@ export function buildQuoteText(projectName: string, report: CostReport, plan: Fl
     totalM2 += m2
     const floor = getMaterial(r.floorMaterialId)?.name ?? '-'
     const wall = getMaterial(r.wallMaterialId)?.name ?? '-'
-    lines.push(`| ${r.name} | ${m2.toFixed(1)}㎡ (${(m2 / 3.3058).toFixed(1)}평) | ${floor} | ${wall} |`)
+    lines.push(
+      `| ${r.name} | ${m2.toFixed(1)}㎡ (${(m2 / 3.3058).toFixed(1)}평) | ${floor} | ${wall} |`
+    )
   }
   lines.push(`| **합계** | **${totalM2.toFixed(1)}㎡ (${(totalM2 / 3.3058).toFixed(1)}평)** | | |`)
   lines.push('')
@@ -38,7 +40,7 @@ export function buildQuoteText(projectName: string, report: CostReport, plan: Fl
     lines.push('|---|---|---|---|---|---|')
     for (const l of report.lines) {
       lines.push(
-        `| ${l.name} | ${l.brand ?? '-'} | ${l.qty} | ${won(l.unitPrice)} | ${won(l.subtotal)} | ${l.sourceUrl ? `[링크](${l.sourceUrl})` : '-'} |`,
+        `| ${l.name} | ${l.brand ?? '-'} | ${l.qty} | ${won(l.unitPrice)} | ${won(l.subtotal)} | ${l.sourceUrl ? `[링크](${l.sourceUrl})` : '-'} |`
       )
     }
   } else {
@@ -55,7 +57,9 @@ export function buildQuoteText(projectName: string, report: CostReport, plan: Fl
   }
 
   lines.push('---')
-  lines.push('*본 견적서는 시뮬레이션 상 참고 가격이며, 실제 옵션·프로모션에 따라 달라질 수 있습니다.*')
+  lines.push(
+    '*본 견적서는 시뮬레이션 상 참고 가격이며, 실제 옵션·프로모션에 따라 달라질 수 있습니다.*'
+  )
   return lines.join('\n')
 }
 
@@ -69,6 +73,11 @@ export function downloadQuote(text: string, filename = '견적서.md'): void {
 }
 
 // 순환 참조 없이 비용 리포트 재계산 편의
-export function quoteFrom(placements: Parameters<typeof buildCostReport>[0], productOf: Parameters<typeof buildCostReport>[1], plan: FloorPlan, projectName: string): string {
+export function quoteFrom(
+  placements: Parameters<typeof buildCostReport>[0],
+  productOf: Parameters<typeof buildCostReport>[1],
+  plan: FloorPlan,
+  projectName: string
+): string {
   return buildQuoteText(projectName, buildCostReport(placements, productOf), plan)
 }

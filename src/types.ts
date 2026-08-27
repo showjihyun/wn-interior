@@ -76,14 +76,7 @@ export interface Product {
 }
 
 export type CategoryId =
-  | 'kitchen'
-  | 'living'
-  | 'bedroom'
-  | 'storage'
-  | 'appliance'
-  | 'lighting'
-  | 'bath'
-  | 'custom'
+  'kitchen' | 'living' | 'bedroom' | 'storage' | 'appliance' | 'lighting' | 'bath' | 'custom'
 
 export type ShapeKind =
   | 'box'

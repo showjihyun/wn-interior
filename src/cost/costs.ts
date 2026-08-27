@@ -23,7 +23,7 @@ export interface CostReport {
 
 export function buildCostReport(
   placements: Placement[],
-  productOf: (id: string) => Product | undefined,
+  productOf: (id: string) => Product | undefined
 ): CostReport {
   const byProduct = new Map<string, number>()
   for (const pl of placements) {

@@ -1,4 +1,4 @@
-﻿// 반전 이미지(어두운 배경) 대응 - TDD
+﻿// 회귀 테스트 — 어두운 배경의 반전 이미지 대응
 import { describe, it, expect } from 'vitest'
 import { invertGray, type Gray } from './planVision'
 

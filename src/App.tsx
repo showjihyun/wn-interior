@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useStore } from './store/store'
 import { Toolbar } from './ui/Toolbar'
 import { LeftPanel } from './ui/LeftPanel'
@@ -31,12 +31,17 @@ export function App() {
       }
       if (e.key === '1') useStore.getState().setMode('2d') // 오늘의집 벤치마크: 1=2D
       if (e.key === '3') useStore.getState().setMode('3d') // 3=3D
-      if ((e.key === 'Delete' || e.key === 'Backspace') && st.selectedId && !st.selectedId.startsWith('wall:')) {
+      if (
+        (e.key === 'Delete' || e.key === 'Backspace') &&
+        st.selectedId &&
+        !st.selectedId.startsWith('wall:')
+      ) {
         st.removePlacement(st.selectedId)
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault()
-        e.shiftKey ? st.redo() : st.undo()
+        if (e.shiftKey) st.redo()
+        else st.undo()
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         e.preventDefault()
@@ -53,13 +58,14 @@ export function App() {
       <div className="main">
         <LeftPanel />
         <div className="viewport">
-        {mode === '3d' ? <Scene3D /> : <Editor2D />}
-        {mode === '3d' && viewPreset === 'walk' && <WalkPanel />}
-      </div>
+          {mode === '3d' ? <Scene3D /> : <Editor2D />}
+          {mode === '3d' && viewPreset === 'walk' && <WalkPanel />}
+        </div>
         <InspectorPanel />
       </div>
       <div className="statusbar">
-        단위 mm · 자동저장됨 · 좌클릭 배치/선택 · 드래그 이동 → ✓ 이동완료로 확정 · R 회전 · Delete 삭제 · Ctrl+Z 되돌리기
+        단위 mm · 자동저장됨 · 좌클릭 배치/선택 · 드래그 이동 → ✓ 이동완료로 확정 · R 회전 · Delete
+        삭제 · Ctrl+Z 되돌리기
       </div>
       {toast && (
         <div key={toast.id} className={`toast toast-${toast.kind}`}>

@@ -1,4 +1,4 @@
-﻿// TDD RED - 워크스루 캐릭터 충돌 해석 (원-AABB, 축별 슬라이드)
+﻿// 계약 테스트 — 워크스루 충돌 해석 (원-AABB, 축별 슬라이드)
 import { describe, it, expect } from 'vitest'
 import { blockedByObstacles, resolveWalkMove, type Obstacle, type WallLine } from './walk'
 

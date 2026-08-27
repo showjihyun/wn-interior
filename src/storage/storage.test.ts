@@ -1,4 +1,4 @@
-﻿// TDD RED - 프로젝트 저장소 어댑터 (지금: localStorage / 나중: DB 교체)
+﻿// 계약 테스트 — 프로젝트 저장소 어댑터 (현재 localStorage, 향후 DB 교체)
 import { describe, it, expect, beforeEach } from 'vitest'
 import { LocalStorageAdapter, clearAllProjects } from './storage'
 import type { Project } from '../types'

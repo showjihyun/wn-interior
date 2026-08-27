@@ -1,6 +1,13 @@
-﻿// TDD RED — CV 도면 변환 코어 (합성 마스크 기반, canvas 불필요)
+﻿// 계약 테스트 — CV 도면 변환 코어 (합성 마스크 기반, canvas 불필요)
 import { describe, it, expect } from 'vitest'
-import { toGray, findWalls, estimateScale, detectRooms, buildPlanFromImage, type Gray } from './planVision'
+import {
+  toGray,
+  findWalls,
+  estimateScale,
+  detectRooms,
+  buildPlanFromImage,
+  type Gray,
+} from './planVision'
 
 /** 합성 Gray 생성: draw 콜백으로 픽셀 채움 (255=잉크) */
 function makeGray(w: number, h: number, draw: (set: (x: number, y: number) => void) => void): Gray {
@@ -12,16 +19,31 @@ function makeGray(w: number, h: number, draw: (set: (x: number, y: number) => vo
 }
 
 /** 두꺼운 선 (직사각형 브러시) */
-function thickLine(set: (x: number, y: number) => void, x1: number, y1: number, x2: number, y2: number, t: number) {
-  if (y1 === y2) for (let y = y1; y < y1 + t; y++) for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) set(x, y)
-  else for (let x = x1; x < x1 + t; x++) for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) set(x, y)
+function thickLine(
+  set: (x: number, y: number) => void,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  t: number
+) {
+  if (y1 === y2)
+    for (let y = y1; y < y1 + t; y++)
+      for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) set(x, y)
+  else
+    for (let x = x1; x < x1 + t; x++)
+      for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) set(x, y)
 }
 
 describe('toGray (이진화)', () => {
   it('어두운 픽셀만 잉크(255)로', () => {
     const rgba = new Uint8ClampedArray(4 * 3)
-    rgba[0] = 20; rgba[1] = 20; rgba[2] = 20 // 어두움 → 잉크
-    rgba[4] = 240; rgba[5] = 240; rgba[6] = 240 // 밝음 → 배경
+    rgba[0] = 20
+    rgba[1] = 20
+    rgba[2] = 20 // 어두움 → 잉크
+    rgba[4] = 240
+    rgba[5] = 240
+    rgba[6] = 240 // 밝음 → 배경
     const g = toGray(rgba, 3, 1, 128)
     expect(g.data[0]).toBe(255)
     expect(g.data[1]).toBe(0)
@@ -82,7 +104,6 @@ describe('detectRooms (플러드필 방지 폴리곤)', () => {
     expect(poly.length).toBeGreaterThanOrEqual(4) // RDP 후 4코너 근처
     // 대략 내부 영역 (50..250 px → 500..2500mm @10mm/px)
     const xs = poly.map((p) => p.x)
-    const ys = poly.map((p) => p.y)
     expect(Math.min(...xs)).toBeGreaterThan(400)
     expect(Math.max(...xs)).toBeLessThan(2600)
   })
@@ -114,5 +135,27 @@ describe('buildPlanFromImage (전체 파이프라인)', () => {
     expect(plan.openings.length).toBeGreaterThanOrEqual(1)
     // 벽 좌표는 mm 스케일 (외벽 두께 200px→8px ⇒ 25mm/px, 400px → ~10000mm)
     expect(Math.max(...plan.walls.map((w) => Math.max(w.a.x, w.b.x)))).toBeGreaterThan(8000)
+  })
+
+  it('축척이 작게 추정되어 방 면적이 기준 미만이어도 저면적 폴백으로 복구한다', () => {
+    const g = makeGray(300, 160, (set) => {
+      thickLine(set, 20, 20, 280, 20, 8)
+      thickLine(set, 20, 140, 280, 140, 8)
+      thickLine(set, 20, 20, 20, 140, 8)
+      thickLine(set, 280, 20, 280, 140, 8)
+      thickLine(set, 150, 20, 150, 140, 8)
+    })
+    const plan = buildPlanFromImage(g, {
+      threshold: 128,
+      minThicknessPx: 4,
+      minLengthPx: 40,
+      gapRangeMm: [500, 1600],
+      exteriorWallMm: 80,
+      minRoomAreaM2: 1.5,
+      wallHeightMm: 2400,
+    })
+
+    expect(plan.rooms).toHaveLength(2)
+    expect(plan.rooms.every((room) => room.areaM2 < 1.5)).toBe(true)
   })
 })

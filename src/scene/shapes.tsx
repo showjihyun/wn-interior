@@ -57,7 +57,6 @@ function Cyl({
 }
 
 const DARK = '#2f3237'
-const WHITE_WOOD = '#e9e4da'
 const STONE = '#d8d4cb'
 const STEEL = '#b8bec4'
 
@@ -76,7 +75,12 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {/* 등받이 */}
           <Box size={[w, h, backT]} pos={[0, 0, -d / 2]} color={c} />
           {/* 좌석 */}
-          <Box size={[w - armW * 2, seatH, d - backT]} pos={[0, 0, -d / 2 + backT + (d - backT) / 2]} color={shade(c, 14)} rough={0.95} />
+          <Box
+            size={[w - armW * 2, seatH, d - backT]}
+            pos={[0, 0, -d / 2 + backT + (d - backT) / 2]}
+            color={shade(c, 14)}
+            rough={0.95}
+          />
           {/* 팔걸이 */}
           <Box size={[armW, h * 0.78, d]} pos={[-w / 2 + armW / 2, 0, 0]} color={c} />
           <Box size={[armW, h * 0.78, d]} pos={[w / 2 - armW / 2, 0, 0]} color={c} />
@@ -85,11 +89,7 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
             <Box
               key={k}
               size={[(w - armW * 2) / (kind === 'sofa3' ? 3 : 1) - 20, 90, (d - backT) * 0.55]}
-              pos={[
-                k * ((w - armW * 2) / 3),
-                seatH,
-                d / 2 - (d - backT) * 0.28,
-              ]}
+              pos={[k * ((w - armW * 2) / 3), seatH, d / 2 - (d - backT) * 0.28]}
               color={shade(c, 30)}
               rough={0.95}
             />
@@ -106,7 +106,12 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       return (
         <group>
           <Box size={[w, topT, d]} pos={[0, h - topT, 0]} color={c} rough={0.55} />
-          {[[-lx, -lz], [lx, -lz], [-lx, lz], [lx, lz]].map(([x, z], i) => (
+          {[
+            [-lx, -lz],
+            [lx, -lz],
+            [-lx, lz],
+            [lx, lz],
+          ].map(([x, z], i) => (
             <Box key={i} size={[leg, h - topT, leg]} pos={[x, 0, z]} color={shade(c, -25)} />
           ))}
         </group>
@@ -119,8 +124,18 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
         <group>
           <Box size={[w - 10, 45, d * 0.55]} pos={[0, seatY - 45, d * 0.18]} color={c} />
           <Box size={[w, h - seatY, 35]} pos={[0, seatY, -d / 2 + 17]} color={c} />
-          {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
-            <Box key={i} size={[leg, seatY - 45, leg]} pos={[sx * (w / 2 - 50), 0, sz * (d / 2 - 55)]} color={shade(c, -30)} />
+          {[
+            [-1, -1],
+            [1, -1],
+            [-1, 1],
+            [1, 1],
+          ].map(([sx, sz], i) => (
+            <Box
+              key={i}
+              size={[leg, seatY - 45, leg]}
+              pos={[sx * (w / 2 - 50), 0, sz * (d / 2 - 55)]}
+              color={shade(c, -30)}
+            />
           ))}
         </group>
       )
@@ -135,9 +150,18 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {/* 헤드보드 */}
           <Box size={[w, h, headT]} pos={[0, 0, -d / 2]} color={shade(c, -15)} rough={0.7} />
           {/* 프레임 */}
-          <Box size={[w, frameH, d - headT]} pos={[0, 0, -d / 2 + headT + (d - headT) / 2]} color={shade(c, -25)} />
+          <Box
+            size={[w, frameH, d - headT]}
+            pos={[0, 0, -d / 2 + headT + (d - headT) / 2]}
+            color={shade(c, -25)}
+          />
           {/* 매트리스 */}
-          <Box size={[w - 80, matH, d - headT - 60]} pos={[0, frameH, -d / 2 + headT + 20 + (d - headT - 60) / 2]} color="#f4f2ec" rough={0.95} />
+          <Box
+            size={[w - 80, matH, d - headT - 60]}
+            pos={[0, frameH, -d / 2 + headT + 20 + (d - headT - 60) / 2]}
+            color="#f4f2ec"
+            rough={0.95}
+          />
           {/* 이불 */}
           <Box
             size={[w - 70, 90, (d - headT) * 0.62]}
@@ -148,8 +172,14 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {/* 베개 */}
           {[-1, 1].map((s) =>
             w > 1400 ? (
-              <Box key={s} size={[w / 2 - 130, 110, pillowD]} pos={[s * (w / 4), frameH + matH - 30, -d / 2 + headT + 240]} color="#ffffff" rough={0.98} />
-            ) : null,
+              <Box
+                key={s}
+                size={[w / 2 - 130, 110, pillowD]}
+                pos={[s * (w / 4), frameH + matH - 30, -d / 2 + headT + 240]}
+                color="#ffffff"
+                rough={0.98}
+              />
+            ) : null
           )}
         </group>
       )
@@ -161,7 +191,15 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {/* 문 틈새 */}
           <Box size={[6, h - 60, 8]} pos={[0, 30, d / 2 - 2]} color={shade(c, -60)} />
           {[-1, 1].map((s) => (
-            <Cyl key={s} rTop={12} rBot={12} h={280} pos={[s * 60, h * 0.42, d / 2 + 14]} color={STEEL} rotX={Math.PI / 2} />
+            <Cyl
+              key={s}
+              rTop={12}
+              rBot={12}
+              h={280}
+              pos={[s * 60, h * 0.42, d / 2 + 14]}
+              color={STEEL}
+              rotX={Math.PI / 2}
+            />
           ))}
         </group>
       )
@@ -175,7 +213,11 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {Array.from({ length: n }, (_, i) => (
             <group key={i}>
               <Box size={[w - 24, dh - 14, d]} pos={[12, 20 + i * dh, 0]} color={c} rough={0.7} />
-              <Box size={[140, 16, 14]} pos={[w / 2 - 100, 20 + i * dh + dh / 2 - 26, d / 2 + 6]} color={STEEL} />
+              <Box
+                size={[140, 16, 14]}
+                pos={[w / 2 - 100, 20 + i * dh + dh / 2 - 26, d / 2 + 6]}
+                color={STEEL}
+              />
             </group>
           ))}
         </group>
@@ -198,8 +240,20 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           <Box size={[w, cabH, d]} pos={[0, 0, 0]} color={c} rough={0.6} />
           <Box size={[w - 300, 12, d + 6]} pos={[150, cabH * 0.55, 0]} color={shade(c, -40)} />
           {/* TV */}
-          <Box size={[tvW, tvH, 36]} pos={[0, cabH + 40, 0]} color="#101216" rough={0.35} metal={0.4} />
-          <Box size={[tvW - 44, tvH - 44, 6]} pos={[0, cabH + 58, 20]} color="#1a2027" rough={0.15} metal={0.6} />
+          <Box
+            size={[tvW, tvH, 36]}
+            pos={[0, cabH + 40, 0]}
+            color="#101216"
+            rough={0.35}
+            metal={0.4}
+          />
+          <Box
+            size={[tvW - 44, tvH - 44, 6]}
+            pos={[0, cabH + 58, 20]}
+            color="#1a2027"
+            rough={0.15}
+            metal={0.6}
+          />
           <Box size={[tvW * 0.3, 30, 60]} pos={[0, cabH, 0]} color="#101216" />
         </group>
       )
@@ -208,7 +262,13 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       return (
         <group>
           <Box size={[w, h, d * 0.4]} pos={[0, 0, 0]} color="#101216" rough={0.4} metal={0.3} />
-          <Box size={[w - 40, h - 40, 8]} pos={[0, 20, d * 0.4]} color="#16202b" rough={0.1} metal={0.7} />
+          <Box
+            size={[w - 40, h - 40, 8]}
+            pos={[0, 20, d * 0.4]}
+            color="#16202b"
+            rough={0.1}
+            metal={0.7}
+          />
         </group>
       )
     case 'sinkLower': {
@@ -218,11 +278,30 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           <Box size={[w, h - counterT, d - 40]} pos={[0, 0, -20]} color={c} rough={0.6} />
           <Box size={[w, counterT, d]} pos={[0, h - counterT, 0]} color={STONE} rough={0.35} />
           {/* 싱크홀 */}
-          <Box size={[w * 0.32, 12, d * 0.4]} pos={[-w * 0.22, h - 4, d * 0.05]} color="#9fa4a8" rough={0.3} metal={0.6} />
-          <Box size={[w * 0.2, 12, d * 0.34]} pos={[w * 0.28, h - 4, d * 0.02]} color="#2c2f33" rough={0.4} metal={0.4} />
+          <Box
+            size={[w * 0.32, 12, d * 0.4]}
+            pos={[-w * 0.22, h - 4, d * 0.05]}
+            color="#9fa4a8"
+            rough={0.3}
+            metal={0.6}
+          />
+          <Box
+            size={[w * 0.2, 12, d * 0.34]}
+            pos={[w * 0.28, h - 4, d * 0.02]}
+            color="#2c2f33"
+            rough={0.4}
+            metal={0.4}
+          />
           {/* 수도꼭지 */}
           <Cyl rTop={14} rBot={14} h={260} pos={[0, h, -d / 2 + 60]} color={STEEL} />
-          <Cyl rTop={11} rBot={11} h={180} pos={[0, h + 250, -d / 2 + 150]} color={STEEL} rotX={Math.PI / 2} />
+          <Cyl
+            rTop={11}
+            rBot={11}
+            h={180}
+            pos={[0, h + 250, -d / 2 + 150]}
+            color={STEEL}
+            rotX={Math.PI / 2}
+          />
           {/* 문 손잡이 라인 */}
           <Box size={[w - 60, 14, 12]} pos={[30, h - counterT - 120, d / 2 - 26]} color={STEEL} />
         </group>
@@ -232,7 +311,14 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       return (
         <group>
           <Box size={[w, h, d]} pos={[0, 0, 0]} color={c} rough={0.5} />
-          <Box size={[w - 40, h - 80, 6]} pos={[20, 40, d / 2 + 1]} color="#bcd2dd" rough={0.1} metal={0.2} opacity={0.45} />
+          <Box
+            size={[w - 40, h - 80, 6]}
+            pos={[20, 40, d / 2 + 1]}
+            color="#bcd2dd"
+            rough={0.1}
+            metal={0.2}
+            opacity={0.45}
+          />
           <Box size={[w - 80, 16, 16]} pos={[40, -24, d / 2 + 8]} color={STEEL} />
         </group>
       )
@@ -242,7 +328,14 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           <Box size={[w, h, d]} pos={[0, 0, 0]} color={c} rough={0.35} metal={0.5} />
           <Box size={[6, h - 120, 10]} pos={[0, 100, d / 2 + 1]} color={shade(c, -50)} />
           {[-1, 1].map((s) => (
-            <Box key={s} size={[16, 500, 26]} pos={[s * 70, h * 0.38, d / 2 + 12]} color={shade(c, -60)} rough={0.3} metal={0.6} />
+            <Box
+              key={s}
+              size={[16, 500, 26]}
+              pos={[s * 70, h * 0.38, d / 2 + 12]}
+              color={shade(c, -60)}
+              rough={0.3}
+              metal={0.6}
+            />
           ))}
         </group>
       )
@@ -320,7 +413,12 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       return (
         <group>
           <Box size={[w, h, d]} pos={[0, 0, 0]} color={c} rough={0.4} metal={0.3} />
-          <Box size={[w * 0.55, h * 0.6, 6]} pos={[w * 0.16, h * 0.2, d / 2 + 1]} color="#1c2126" rough={0.1} />
+          <Box
+            size={[w * 0.55, h * 0.6, 6]}
+            pos={[w * 0.16, h * 0.2, d / 2 + 1]}
+            color="#1c2126"
+            rough={0.1}
+          />
           <Box size={[60, h * 0.5, 10]} pos={[w / 2 - 60, h * 0.25, d / 2 + 3]} color={STEEL} />
         </group>
       )
@@ -357,8 +455,18 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       return (
         <group>
           <Box size={[w, 380, 170]} pos={[0, 420, -d / 2 + 85]} color="#fafafa" rough={0.3} />
-          <Box size={[w * 0.96, 400, d * 0.62]} pos={[w * 0.02, 0, -d * 0.08]} color="#fafafa" rough={0.25} />
-          <mesh castShadow position={[0, 410, d * 0.12]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1.25, 1]}>
+          <Box
+            size={[w * 0.96, 400, d * 0.62]}
+            pos={[w * 0.02, 0, -d * 0.08]}
+            color="#fafafa"
+            rough={0.25}
+          />
+          <mesh
+            castShadow
+            position={[0, 410, d * 0.12]}
+            rotation={[Math.PI / 2, 0, 0]}
+            scale={[1, 1.25, 1]}
+          >
             <cylinderGeometry args={[w * 0.48, w * 0.44, 45, 24]} />
             <meshStandardMaterial color="#ffffff" roughness={0.2} />
           </mesh>
@@ -374,9 +482,22 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
             <cylinderGeometry args={[w * 0.3, w * 0.24, 120, 28]} />
             <meshStandardMaterial color="#ffffff" roughness={0.2} />
           </mesh>
-          <Cyl rTop={12} rBot={12} h={200} pos={[0, cabH + 120, -d / 2 + 120]} color={STEEL} rotX={Math.PI / 4} />
+          <Cyl
+            rTop={12}
+            rBot={12}
+            h={200}
+            pos={[0, cabH + 120, -d / 2 + 120]}
+            color={STEEL}
+            rotX={Math.PI / 4}
+          />
           {/* 거울 */}
-          <Box size={[w - 60, h - cabH - 220, 26]} pos={[0, cabH + 200, -d / 2 + 13]} color="#cfe0e8" rough={0.05} metal={0.9} />
+          <Box
+            size={[w - 60, h - cabH - 220, 26]}
+            pos={[0, cabH + 200, -d / 2 + 13]}
+            color="#cfe0e8"
+            rough={0.05}
+            metal={0.9}
+          />
         </group>
       )
     }
@@ -384,7 +505,12 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       return (
         <group>
           <Box size={[w, 40, d]} pos={[0, h - 40, 0]} color={c} rough={0.5} />
-          <Box size={[w - 120, h - 40, d - 120]} pos={[60, 0, 0]} color={shade(c, -40)} rough={0.7} />
+          <Box
+            size={[w - 120, h - 40, d - 120]}
+            pos={[60, 0, 0]}
+            color={shade(c, -40)}
+            rough={0.7}
+          />
         </group>
       )
     case 'robotVacuum': {
@@ -446,9 +572,21 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
           {/* 패널 (베젤) */}
           <Box size={[w, panelH, 46]} pos={[0, 60, 0]} color="#101216" rough={0.35} metal={0.4} />
           {/* 화면 */}
-          <Box size={[w - 36, panelH - 36, 6]} pos={[0, 78, 22]} color="#131c26" rough={0.08} metal={0.7} />
+          <Box
+            size={[w - 36, panelH - 36, 6]}
+            pos={[0, 78, 22]}
+            color="#131c26"
+            rough={0.08}
+            metal={0.7}
+          />
           {/* 중앙 발판 스탠드 */}
-          <Box size={[Math.min(w * 0.33, 470), 26, d]} pos={[0, 0, 0]} color="#1c1f24" rough={0.4} metal={0.5} />
+          <Box
+            size={[Math.min(w * 0.33, 470), 26, d]}
+            pos={[0, 0, 0]}
+            color="#1c1f24"
+            rough={0.4}
+            metal={0.5}
+          />
           <Box size={[60, 60, d * 0.7]} pos={[0, 26, 0]} color="#1c1f24" />
         </group>
       )
@@ -466,13 +604,19 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
             pos={[-w / 2 + foldW * (i + 0.5), 60, 0]}
             color={i % 2 ? shade(c, -14) : shade(c, 10)}
             rough={0.95}
-          />,
+          />
         )
       }
       return (
         <group>
           {panels}
-          <Box size={[w + 60, 50, d + 30]} pos={[0, h - 50, 0]} color="#8a8f96" rough={0.4} metal={0.5} />
+          <Box
+            size={[w + 60, 50, d + 30]}
+            pos={[0, h - 50, 0]}
+            color="#8a8f96"
+            rough={0.4}
+            metal={0.5}
+          />
         </group>
       )
     }
@@ -480,7 +624,14 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
       // 롤스크린: 상단 롤 + 하강 패널 + 하단 바
       return (
         <group>
-          <Cyl rTop={d / 2 + 15} rBot={d / 2 + 15} h={w} pos={[0, h - 60, 0]} color={shade(c, -12)} rotZ={Math.PI / 2} />
+          <Cyl
+            rTop={d / 2 + 15}
+            rBot={d / 2 + 15}
+            h={w}
+            pos={[0, h - 60, 0]}
+            color={shade(c, -12)}
+            rotZ={Math.PI / 2}
+          />
           <Box size={[w - 40, h - 140, 16]} pos={[0, 40, 0]} color={c} rough={0.85} />
           <Box size={[w - 30, 40, d]} pos={[0, 20, 0]} color={shade(c, -30)} rough={0.6} />
         </group>

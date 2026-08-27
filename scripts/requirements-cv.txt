@@ -1,0 +1,7 @@
+gdown>=5.0
+numpy>=1.24
+opencv-python>=4.8
+
+# PyTorch는 환경별로 별도 설치:
+# GPU (CUDA 12.8): pip install torch --index-url https://download.pytorch.org/whl/cu128
+# CPU: pip install torch --index-url https://download.pytorch.org/whl/cpu

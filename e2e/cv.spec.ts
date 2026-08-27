@@ -35,15 +35,89 @@ async function makePlanPng(page: import('@playwright/test').Page): Promise<Buffe
     wall(400, 35, 400, 530)
     // 얇은 치수선 (2px — 필터 대상)
     g.lineWidth = 2
-    g.beginPath(); g.moveTo(30, 8); g.lineTo(770, 8); g.stroke()
-    g.beginPath(); g.moveTo(8, 30); g.lineTo(8, 530); g.stroke()
+    g.beginPath()
+    g.moveTo(30, 8)
+    g.lineTo(770, 8)
+    g.stroke()
+    g.beginPath()
+    g.moveTo(8, 30)
+    g.lineTo(8, 530)
+    g.stroke()
     return c.toDataURL('image/png')
   })
   return Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ''), 'base64')
 }
 
+async function makeSemanticMask(
+  page: import('@playwright/test').Page,
+  kind: 'wall' | 'door' | 'window'
+): Promise<string> {
+  return page.evaluate((maskKind) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 800
+    canvas.height = 560
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#fff'
+    ctx.strokeStyle = '#fff'
+    if (maskKind === 'wall') {
+      ctx.lineWidth = 10
+      const line = (x1: number, y1: number, x2: number, y2: number) => {
+        ctx.beginPath()
+        ctx.moveTo(x1, y1)
+        ctx.lineTo(x2, y2)
+        ctx.stroke()
+      }
+      line(30, 30, 340, 30)
+      line(395, 30, 770, 30)
+      line(30, 530, 770, 530)
+      line(30, 30, 30, 530)
+      line(770, 30, 770, 530)
+      line(400, 35, 400, 530)
+    } else if (maskKind === 'door') {
+      ctx.fillRect(345, 25, 46, 11)
+    } else {
+      ctx.fillRect(500, 525, 81, 11)
+    }
+    return canvas.toDataURL('image/png')
+  }, kind)
+}
+
+test('평면도 업로드는 축척 확인 후 2D 보정 또는 3D 보기를 선택하게 한다', async ({ page }) => {
+  const uploadCta = page.getByRole('button', { name: /평면도 업로드.*3D/ })
+  await expect(uploadCta).toBeVisible()
+  await uploadCta.click()
+
+  const modal = page.locator('.modal')
+  await expect(modal.getByText('1. 도면 업로드')).toBeVisible()
+  await modal.locator('input[type=file]').setInputFiles({
+    name: 'plan.png',
+    mimeType: 'image/png',
+    buffer: await makePlanPng(page),
+  })
+  await expect(modal.locator('.status')).toContainText(/벽 \d+개 · 방 \d+개/, { timeout: 10_000 })
+
+  const applyButton = modal.getByRole('button', { name: /변환 결과 적용/ })
+  await expect(modal.locator('.pv-scale-state')).toContainText(/실측 가로.*입력|추정 축척.*확인/)
+  await expect(applyButton).toBeDisabled()
+
+  await modal.getByLabel('도면 전체 가로 실측').fill('12000')
+  await expect(modal.locator('.pv-scale-state')).toContainText(/12,000mm.*보정/, {
+    timeout: 10_000,
+  })
+  await expect(applyButton).toBeEnabled()
+  await applyButton.click()
+
+  await expect(modal.getByRole('heading', { name: /변환 적용 완료/ })).toBeVisible()
+  await expect(modal.getByRole('button', { name: /2D에서 보정/ })).toBeVisible()
+  await modal.getByRole('button', { name: /바로 3D 보기/ }).click()
+  await expect(page.locator('.viewport canvas')).toBeVisible()
+  expect(await page.evaluate(() => window.__hp3d_store.getState().mode)).toBe('3d')
+})
+
 test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D 평면도로 변환한다', async ({ page }) => {
-  await page.getByRole('button', { name: /도면 자동 변환/ }).click()
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
   const modal = page.locator('.modal')
   await expect(modal).toBeVisible()
 
@@ -58,7 +132,11 @@ test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D �
   const status = await modal.locator('.status').textContent()
   expect(status).toMatch(/벽 [4-9]개/) // 외곽 4 + 내벽 1 (얇은 치수선은 제외되어야 소수)
   expect(status).toMatch(/방 [1-9]개/)
-  expect(status).toMatch(/문 후보 [1-9]개/)
+  expect(status).toMatch(/문 [1-9]\d*개/)
+
+  // 도면에 표기된 전체 가로 실측값으로 축척 보정
+  await modal.getByLabel('도면 전체 가로 실측').fill('12000')
+  await expect(modal.locator('.status')).toContainText('축척', { timeout: 10_000 })
 
   // 프리뷰 캔버스에 오버레이 렌더 확인 (벽 빨강 픽셀 존재)
   const hasRed = await page.evaluate(() => {
@@ -72,13 +150,88 @@ test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D �
   expect(hasRed).toBe(true)
 
   // 변환 적용 → 2D 편집기 + 벽/방 생성
-  await modal.getByRole('button', { name: /3D 평면도로 변환 적용/ }).click()
+  await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
+  await modal.getByRole('button', { name: /2D에서 보정/ }).click()
   await expect(page.locator('.ed2d-svg')).toBeVisible({ timeout: 10_000 })
+  const reviewGuide = page.getByRole('complementary', { name: '변환 초안 검수', exact: true })
+  await expect(reviewGuide).toBeVisible()
+  await expect(reviewGuide).toContainText('벽 연결')
+  await expect(reviewGuide).toContainText('방 경계')
+  await expect(reviewGuide).toContainText('문·창문')
+  await expect(reviewGuide).toContainText('실측 치수')
   const plan = await page.evaluate(() => {
     const s = window.__hp3d_store.getState()
-    return { walls: s.plan.walls.length, rooms: s.plan.rooms.length, openings: s.plan.openings.length }
+    return {
+      walls: s.plan.walls.length,
+      rooms: s.plan.rooms.length,
+      openings: s.plan.openings.length,
+      minX: Math.min(...s.plan.walls.flatMap((w: any) => [w.a.x, w.b.x])),
+      maxX: Math.max(...s.plan.walls.flatMap((w: any) => [w.a.x, w.b.x])),
+    }
   })
   expect(plan.walls).toBeGreaterThanOrEqual(4)
   expect(plan.rooms).toBeGreaterThanOrEqual(1)
   expect(plan.openings).toBeGreaterThanOrEqual(1)
+  expect(plan.maxX - plan.minX).toBeCloseTo(12000, -1)
+})
+
+test('실도면의 큰 축척 보정 뒤에도 검출한 문을 적용 결과에 보존한다', async ({ page }) => {
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal.locator('input[type=file]').setInputFiles('e2e/fixtures/real-korean-33pyeong.png')
+  await expect(modal.locator('.status')).toContainText(/문 [1-9]\d*개/, { timeout: 10_000 })
+  await modal.getByLabel('도면 전체 가로 실측').fill('11800')
+  await expect(modal.locator('.status')).toContainText(/문 [1-9]\d*개/, { timeout: 10_000 })
+  await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
+  await expect(modal.getByText(/문·창문 [1-9]\d*개/)).toBeVisible()
+  await modal.getByRole('button', { name: /2D에서 보정/ }).click()
+  expect(
+    await page.evaluate(() => window.__hp3d_store.getState().plan.openings.length)
+  ).toBeGreaterThan(0)
+})
+
+test('로컬 CNN door/window 채널을 직접 Opening으로 변환한다', async ({ page }) => {
+  const [wallMask, doorMask, windowMask] = await Promise.all([
+    makeSemanticMask(page, 'wall'),
+    makeSemanticMask(page, 'door'),
+    makeSemanticMask(page, 'window'),
+  ])
+  await page.route('http://127.0.0.1:8976/health', (route) =>
+    route.fulfill({ json: { ok: true, device: 'cuda', cudaAvailable: true } })
+  )
+  await page.route('http://127.0.0.1:8976/segment', (route) =>
+    route.fulfill({
+      json: {
+        maskDataUrl: wallMask,
+        doorMaskDataUrl: doorMask,
+        windowMaskDataUrl: windowMask,
+        width: 800,
+        height: 560,
+        device: 'cuda',
+        inferenceMs: 42,
+      },
+    })
+  )
+
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal.locator('input[type=file]').setInputFiles({
+    name: 'plan.png',
+    mimeType: 'image/png',
+    buffer: await makePlanPng(page),
+  })
+  await expect(modal.locator('.status')).toContainText(/CNN\(cuda, 42ms\).*문 1개 · 창 1개/, {
+    timeout: 10_000,
+  })
+  await modal.getByText('고급 검출 설정').click()
+  await expect(modal.getByLabel(/로컬 CNN 벽 분할/)).toBeChecked()
+  await modal.getByLabel('도면 전체 가로 실측').fill('12000')
+  await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
+  await modal.getByRole('button', { name: /2D에서 보정/ }).click()
+  await expect(page.locator('.ed2d-svg')).toBeVisible({ timeout: 10_000 })
+  const openingTypes = await page.evaluate(() =>
+    window.__hp3d_store.getState().plan.openings.map((opening: any) => opening.type)
+  )
+  expect(openingTypes.filter((type: string) => type === 'door')).toHaveLength(1)
+  expect(openingTypes.filter((type: string) => type === 'window')).toHaveLength(1)
 })

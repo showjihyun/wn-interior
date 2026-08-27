@@ -11,7 +11,6 @@ import type {
   Product,
   Project,
   Pt,
-  Room,
   Wall,
 } from '../types'
 import { SAMPLE_PLACEMENTS, SAMPLE_PLAN } from '../data/samplePlan'
@@ -19,6 +18,7 @@ import { CATALOG, PRODUCT_MAP } from '../data/catalog'
 import { canDropAt } from '../engine/drop'
 import { resolveDims } from '../engine/dims'
 import { storage, type ProjectMeta } from '../storage/storage'
+import { DEFAULT_AI_MODEL } from '../ai/client'
 
 const LS_KEY = 'homeplan3d.project.v1'
 
@@ -91,7 +91,11 @@ export interface AppState {
   removePlacement: (id: string) => void
   duplicatePlacement: (id: string) => void
 
-  setRoomMaterial: (roomId: string, kind: 'floorMaterialId' | 'wallMaterialId', materialId: string) => void
+  setRoomMaterial: (
+    roomId: string,
+    kind: 'floorMaterialId' | 'wallMaterialId',
+    materialId: string
+  ) => void
   renameRoom: (roomId: string, name: string) => void
 
   addWall: (a: Pt, b: Pt, thickness?: number) => void
@@ -111,8 +115,7 @@ export interface AppState {
   productById: (id: string) => Product | undefined
 }
 
-const clonePlan = (p: FloorPlan): FloorPlan =>
-  JSON.parse(JSON.stringify(p)) as FloorPlan
+const clonePlan = (p: FloorPlan): FloorPlan => JSON.parse(JSON.stringify(p)) as FloorPlan
 const clonePlacements = (ps: Placement[]): Placement[] =>
   ps.map((x) => ({ ...x, pos: { ...x.pos } }))
 
@@ -225,12 +228,10 @@ export const useStore = create<AppState>((set, get) => ({
   ai: {
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKey: (import.meta.env.VITE_OPENROUTER_KEY as string) ?? '',
-    model: 'stealth/ox-alpha',
+    model: DEFAULT_AI_MODEL,
   },
 
-  productById: (id) =>
-    PRODUCT_MAP.get(id) ??
-    get().customProducts.find((c) => c.id === id),
+  productById: (id) => PRODUCT_MAP.get(id) ?? get().customProducts.find((c) => c.id === id),
 
   commit: (fn) =>
     set((s) => {
@@ -240,7 +241,10 @@ export const useStore = create<AppState>((set, get) => ({
         placements: clonePlacements(s.placements),
         customProducts: [...s.customProducts],
         moving: null, // 히스토리 연산은 이동 확정 대기 무효화
-        past: [...s.past.slice(-59), { plan: s.plan, placements: s.placements, customProducts: s.customProducts }],
+        past: [
+          ...s.past.slice(-59),
+          { plan: s.plan, placements: s.placements, customProducts: s.customProducts },
+        ],
         future: [],
       }
       fn(next)
@@ -306,8 +310,7 @@ export const useStore = create<AppState>((set, get) => ({
       if (v) s.placements = clonePlacements(v.placements)
     }),
 
-  removeVariant: (id) =>
-    set((s) => ({ ...s, variants: s.variants.filter((v) => v.id !== id) })),
+  removeVariant: (id) => set((s) => ({ ...s, variants: s.variants.filter((v) => v.id !== id) })),
 
   beginMove: (id, origin) => set({ moving: { id, origin } }),
 
@@ -322,7 +325,16 @@ export const useStore = create<AppState>((set, get) => ({
       return
     }
     const effProduct = { ...prod, dims: resolveDims(prod, pl) }
-    const r = canDropAt(s.plan, effProduct, s.placements, mv.id, pl.pos.x, pl.pos.z, pl.rotY, s.productById)
+    const r = canDropAt(
+      s.plan,
+      effProduct,
+      s.placements,
+      mv.id,
+      pl.pos.x,
+      pl.pos.z,
+      pl.rotY,
+      s.productById
+    )
     if (r.ok) {
       s.updatePlacement(mv.id, { pos: { ...pl.pos }, rotY: pl.rotY })
       set({ moving: null })
@@ -378,7 +390,7 @@ export const useStore = create<AppState>((set, get) => ({
     set((s) => ({
       ...s,
       placements: s.placements.map((p) =>
-        p.id === id ? { ...p, pos: { ...p.pos, x: Math.round(x), z: Math.round(z) }, roomId } : p,
+        p.id === id ? { ...p, pos: { ...p.pos, x: Math.round(x), z: Math.round(z) }, roomId } : p
       ),
     })),
 
@@ -497,7 +509,12 @@ export const useStore = create<AppState>((set, get) => ({
     set({
       projectName: '샘플 아파트 (34평형)',
       plan: clonePlan(SAMPLE_PLAN),
-      placements: SAMPLE_PLACEMENTS.map((sp) => ({ id: uid(), productId: sp.productId, pos: { ...sp.pos }, rotY: sp.rotY })),
+      placements: SAMPLE_PLACEMENTS.map((sp) => ({
+        id: uid(),
+        productId: sp.productId,
+        pos: { ...sp.pos },
+        rotY: sp.rotY,
+      })),
       customProducts: [],
       past: [],
       future: [],

@@ -3,6 +3,16 @@
 // ─────────────────────────────────────────────────────────────
 import type { AiSettings } from '../types'
 
+export const DEFAULT_AI_MODEL = 'google/gemma-4-26b-a4b-it:free'
+const RETIRED_AI_MODELS = new Set(['stealth/ox-alpha'])
+
+export function resolveAiModel(model: string): string {
+  const normalized = model.trim()
+  return !normalized || RETIRED_AI_MODELS.has(normalized.toLowerCase())
+    ? DEFAULT_AI_MODEL
+    : normalized
+}
+
 export const FLOOR_PLAN_PROMPT = `너는 건축 평면도 이미지 해석 전문가다. 이미지의 아파트 평면도를 분석하여 다음 JSON만 출력하라 (설명 금지, 코드펜스 금지).
 규칙:
 - 단위는 전부 mm. 원점은 도면 좌상단, x=우측+, y=하단+.
@@ -34,7 +44,7 @@ export function buildChatRequest(settings: AiSettings, imageDataUrl: string): Ch
         Authorization: `Bearer ${settings.apiKey.trim()}`,
       },
       body: JSON.stringify({
-        model: settings.model,
+        model: resolveAiModel(settings.model),
         max_tokens: 4096,
         messages: [
           {

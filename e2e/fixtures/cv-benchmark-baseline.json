@@ -1,0 +1,19 @@
+{
+  "cases": {
+    "real-focsa-apt.jpg": {
+      "source": "https://commons.wikimedia.org/wiki/File:Typical_apartment_floor_plan_FOCSA_Building.jpeg",
+      "minWalls": 40,
+      "minRooms": 5,
+      "minOpenings": 15,
+      "maxMs": 5000
+    },
+    "real-korean-33pyeong.png": {
+      "source": "workspace input: 33평 아파트 평면도.png",
+      "minWalls": 20,
+      "minRooms": 5,
+      "minOpenings": 5,
+      "maxMs": 5000,
+      "knownWidthMm": 11800
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "model": "CubiCasa5K official multi-task CNN",
+  "weights": "model_best_val_loss_var.pkl",
+  "device": "cuda",
+  "maxDimension": 1600,
+  "summary": {
+    "count": 1,
+    "meanRoomF1At50": 0.6667,
+    "meanBestRoomIoU": 0.6204,
+    "meanWallF1": 0.9311,
+    "meanElapsedMs": 4670.8
+  },
+  "rows": [
+    {
+      "category": "high_quality",
+      "id": "1245",
+      "gtRooms": 10,
+      "predictedRooms": 11,
+      "roomF1At50": 0.6667,
+      "meanBestRoomIoU": 0.6204,
+      "wallF1": 0.9311,
+      "gtDoors": 9,
+      "predictedDoors": 0,
+      "elapsedMs": 4670.8
+    }
+  ]
+}

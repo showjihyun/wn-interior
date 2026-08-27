@@ -107,7 +107,15 @@ describe('roomAt', () => {
 })
 
 describe('snapPlacement (배치 스냅 엔진)', () => {
-  const wallProduct = { id: 'p1', name: '싱크대', category: 'kitchen' as const, dims: { w: 2400, d: 600, h: 850 }, mount: 'floor' as const, snapToWall: true, shape: 'sinkLower' as const }
+  const wallProduct = {
+    id: 'p1',
+    name: '싱크대',
+    category: 'kitchen' as const,
+    dims: { w: 2400, d: 600, h: 850 },
+    mount: 'floor' as const,
+    snapToWall: true,
+    shape: 'sinkLower' as const,
+  }
   const freeProduct = { ...wallProduct, snapToWall: false }
 
   it('일반 제품은 25mm 그리드로 스냅된다', () => {

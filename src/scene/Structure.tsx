@@ -10,7 +10,12 @@ import { wallLength, wallAngle } from '../engine/geom'
 
 const DEFAULT_WALL = 'w-silk-white'
 
-function wallMaterialId(plan: FloorPlan, midX: number, midY: number, ang: number): string | undefined {
+function wallMaterialId(
+  plan: FloorPlan,
+  midX: number,
+  midY: number,
+  ang: number
+): string | undefined {
   const off = 150
   const nx = -Math.sin(ang) * off
   const ny = Math.cos(ang) * off
@@ -80,13 +85,26 @@ export function Walls3D({ plan }: { plan: FloorPlan }) {
         return (
           <group key={w.id} position={[cx, 0, cy]} rotation={[0, rotY, 0]}>
             {slices.map((s, i) => (
-              <mesh key={i} castShadow receiveShadow position={[-L / 2 + s.start + s.len / 2, s.yBase + s.hgt / 2, 0]}>
+              <mesh
+                key={i}
+                castShadow
+                receiveShadow
+                position={[-L / 2 + s.start + s.len / 2, s.yBase + s.hgt / 2, 0]}
+              >
                 <boxGeometry args={[Math.max(s.len, 1), Math.max(s.hgt, 1), w.thickness]} />
-                <meshStandardMaterial map={cloneWithRepeat(baseTex, s.len / mat.tileMm, s.hgt / mat.tileMm)} roughness={0.92} />
+                <meshStandardMaterial
+                  map={cloneWithRepeat(baseTex, s.len / mat.tileMm, s.hgt / mat.tileMm)}
+                  roughness={0.92}
+                />
               </mesh>
             ))}
             {ops.map((o) => (
-              <OpeningMesh key={o.id} op={o} thickness={w.thickness} localOffsetFromCenter={-L / 2} />
+              <OpeningMesh
+                key={o.id}
+                op={o}
+                thickness={w.thickness}
+                localOffsetFromCenter={-L / 2}
+              />
             ))}
           </group>
         )
@@ -95,7 +113,15 @@ export function Walls3D({ plan }: { plan: FloorPlan }) {
   )
 }
 
-function OpeningMesh({ op, thickness, localOffsetFromCenter }: { op: Opening; thickness: number; localOffsetFromCenter: number }) {
+function OpeningMesh({
+  op,
+  thickness,
+  localOffsetFromCenter,
+}: {
+  op: Opening
+  thickness: number
+  localOffsetFromCenter: number
+}) {
   const x = localOffsetFromCenter + op.offset + op.width / 2
   const frameC = op.type === 'entry' ? '#4a3b2c' : '#efece6'
   const leafC = op.type === 'entry' ? '#5a4634' : '#dfe3e6'
@@ -121,7 +147,13 @@ function OpeningMesh({ op, thickness, localOffsetFromCenter }: { op: Opening; th
         {/* 유리 */}
         <mesh position={[0, op.sill + op.height / 2, 0]}>
           <boxGeometry args={[op.width, op.height, 14]} />
-          <meshPhysicalMaterial color="#bcd7e4" transparent opacity={0.32} roughness={0.05} metalness={0.1} />
+          <meshPhysicalMaterial
+            color="#bcd7e4"
+            transparent
+            opacity={0.32}
+            roughness={0.05}
+            metalness={0.1}
+          />
         </mesh>
         {/* 중간 창살 */}
         <mesh position={[0, op.sill + op.height / 2, 0]}>
@@ -150,7 +182,10 @@ function OpeningMesh({ op, thickness, localOffsetFromCenter }: { op: Opening; th
         <meshStandardMaterial color={leafC} roughness={0.55} />
       </mesh>
       {/* 손잡이 */}
-      <mesh position={[op.width / 2 - 130, 1050, thickness / 2 + 30]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh
+        position={[op.width / 2 - 130, 1050, thickness / 2 + 30]}
+        rotation={[Math.PI / 2, 0, 0]}
+      >
         <cylinderGeometry args={[22, 22, 90, 16]} />
         <meshStandardMaterial color="#8f959b" metalness={0.8} roughness={0.3} />
       </mesh>

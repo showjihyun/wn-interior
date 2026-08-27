@@ -1,7 +1,6 @@
 ﻿// M16 워크스루 캐릭터 E2E
 import { test, expect } from '@playwright/test'
 
-type AnyStore = Record<string, any>
 const S = async (page: import('@playwright/test').Page, expr: string) =>
   page.evaluate(`(window.__hp3d_store.getState())${expr}`)
 
@@ -86,7 +85,12 @@ test('3인칭 전환 시 캐릭터가 렌더된다 (픽셀 검사)', async ({ pa
     glc.readPixels(0, 0, w, h, glc.RGBA, glc.UNSIGNED_BYTE, px)
     // 캐릭터 몸통 색(#4a5568 근처) 탐색
     for (let i = 0; i < px.length; i += 4) {
-      if (Math.abs(px[i] - 74) < 25 && Math.abs(px[i + 1] - 85) < 25 && Math.abs(px[i + 2] - 104) < 25) return true
+      if (
+        Math.abs(px[i] - 74) < 25 &&
+        Math.abs(px[i + 1] - 85) < 25 &&
+        Math.abs(px[i + 2] - 104) < 25
+      )
+        return true
     }
     return false
   })

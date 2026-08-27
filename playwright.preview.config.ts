@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   ...base,
+  testIgnore: [],
+  testMatch: '**/preview.smoke.spec.ts',
   use: {
     ...base.use,
     baseURL: 'http://localhost:4173',
@@ -11,7 +13,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview',
     url: 'http://localhost:4173',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
 })

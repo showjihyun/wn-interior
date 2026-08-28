@@ -1,0 +1,100 @@
+{
+  "cases": [
+    {
+      "file": "real-wikimedia-somerville.png",
+      "commonsTitle": "File:178 Central Street Somerville MA.png",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:178_Central_Street_Somerville_MA.png",
+      "license": "CC BY-SA 3.0",
+      "artist": "Jameslwoodward",
+      "originalWidth": 1099,
+      "originalHeight": 1353,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 1477,
+      "sha256": "17cdd1a149a943e0f029b78d096d70675896ad80ba0b9966d93110b64b4c0354"
+    },
+    {
+      "file": "real-wikimedia-harris-1920.jpg",
+      "commonsTitle": "File:1920 Harris Homes plan M1022.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:1920_Harris_Homes_plan_M1022.jpg",
+      "license": "Public domain",
+      "artist": "Harris Homes/Harris Brothers, Chicago, Illinois",
+      "originalWidth": 620,
+      "originalHeight": 1050,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 2032,
+      "sha256": "f03540dbd81f1d731d8bc45a2658a720b04dd8530ec47ddf5298219b12c72856"
+    },
+    {
+      "file": "real-wikimedia-bungalow-2bhk.jpg",
+      "commonsTitle": "File:2 bhk Bungalow floor plan.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:2_bhk_Bungalow_floor_plan.jpg",
+      "license": "CC BY-SA 4.0",
+      "artist": "Jithurad4539",
+      "originalWidth": 2160,
+      "originalHeight": 2576,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 1431,
+      "sha256": "b7fed7b37122f8991dd32b8de6b70d8fbecac486d1cf6e1967e96869dacfefb7"
+    },
+    {
+      "file": "real-wikimedia-state-house-1930.jpg",
+      "commonsTitle": "File:1930s state house.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:1930s_state_house.jpg",
+      "license": "Public domain",
+      "artist": "Unknown authorUnknown author",
+      "originalWidth": 512,
+      "originalHeight": 374,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 877,
+      "sha256": "d86eb10fd257a0286056f64987b64aa447da23ba3b391a9c30ed7b914ba7b96e"
+    },
+    {
+      "file": "real-wikimedia-paris-plan.jpg",
+      "commonsTitle": "File:5 rue de la Tour-des-Dames (Paris) - plan.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:5_rue_de_la_Tour-des-Dames_(Paris)_-_plan.jpg",
+      "license": "Public domain",
+      "artist": "Louis Pierre Haudebourt",
+      "originalWidth": 1072,
+      "originalHeight": 824,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 922,
+      "sha256": "33421295f01607eaec7cfc189f9f6e53595b3ad942d7e83f095121732755f1a4"
+    },
+    {
+      "file": "real-wikimedia-divided-apartment.png",
+      "commonsTitle": "File:A Divided Apartment (דירה מחולקת).png",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:A_Divided_Apartment_(%D7%93%D7%99%D7%A8%D7%94_%D7%9E%D7%97%D7%95%D7%9C%D7%A7%D7%AA).png",
+      "license": "CC BY-SA 4.0",
+      "artist": "Hentengeer",
+      "originalWidth": 1024,
+      "originalHeight": 548,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 642,
+      "sha256": "4d1a05dceb13fb076075d268722a8969fc79700940447848d4c8b91e9875f9ad"
+    },
+    {
+      "file": "real-wikimedia-apartment.png",
+      "commonsTitle": "File:Apartment.png",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Apartment.png",
+      "license": "Public domain",
+      "artist": "Jan Křivka",
+      "originalWidth": 506,
+      "originalHeight": 304,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 721,
+      "sha256": "2a5226566bd373f3fd28fc59c111aed82b92d8bd2a2004c423165a08a9153f2a"
+    },
+    {
+      "file": "real-wikimedia-space-apartment.png",
+      "commonsTitle": "File:Apartment plan-Space Settlements A Design Study.png",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Apartment_plan-Space_Settlements_A_Design_Study.png",
+      "license": "Public domain",
+      "artist": "Richard D. Johnson, Charles Holbrow (1977). \"Space Settlements: A Design Study\". National Aeronautics and Space Administration.",
+      "originalWidth": 822,
+      "originalHeight": 443,
+      "benchmarkWidth": 1200,
+      "benchmarkHeight": 647,
+      "sha256": "d04625e8291520834eb8731372e9309f0f2f13f898743eca5afb4ef34c0ef37c"
+    }
+  ]
+}

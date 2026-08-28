@@ -2,6 +2,7 @@
 // LLM/네트워크 불필요. 기준선은 fixtures, 매 실행 결과는 test-results에 기록한다.
 import { test, expect } from '@playwright/test'
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { createHash } from 'node:crypto'
 import {
   buildPlanFromImage,
   autoThresholdOtsu,
@@ -17,6 +18,9 @@ const BASELINE = JSON.parse(
   readFileSync(`${FIXTURES}/cv-benchmark-baseline.json`, 'utf8')
 ) as BenchmarkBaseline
 const RESULTS = new Map<string, Row>()
+const WIKIMEDIA = JSON.parse(
+  readFileSync(`${FIXTURES}/wikimedia-floorplans.json`, 'utf8')
+) as WikimediaManifest
 
 interface BenchmarkCase {
   source: string
@@ -25,10 +29,21 @@ interface BenchmarkCase {
   minOpenings: number
   maxMs: number
   knownWidthMm?: number
+  expectedConversion?: boolean
 }
 
 interface BenchmarkBaseline {
+  minimumConversionSuccessRate: number
   cases: Record<string, BenchmarkCase>
+}
+
+interface WikimediaManifest {
+  cases: Array<{
+    file: string
+    sourcePage: string
+    license: string
+    sha256: string
+  }>
 }
 
 interface Row {
@@ -48,9 +63,23 @@ interface Row {
   knownWidthMm?: number
   rawScaleErrorPct?: number
   scaleErrorPct?: number
+  conversionSuccess: boolean
+  expectedConversion: boolean
 }
 
 test.describe.configure({ mode: 'serial' })
+
+test('Wikimedia 실도면 fixture의 출처·라이선스·해시가 고정돼 있다', () => {
+  expect(WIKIMEDIA.cases).toHaveLength(8)
+  for (const fixture of WIKIMEDIA.cases) {
+    expect(fixture.license).toMatch(/^(Public domain|CC0|CC BY(?:-SA)?)/)
+    expect(BASELINE.cases[fixture.file]?.source).toBe(fixture.sourcePage)
+    const digest = createHash('sha256')
+      .update(readFileSync(`${FIXTURES}/${fixture.file}`))
+      .digest('hex')
+    expect(digest).toBe(fixture.sha256)
+  }
+})
 
 for (const [file, baseline] of Object.entries(BASELINE.cases)) {
   test(`CV 변환: ${file}`, async ({ page }) => {
@@ -131,6 +160,8 @@ for (const [file, baseline] of Object.entries(BASELINE.cases)) {
             (Math.abs(detectedWidthMm - baseline.knownWidthMm) / baseline.knownWidthMm) * 1000
           ) / 10
         : undefined,
+      conversionSuccess: plan.walls.length > 0 && plan.rooms.length > 0,
+      expectedConversion: baseline.expectedConversion !== false,
     }
     RESULTS.set(file, row)
     console.log('BENCH ' + JSON.stringify(row))
@@ -140,14 +171,30 @@ for (const [file, baseline] of Object.entries(BASELINE.cases)) {
     expect(row.openings).toBeGreaterThanOrEqual(baseline.minOpenings)
     expect(row.ms).toBeLessThan(baseline.maxMs)
     expect(row.mmPerPx).toBeGreaterThan(0)
+    if (baseline.expectedConversion !== false) expect(row.conversionSuccess).toBe(true)
   })
 }
 
-test('벤치마크 리포트 저장', async () => {
+test('10종 실도면의 구조 변환 성공률을 집계하고 리포트를 저장한다', async () => {
   expect(RESULTS.size).toBe(Object.keys(BASELINE.cases).length)
+  const rows = [...RESULTS.values()]
+  const successCount = rows.filter((row) => row.conversionSuccess).length
+  const conversionSuccessRate = successCount / rows.length
+  expect(conversionSuccessRate).toBeGreaterThanOrEqual(BASELINE.minimumConversionSuccessRate)
+  console.log(
+    `BENCH-SUMMARY ${JSON.stringify({ cases: rows.length, successCount, conversionSuccessRate })}`
+  )
   mkdirSync('test-results', { recursive: true })
   writeFileSync(
     'test-results/cv-benchmark-latest.json',
-    JSON.stringify({ at: new Date().toISOString(), results: [...RESULTS.values()] }, null, 2)
+    JSON.stringify(
+      {
+        at: new Date().toISOString(),
+        summary: { cases: rows.length, successCount, conversionSuccessRate },
+        results: rows,
+      },
+      null,
+      2
+    )
   )
 })

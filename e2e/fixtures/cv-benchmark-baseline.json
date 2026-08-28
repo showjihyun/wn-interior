@@ -1,4 +1,5 @@
 {
+  "minimumConversionSuccessRate": 0.8,
   "cases": {
     "real-focsa-apt.jpg": {
       "source": "https://commons.wikimedia.org/wiki/File:Typical_apartment_floor_plan_FOCSA_Building.jpeg",
@@ -14,6 +15,64 @@
       "minOpenings": 5,
       "maxMs": 5000,
       "knownWidthMm": 11800
+    },
+    "real-wikimedia-somerville.png": {
+      "source": "https://commons.wikimedia.org/wiki/File:178_Central_Street_Somerville_MA.png",
+      "minWalls": 58,
+      "minRooms": 26,
+      "minOpenings": 33,
+      "maxMs": 5000
+    },
+    "real-wikimedia-harris-1920.jpg": {
+      "source": "https://commons.wikimedia.org/wiki/File:1920_Harris_Homes_plan_M1022.jpg",
+      "minWalls": 80,
+      "minRooms": 4,
+      "minOpenings": 20,
+      "maxMs": 5000
+    },
+    "real-wikimedia-bungalow-2bhk.jpg": {
+      "source": "https://commons.wikimedia.org/wiki/File:2_bhk_Bungalow_floor_plan.jpg",
+      "minWalls": 45,
+      "minRooms": 5,
+      "minOpenings": 10,
+      "maxMs": 5000
+    },
+    "real-wikimedia-state-house-1930.jpg": {
+      "source": "https://commons.wikimedia.org/wiki/File:1930s_state_house.jpg",
+      "minWalls": 23,
+      "minRooms": 4,
+      "minOpenings": 8,
+      "maxMs": 5000
+    },
+    "real-wikimedia-paris-plan.jpg": {
+      "source": "https://commons.wikimedia.org/wiki/File:5_rue_de_la_Tour-des-Dames_(Paris)_-_plan.jpg",
+      "minWalls": 30,
+      "minRooms": 1,
+      "minOpenings": 4,
+      "maxMs": 5000
+    },
+    "real-wikimedia-divided-apartment.png": {
+      "source": "https://commons.wikimedia.org/wiki/File:A_Divided_Apartment_(%D7%93%D7%99%D7%A8%D7%94_%D7%9E%D7%97%D7%95%D7%9C%D7%A7%D7%AA).png",
+      "minWalls": 50,
+      "minRooms": 8,
+      "minOpenings": 20,
+      "maxMs": 5000
+    },
+    "real-wikimedia-apartment.png": {
+      "source": "https://commons.wikimedia.org/wiki/File:Apartment.png",
+      "minWalls": 0,
+      "minRooms": 0,
+      "minOpenings": 0,
+      "maxMs": 5000,
+      "expectedConversion": false
+    },
+    "real-wikimedia-space-apartment.png": {
+      "source": "https://commons.wikimedia.org/wiki/File:Apartment_plan-Space_Settlements_A_Design_Study.png",
+      "minWalls": 0,
+      "minRooms": 0,
+      "minOpenings": 0,
+      "maxMs": 5000,
+      "expectedConversion": false
     }
   }
 }

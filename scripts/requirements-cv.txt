@@ -1,4 +1,5 @@
 gdown>=5.0
+certifi>=2024.0
 numpy>=1.24
 opencv-python>=4.8
 

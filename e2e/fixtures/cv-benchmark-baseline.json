@@ -1,5 +1,7 @@
 {
-  "minimumConversionSuccessRate": 0.8,
+  "minimumSinglePlanConversionRate": 0.875,
+  "minimumMultipleInputDetectionRate": 1,
+  "minimumSafeHandlingRate": 0.9,
   "cases": {
     "real-focsa-apt.jpg": {
       "source": "https://commons.wikimedia.org/wiki/File:Typical_apartment_floor_plan_FOCSA_Building.jpeg",
@@ -21,7 +23,9 @@
       "minWalls": 58,
       "minRooms": 26,
       "minOpenings": 33,
-      "maxMs": 5000
+      "maxMs": 5000,
+      "expectedInputKind": "multiple",
+      "expectedConversion": false
     },
     "real-wikimedia-harris-1920.jpg": {
       "source": "https://commons.wikimedia.org/wiki/File:1920_Harris_Homes_plan_M1022.jpg",
@@ -49,7 +53,9 @@
       "minWalls": 30,
       "minRooms": 1,
       "minOpenings": 4,
-      "maxMs": 5000
+      "maxMs": 5000,
+      "expectedInputKind": "multiple",
+      "expectedConversion": false
     },
     "real-wikimedia-divided-apartment.png": {
       "source": "https://commons.wikimedia.org/wiki/File:A_Divided_Apartment_(%D7%93%D7%99%D7%A8%D7%94_%D7%9E%D7%97%D7%95%D7%9C%D7%A7%D7%AA).png",
@@ -60,11 +66,10 @@
     },
     "real-wikimedia-apartment.png": {
       "source": "https://commons.wikimedia.org/wiki/File:Apartment.png",
-      "minWalls": 0,
-      "minRooms": 0,
-      "minOpenings": 0,
-      "maxMs": 5000,
-      "expectedConversion": false
+      "minWalls": 12,
+      "minRooms": 5,
+      "minOpenings": 3,
+      "maxMs": 5000
     },
     "real-wikimedia-space-apartment.png": {
       "source": "https://commons.wikimedia.org/wiki/File:Apartment_plan-Space_Settlements_A_Design_Study.png",

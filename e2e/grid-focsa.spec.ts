@@ -3,10 +3,7 @@ import { test, expect } from '@playwright/test'
 import { readFileSync } from 'fs'
 import {
   buildPlanFromImage,
-  autoThresholdOtsu,
-  toGray,
-  invertGray,
-  inkRatio,
+  autoBinarizeFloorPlan,
   removeSmallComponents,
   morphClose,
 } from '../src/engine/planVision'
@@ -38,9 +35,9 @@ test('FOCSA 파라미터 그리드에 유효한 기준선 조합이 존재한다
   }, dataUrl)
 
   const rgba = new Uint8ClampedArray(rgbaArr.data)
-  const th = autoThresholdOtsu(rgba, rgbaArr.width, rgbaArr.height)
-  let base: Gray = toGray(rgba, rgbaArr.width, rgbaArr.height, th)
-  if (inkRatio(base) > 0.5) base = invertGray(base)
+  const binarized = autoBinarizeFloorPlan(rgba, rgbaArr.width, rgbaArr.height)
+  const th = binarized.threshold
+  const base: Gray = binarized.gray
 
   const results: GridResult[] = []
   for (const denoise of [300, 800, 1200, 2000]) {

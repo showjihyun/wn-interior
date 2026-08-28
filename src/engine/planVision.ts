@@ -12,6 +12,286 @@ export interface Gray {
   height: number
 }
 
+export interface PlanRegion {
+  x: number
+  y: number
+  width: number
+  height: number
+  inkPixels: number
+}
+
+export type FloorPlanPolarity = 'dark-on-light' | 'light-on-dark'
+
+export interface FloorPlanBinarization {
+  gray: Gray
+  threshold: number
+  baseThreshold: number
+  polarity: FloorPlanPolarity
+  edgeDarkRatio: number
+}
+
+function darkBackgroundEdgeRatio(rgba: Uint8ClampedArray, width: number, height: number): number {
+  if (width <= 0 || height <= 0 || rgba.length < width * height * 4) return 0
+  const band = Math.max(1, Math.round(Math.min(width, height) * 0.04))
+  let dark = 0
+  let sampled = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (x >= band && x < width - band && y >= band && y < height - band) continue
+      const offset = (y * width + x) * 4
+      const alpha = rgba[offset + 3] / 255
+      const luminance =
+        (0.299 * rgba[offset] + 0.587 * rgba[offset + 1] + 0.114 * rgba[offset + 2]) * alpha +
+        255 * (1 - alpha)
+      if (luminance <= 72) dark++
+      sampled++
+    }
+  }
+  return sampled > 0 ? dark / sampled : 0
+}
+
+export function shouldInvertDarkBackground(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number
+): boolean {
+  return darkBackgroundEdgeRatio(rgba, width, height) >= 0.62
+}
+
+export function autoBinarizeFloorPlan(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number
+): FloorPlanBinarization {
+  const baseThreshold = autoThresholdOtsu(rgba, width, height)
+  const edgeDarkRatio = darkBackgroundEdgeRatio(rgba, width, height)
+  if (edgeDarkRatio < 0.62) {
+    return {
+      gray: toGray(rgba, width, height, baseThreshold),
+      threshold: baseThreshold,
+      baseThreshold,
+      polarity: 'dark-on-light',
+      edgeDarkRatio,
+    }
+  }
+
+  const histogram = new Float64Array(256)
+  let total = 0
+  let populatedBins = 0
+  for (let offset = 0; offset < rgba.length; offset += 4) {
+    if (rgba[offset + 3] === 0) continue
+    const luminance = Math.round(
+      0.299 * rgba[offset] + 0.587 * rgba[offset + 1] + 0.114 * rgba[offset + 2]
+    )
+    if (luminance <= baseThreshold) continue
+    if (histogram[luminance] === 0) populatedBins++
+    histogram[luminance]++
+    total++
+  }
+
+  let threshold = baseThreshold
+  if (total > 0 && populatedBins >= 2) {
+    let totalSum = 0
+    for (let value = baseThreshold + 1; value < 256; value++) {
+      totalSum += value * histogram[value]
+    }
+    let backgroundWeight = 0
+    let backgroundSum = 0
+    let bestVariance = -1
+    for (let candidate = baseThreshold + 1; candidate < 256; candidate++) {
+      backgroundWeight += histogram[candidate]
+      if (backgroundWeight === 0) continue
+      const foregroundWeight = total - backgroundWeight
+      if (foregroundWeight === 0) break
+      backgroundSum += candidate * histogram[candidate]
+      const backgroundMean = backgroundSum / backgroundWeight
+      const foregroundMean = (totalSum - backgroundSum) / foregroundWeight
+      const variance =
+        backgroundWeight *
+        foregroundWeight *
+        (backgroundMean - foregroundMean) *
+        (backgroundMean - foregroundMean)
+      if (variance > bestVariance) {
+        bestVariance = variance
+        threshold = candidate
+      }
+    }
+  }
+
+  const data = new Uint8Array(width * height)
+  for (let index = 0, offset = 0; index < data.length; index++, offset += 4) {
+    if (rgba[offset + 3] === 0) continue
+    const luminance = 0.299 * rgba[offset] + 0.587 * rgba[offset + 1] + 0.114 * rgba[offset + 2]
+    if (luminance > threshold) data[index] = 255
+  }
+  return {
+    gray: { data, width, height },
+    threshold,
+    baseThreshold,
+    polarity: 'light-on-dark',
+    edgeDarkRatio,
+  }
+}
+
+export function detectPlanRegions(gray: Gray): PlanRegion[] {
+  const { data, width, height } = gray
+  if (width <= 0 || height <= 0 || data.length !== width * height) return []
+  const prepared = removeSmallComponents(morphClose(gray, 2), 300)
+  const allWalls = findWalls(prepared, { minThicknessPx: 4, minLengthPx: 40 })
+  const shortSide = Math.min(width, height)
+  const edgeX = width * 0.02
+  const edgeY = height * 0.02
+  const walls = allWalls.filter((wall) => {
+    const horizontal = Math.abs(wall.x2 - wall.x1) >= Math.abs(wall.y2 - wall.y1)
+    const length = Math.hypot(wall.x2 - wall.x1, wall.y2 - wall.y1)
+    if (horizontal) {
+      const y = (wall.y1 + wall.y2) / 2
+      return !(length >= width * 0.9 && (y <= edgeY || y >= height - edgeY))
+    }
+    const x = (wall.x1 + wall.x2) / 2
+    return !(length >= height * 0.9 && (x <= edgeX || x >= width - edgeX))
+  })
+  if (walls.length < 6) return []
+  const totalWallLength = walls.reduce(
+    (sum, wall) => sum + Math.hypot(wall.x2 - wall.x1, wall.y2 - wall.y1),
+    0
+  )
+  const bridge = Math.max(4, Math.min(12, Math.round(shortSide * 0.01)))
+
+  function supportBands(axis: 'x' | 'y') {
+    const axisLength = axis === 'x' ? width : height
+    const support = new Uint8Array(axisLength)
+    for (const wall of walls) {
+      const horizontal = Math.abs(wall.x2 - wall.x1) >= Math.abs(wall.y2 - wall.y1)
+      if ((axis === 'x') !== horizontal) continue
+      const start = Math.max(
+        0,
+        Math.floor(axis === 'x' ? Math.min(wall.x1, wall.x2) : Math.min(wall.y1, wall.y2))
+      )
+      const end = Math.min(
+        axisLength - 1,
+        Math.ceil(axis === 'x' ? Math.max(wall.x1, wall.x2) : Math.max(wall.y1, wall.y2))
+      )
+      for (let position = start; position <= end; position++) support[position] = 1
+    }
+    let position = 0
+    while (position < support.length) {
+      if (support[position]) {
+        position++
+        continue
+      }
+      const gapStart = position
+      while (position < support.length && !support[position]) position++
+      const gapLength = position - gapStart
+      if (gapStart > 0 && position < support.length && gapLength <= bridge) {
+        support.fill(1, gapStart, position)
+      }
+    }
+    const bands: Array<{ start: number; end: number; center: number }> = []
+    position = 0
+    while (position < support.length) {
+      if (!support[position]) {
+        position++
+        continue
+      }
+      const start = position
+      while (position < support.length && support[position]) position++
+      const end = position - 1
+      if (end - start + 1 >= axisLength * 0.1) {
+        bands.push({ start, end, center: (start + end) / 2 })
+      }
+    }
+    return bands
+  }
+
+  function countJunctions(group: WallSeg[]) {
+    const horizontal = group.filter(
+      (wall) => Math.abs(wall.x2 - wall.x1) >= Math.abs(wall.y2 - wall.y1)
+    )
+    const vertical = group.filter(
+      (wall) => Math.abs(wall.x2 - wall.x1) < Math.abs(wall.y2 - wall.y1)
+    )
+    let junctions = 0
+    for (const h of horizontal) {
+      const y = (h.y1 + h.y2) / 2
+      const hx1 = Math.min(h.x1, h.x2) - 3
+      const hx2 = Math.max(h.x1, h.x2) + 3
+      for (const v of vertical) {
+        const x = (v.x1 + v.x2) / 2
+        const vy1 = Math.min(v.y1, v.y2) - 3
+        const vy2 = Math.max(v.y1, v.y2) + 3
+        if (x >= hx1 && x <= hx2 && y >= vy1 && y <= vy2) junctions++
+      }
+    }
+    return junctions
+  }
+
+  function planLike(group: WallSeg[]) {
+    if (group.length < 6) return false
+    const horizontal = group.filter(
+      (wall) => Math.abs(wall.x2 - wall.x1) >= Math.abs(wall.y2 - wall.y1)
+    ).length
+    const vertical = group.length - horizontal
+    if (horizontal < 2 || vertical < 2 || countJunctions(group) < 2) return false
+    const region = wallsToRegion(group, prepared)
+    if (region.width < Math.floor(width * 0.12) || region.height < Math.floor(height * 0.1)) {
+      return false
+    }
+    const groupLength = group.reduce(
+      (sum, wall) => sum + Math.hypot(wall.x2 - wall.x1, wall.y2 - wall.y1),
+      0
+    )
+    if (groupLength < shortSide * 0.5 || groupLength / totalWallLength < 0.08) return false
+    return region.inkPixels / (region.width * region.height) <= 0.38
+  }
+
+  for (const axis of ['x', 'y'] as const) {
+    const bands = supportBands(axis)
+    if (bands.length < 2) continue
+    const groups = bands.map(() => [] as WallSeg[])
+    for (const wall of walls) {
+      const center = axis === 'x' ? (wall.x1 + wall.x2) / 2 : (wall.y1 + wall.y2) / 2
+      let nearest = 0
+      let nearestDistance = Infinity
+      bands.forEach((band, index) => {
+        const distance = Math.abs(center - band.center)
+        if (distance < nearestDistance) {
+          nearest = index
+          nearestDistance = distance
+        }
+      })
+      groups[nearest].push(wall)
+    }
+    const regions = groups
+      .filter(planLike)
+      .map((group) => wallsToRegion(group, prepared))
+      .sort((a, b) => b.width * b.height - a.width * a.height)
+    if (regions.length >= 2) return regions
+  }
+
+  return walls.length >= 6 ? [wallsToRegion(walls, prepared)] : []
+}
+
+function wallsToRegion(walls: WallSeg[], gray: Gray): PlanRegion {
+  const minX = Math.max(0, Math.floor(Math.min(...walls.flatMap((wall) => [wall.x1, wall.x2]))))
+  const minY = Math.max(0, Math.floor(Math.min(...walls.flatMap((wall) => [wall.y1, wall.y2]))))
+  const maxX = Math.min(
+    gray.width - 1,
+    Math.ceil(Math.max(...walls.flatMap((wall) => [wall.x1, wall.x2])))
+  )
+  const maxY = Math.min(
+    gray.height - 1,
+    Math.ceil(Math.max(...walls.flatMap((wall) => [wall.y1, wall.y2])))
+  )
+  let inkPixels = 0
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (gray.data[y * gray.width + x]) inkPixels++
+    }
+  }
+  return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1, inkPixels }
+}
+
 /** RGBA ImageData → 이진 Gray (luminance < threshold → 잉크) */
 export function toGray(
   rgba: Uint8ClampedArray,

@@ -5,9 +5,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { createHash } from 'node:crypto'
 import {
   buildPlanFromImage,
-  autoThresholdOtsu,
-  toGray,
-  invertGray,
+  autoBinarizeFloorPlan,
+  detectPlanRegions,
   inkRatio,
   rescalePlanToWidth,
 } from '../src/engine/planVision'
@@ -30,10 +29,13 @@ interface BenchmarkCase {
   maxMs: number
   knownWidthMm?: number
   expectedConversion?: boolean
+  expectedInputKind?: 'single' | 'multiple'
 }
 
 interface BenchmarkBaseline {
-  minimumConversionSuccessRate: number
+  minimumSinglePlanConversionRate: number
+  minimumMultipleInputDetectionRate: number
+  minimumSafeHandlingRate: number
   cases: Record<string, BenchmarkCase>
 }
 
@@ -65,6 +67,11 @@ interface Row {
   scaleErrorPct?: number
   conversionSuccess: boolean
   expectedConversion: boolean
+  expectedInputKind: 'single' | 'multiple'
+  polarity: 'dark-on-light' | 'light-on-dark'
+  inputKind: 'single' | 'multiple'
+  detectedPlanRegions: number
+  safeOutcome: boolean
 }
 
 test.describe.configure({ mode: 'serial' })
@@ -105,10 +112,13 @@ for (const [file, baseline] of Object.entries(BASELINE.cases)) {
     }, dataUrl)) as unknown as { data: number[]; width: number; height: number }
 
     const rgba = new Uint8ClampedArray(gray.data)
-    const threshold = autoThresholdOtsu(rgba, gray.width, gray.height)
-    let grayTyped: Gray = toGray(rgba, gray.width, gray.height, threshold)
-    if (inkRatio(grayTyped) > 0.5) grayTyped = invertGray(grayTyped)
+    const binarized = autoBinarizeFloorPlan(rgba, gray.width, gray.height)
+    const threshold = binarized.threshold
+    const grayTyped: Gray = binarized.gray
     const normalizedInkRatio = inkRatio(grayTyped)
+    const planRegions = detectPlanRegions(grayTyped)
+    const inputKind = planRegions.length > 1 ? 'multiple' : 'single'
+    const expectedInputKind = baseline.expectedInputKind ?? 'single'
 
     const t0 = performance.now()
     const rawPlan = buildPlanFromImage(grayTyped, {
@@ -162,35 +172,65 @@ for (const [file, baseline] of Object.entries(BASELINE.cases)) {
         : undefined,
       conversionSuccess: plan.walls.length > 0 && plan.rooms.length > 0,
       expectedConversion: baseline.expectedConversion !== false,
+      expectedInputKind,
+      polarity: binarized.polarity,
+      inputKind,
+      detectedPlanRegions: planRegions.length,
+      safeOutcome:
+        expectedInputKind === 'multiple'
+          ? inputKind === 'multiple'
+          : plan.walls.length > 0 && plan.rooms.length > 0,
     }
     RESULTS.set(file, row)
     console.log('BENCH ' + JSON.stringify(row))
 
-    expect(row.walls).toBeGreaterThanOrEqual(baseline.minWalls)
-    expect(row.rooms).toBeGreaterThanOrEqual(baseline.minRooms)
-    expect(row.openings).toBeGreaterThanOrEqual(baseline.minOpenings)
     expect(row.ms).toBeLessThan(baseline.maxMs)
     expect(row.mmPerPx).toBeGreaterThan(0)
-    if (baseline.expectedConversion !== false) expect(row.conversionSuccess).toBe(true)
+    expect(row.inputKind).toBe(expectedInputKind)
+    if (expectedInputKind === 'single' && baseline.expectedConversion !== false) {
+      expect(row.walls).toBeGreaterThanOrEqual(baseline.minWalls)
+      expect(row.rooms).toBeGreaterThanOrEqual(baseline.minRooms)
+      expect(row.openings).toBeGreaterThanOrEqual(baseline.minOpenings)
+      expect(row.conversionSuccess).toBe(true)
+    }
   })
 }
 
 test('10종 실도면의 구조 변환 성공률을 집계하고 리포트를 저장한다', async () => {
   expect(RESULTS.size).toBe(Object.keys(BASELINE.cases).length)
   const rows = [...RESULTS.values()]
-  const successCount = rows.filter((row) => row.conversionSuccess).length
-  const conversionSuccessRate = successCount / rows.length
-  expect(conversionSuccessRate).toBeGreaterThanOrEqual(BASELINE.minimumConversionSuccessRate)
-  console.log(
-    `BENCH-SUMMARY ${JSON.stringify({ cases: rows.length, successCount, conversionSuccessRate })}`
+  const singleRows = rows.filter((row) => row.expectedInputKind !== 'multiple')
+  const multipleRows = rows.filter((row) => row.expectedInputKind === 'multiple')
+  const singleSuccessCount = singleRows.filter((row) => row.conversionSuccess).length
+  const multipleDetectedCount = multipleRows.filter((row) => row.inputKind === 'multiple').length
+  const safeCount = rows.filter((row) => row.safeOutcome).length
+  const singlePlanConversionRate = singleSuccessCount / singleRows.length
+  const multipleInputDetectionRate = multipleDetectedCount / multipleRows.length
+  const safeHandlingRate = safeCount / rows.length
+  expect(singlePlanConversionRate).toBeGreaterThanOrEqual(BASELINE.minimumSinglePlanConversionRate)
+  expect(multipleInputDetectionRate).toBeGreaterThanOrEqual(
+    BASELINE.minimumMultipleInputDetectionRate
   )
+  expect(safeHandlingRate).toBeGreaterThanOrEqual(BASELINE.minimumSafeHandlingRate)
+  const summary = {
+    cases: rows.length,
+    singleCases: singleRows.length,
+    singleSuccessCount,
+    singlePlanConversionRate,
+    multipleCases: multipleRows.length,
+    multipleDetectedCount,
+    multipleInputDetectionRate,
+    safeCount,
+    safeHandlingRate,
+  }
+  console.log(`BENCH-SUMMARY ${JSON.stringify(summary)}`)
   mkdirSync('test-results', { recursive: true })
   writeFileSync(
     'test-results/cv-benchmark-latest.json',
     JSON.stringify(
       {
         at: new Date().toISOString(),
-        summary: { cases: rows.length, successCount, conversionSuccessRate },
+        summary,
         results: rows,
       },
       null,

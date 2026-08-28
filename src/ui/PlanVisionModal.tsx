@@ -5,6 +5,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   toGray,
+  autoBinarizeFloorPlan,
+  detectPlanRegions,
   buildPlanFromImage,
   autoThresholdOtsu,
   invertGray,
@@ -14,6 +16,7 @@ import {
   type Gray,
   type PlanVisionOpts,
   type RawPlan,
+  type PlanRegion,
 } from '../engine/planVision'
 import { selectRaster2SeqRooms, type Raster2SeqResponse } from '../engine/raster2seqRooms'
 import {
@@ -75,6 +78,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   const [previewReady, setPreviewReady] = useState(false)
   const [previewPlan, setPreviewPlan] = useState<RawPlan | null>(null)
   const [detectedWidthMm, setDetectedWidthMm] = useState(0)
+  const [inputRegions, setInputRegions] = useState<PlanRegion[]>([])
   const [appliedSummary, setAppliedSummary] = useState<AppliedSummary | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const grayRef = useRef<Gray | null>(null)
@@ -84,6 +88,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   const neuralRequestControllerRef = useRef<AbortController | null>(null)
   const raster2SeqRequestControllerRef = useRef<AbortController | null>(null)
   const usingNeuralRef = useRef(false)
+  const darkBackgroundRef = useRef(false)
   const previewPlanRef = useRef<RawPlan | null>(null)
   const imageGenerationRef = useRef(0)
   const runGenerationRef = useRef(0)
@@ -163,6 +168,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     setPreviewPlan(null)
     setPreviewReady(false)
     setDetectedWidthMm(0)
+    setInputRegions([])
     setKnownWidthMm(0)
     setAcceptEstimatedScale(false)
     setAppliedSummary(null)
@@ -170,6 +176,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     neuralGrayRef.current = null
     neuralOpeningMasksRef.current = null
     neuralCacheGenerationRef.current = -1
+    darkBackgroundRef.current = false
     const im = new Image()
     im.onload = () => {
       if (generation !== imageGenerationRef.current) {
@@ -198,6 +205,12 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     ctx.drawImage(im, 0, 0, c.width, c.height)
     const id = ctx.getImageData(0, 0, c.width, c.height)
     rgbaRef.current = id
+    const automatic = autoBinarizeFloorPlan(id.data, c.width, c.height)
+    if (automatic.polarity === 'light-on-dark') {
+      darkBackgroundRef.current = true
+      return automatic.gray
+    }
+    darkBackgroundRef.current = false
     const g0 = toGray(id.data, c.width, c.height, th)
     // 어두운 배경(반전 도면) 자동 감지 → 반전
     return inkRatio(g0) > 0.5 ? invertGray(g0) : g0
@@ -378,7 +391,37 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
       ctx.drawImage(img, 0, 0, c.width, c.height)
       th = autoThresholdOtsu(ctx.getImageData(0, 0, c.width, c.height).data, c.width, c.height)
     }
-    let gray: Gray | null = null
+    const inputGray = computeGray(img, th)
+    if (!inputGray) return
+    const regions = detectPlanRegions(inputGray)
+    if (runGeneration !== runGenerationRef.current) return
+    setInputRegions(regions)
+    if (regions.length > 1) {
+      grayRef.current = inputGray
+      usingNeuralRef.current = false
+      setDetectedWidthMm(0)
+      const cv = canvasRef.current
+      cv.width = inputGray.width
+      cv.height = inputGray.height
+      const ctx = cv.getContext('2d')!
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, cv.width, cv.height)
+      ctx.drawImage(img, 0, 0, cv.width, cv.height)
+      ctx.strokeStyle = '#ff9f1a'
+      ctx.fillStyle = '#ff9f1a'
+      ctx.lineWidth = Math.max(2, Math.round(Math.min(cv.width, cv.height) * 0.004))
+      ctx.setLineDash([10, 6])
+      ctx.font = `${Math.max(12, Math.round(Math.min(cv.width, cv.height) * 0.025))}px sans-serif`
+      regions.forEach((region, index) => {
+        ctx.strokeRect(region.x, region.y, region.width, region.height)
+        ctx.fillText(`영역 ${index + 1}`, region.x + 6, Math.max(16, region.y + 18))
+      })
+      ctx.setLineDash([])
+      setStatus(`여러 평면도 영역 ${regions.length}개 감지 · 원하는 영역만 잘라 다시 업로드하세요.`)
+      return
+    }
+
+    let gray: Gray | null = inputGray
     let sourceLabel = '고전 CV'
     let neural = false
     if (useNeural) {
@@ -393,8 +436,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
         console.warn('[PlanVision] 로컬 CNN 폴백', error)
       }
     }
-    gray ??= computeGray(img, th)
-    if (!gray) return
+    if (!neural && darkBackgroundRef.current) sourceLabel = '고전 CV(어두운 배경 자동 반전)'
     grayRef.current = gray
     usingNeuralRef.current = neural
     const opts = visionOptions(th, neural)
@@ -508,7 +550,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
 
   function apply() {
     if (!img || !previewPlanRef.current) return
-    if (!scaleAssessment.canApply || blockerCount > 0) {
+    if (inputRegions.length > 1 || !scaleAssessment.canApply || blockerCount > 0) {
       useStore.getState().showToast('축척과 필수 검출 항목을 확인한 뒤 적용하세요.', 'error')
       return
     }
@@ -682,6 +724,15 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
 
         {img && (
           <>
+            {inputRegions.length > 1 && (
+              <div className="pv-input-blocker" role="alert">
+                <b>여러 평면도 영역이 감지되었습니다.</b>
+                <span>
+                  현재는 한 번에 한 층 또는 한 세대만 변환할 수 있습니다. 원하는 영역만 잘라 다시
+                  업로드하세요.
+                </span>
+              </div>
+            )}
             <section className="pv-stage pv-scale-stage">
               <div className="pv-stage-head">
                 <span>2</span>
@@ -868,7 +919,13 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
         <div className="pv-actions">
           <button
             className="primary"
-            disabled={!img || !previewReady || !scaleAssessment.canApply || blockerCount > 0}
+            disabled={
+              !img ||
+              !previewReady ||
+              inputRegions.length > 1 ||
+              !scaleAssessment.canApply ||
+              blockerCount > 0
+            }
             onClick={apply}
           >
             변환 결과 적용

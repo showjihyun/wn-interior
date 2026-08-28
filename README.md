@@ -9,7 +9,7 @@
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111827)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-R3F-111111?logo=threedotjs&logoColor=white)
-![Tests](https://img.shields.io/badge/Vitest-140_tests-6E9F18?logo=vitest&logoColor=white)
+![Tests](https://img.shields.io/badge/Vitest-153_tests-6E9F18?logo=vitest&logoColor=white)
 ![License guard](https://img.shields.io/badge/non--commercial_models-production_off-59D499)
 [![Verify](https://github.com/showjihyun/wn-interior/actions/workflows/verify.yml/badge.svg)](https://github.com/showjihyun/wn-interior/actions/workflows/verify.yml)
 
@@ -180,7 +180,7 @@ On the fixed 900-plan holdout, the local CNN hybrid reached **47.52% room F1** a
 
 Those numbers are useful, but room extraction is not reliable enough for autonomous completion. HomePlan 3D therefore treats conversion as a measurable draft and asks users to verify every wall, room, opening, and dimension. Full evidence lives in:
 
-The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-pyeong, and eight license-checked Wikimedia plans). The current engine creates both walls and rooms for 8/10; this is a structural regression signal, **not an accuracy score**.
+The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-pyeong, and eight license-checked Wikimedia plans). Single-plan conversion is 7/8, multi-plan detection is 2/2, and conversion-or-safe-block handling is 9/10. These are regression signals, **not accuracy scores**.
 
 - [CV algorithm improvement](docs/evidence/CV-ALGORITHM-IMPROVEMENT.md)
 - [Opening-vector research](docs/evidence/CV-RESEARCH-STAGE-1.md)
@@ -338,7 +338,7 @@ CUDA를 우선 사용하고 CPU로 폴백합니다. production에서는 `VITE_EN
 
 방 추출은 자동 완성으로 부르기에는 부족합니다. 그래서 현재 제품은 변환 결과를 초안으로 제한하고 모든 벽·방·문·창문·치수를 사용자가 확인하도록 합니다. 근거는 다음 문서에서 확인할 수 있습니다.
 
-스타일 다양성 회귀 세트는 FOCSA, 한국 33평, 라이선스를 검증한 Wikimedia 8종을 합쳐 실제 도면 10종입니다. 현재 벽과 방을 모두 생성하는 비율은 8/10이며, 이는 **정확도 수치가 아니라 구조 생성 회귀 신호**입니다.
+스타일 다양성 회귀 세트는 FOCSA, 한국 33평, 라이선스를 검증한 Wikimedia 8종을 합쳐 실제 도면 10종입니다. 단일 도면 변환은 7/8, 복수 입력 감지는 2/2, 변환 또는 안전 차단은 9/10입니다. 이는 **정확도 수치가 아니라 회귀 신호**입니다.
 
 - [CV 알고리즘 개선](docs/evidence/CV-ALGORITHM-IMPROVEMENT.md)
 - [문·창문 벡터화 연구](docs/evidence/CV-RESEARCH-STAGE-1.md)

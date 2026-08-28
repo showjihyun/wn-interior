@@ -943,6 +943,24 @@ body,
   gap: 14px;
   align-items: end;
 }
+.pv-input-blocker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-left: 3px solid #e05b5b;
+  background: #2b2022;
+}
+.pv-input-blocker b {
+  color: #ff9292;
+  font-size: 12.5px;
+}
+.pv-input-blocker span {
+  color: #c3b4b7;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
 .pv-scale-grid label {
   margin: 0;
 }

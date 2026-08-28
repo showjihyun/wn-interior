@@ -190,6 +190,36 @@ test('실도면의 큰 축척 보정 뒤에도 검출한 문을 적용 결과에
   ).toBeGreaterThan(0)
 })
 
+test('어두운 배경 색상 도면은 밝은 벽선만 분리해 방을 복구한다', async ({ page }) => {
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal.locator('input[type=file]').setInputFiles('e2e/fixtures/real-wikimedia-apartment.png')
+  await expect(modal.locator('.status')).toContainText(/어두운 배경 자동 반전.*방 [1-9]\d*개/, {
+    timeout: 10_000,
+  })
+  await expect(modal.locator('.status')).toContainText(/문 [1-9]\d*개/)
+})
+
+test('복수 평면 입력은 적용을 막고 단일 도면 재업로드 시 차단을 해제한다', async ({ page }) => {
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  const fileInput = modal.locator('input[type=file]')
+  const applyButton = modal.getByRole('button', { name: /변환 결과 적용/ })
+
+  await fileInput.setInputFiles('e2e/fixtures/real-wikimedia-somerville.png')
+  await expect(modal.getByRole('alert')).toContainText(
+    /여러 평면도 영역.*한 번에 한 층 또는 한 세대/
+  )
+  await expect(modal.locator('.status')).toContainText(/여러 평면도 영역 \d+개 감지/)
+  await expect(applyButton).toBeDisabled()
+
+  await fileInput.setInputFiles('e2e/fixtures/real-korean-33pyeong.png')
+  await expect(modal.getByRole('alert')).toHaveCount(0)
+  await expect(modal.locator('.status')).toContainText(/벽 \d+개 · 방 \d+개/, { timeout: 10_000 })
+  await modal.getByLabel('도면 전체 가로 실측').fill('11800')
+  await expect(applyButton).toBeEnabled()
+})
+
 test('로컬 CNN door/window 채널을 직접 Opening으로 변환한다', async ({ page }) => {
   const [wallMask, doorMask, windowMask] = await Promise.all([
     makeSemanticMask(page, 'wall'),

@@ -27,3 +27,5 @@
 - 개별 성공 사례에는 최초 측정치보다 낮은 회귀 하한을 설정했다.
 - 실패 사례 2종은 `expectedConversion: false`로 명시하되 전체 성공률 분모에서는 제외하지 않았다.
 - 전체 검증: 확대 직후 `npm run verify:full` 종료 코드 `0`(단위 `140`, E2E `55 passed / 2 skipped`, preview `3`). 개인정보성 파일명 후보 교체 후 `npm run verify`와 10종 벤치마크 `12 passed`를 다시 확인했다.
+
+후속 극성·복수 입력 개선으로 현재 게이트는 단일 변환·복수 감지·안전 처리로 분리됐다. 최신 기준은 `docs/tdd/2026-08-28-dark-polarity-and-multi-input.md`를 따른다.

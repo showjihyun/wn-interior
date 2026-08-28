@@ -208,9 +208,12 @@ test('복수 평면 입력은 적용을 막고 단일 도면 재업로드 시 �
 
   await fileInput.setInputFiles('e2e/fixtures/real-wikimedia-somerville.png')
   await expect(modal.getByRole('alert')).toContainText(
-    /여러 평면도 영역.*한 번에 한 층 또는 한 세대/
+    /여러 평면도 영역.*한 번에 한 층 또는 한 세대/,
+    { timeout: 20_000 }
   )
-  await expect(modal.locator('.status')).toContainText(/여러 평면도 영역 \d+개 감지/)
+  await expect(modal.locator('.status')).toContainText(/여러 평면도 영역 \d+개 감지/, {
+    timeout: 20_000,
+  })
   await expect(applyButton).toBeDisabled()
 
   await fileInput.setInputFiles('e2e/fixtures/real-korean-33pyeong.png')

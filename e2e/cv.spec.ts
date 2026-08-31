@@ -221,6 +221,33 @@ test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D �
   expect(plan.maxX - plan.minX).toBeCloseTo(12000, -1)
 })
 
+test('로컬 CNN 실패는 사용자에게 기본 분석 성공으로 안내하고 상세 원인은 접어 둔다', async ({
+  page,
+}) => {
+  await page.route('http://127.0.0.1:8976/health', (route) =>
+    route.fulfill({ status: 503, json: { error: 'offline' } })
+  )
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal.locator('input[type=file]').setInputFiles({
+    name: 'fallback-plan.png',
+    mimeType: 'image/png',
+    buffer: await makePlanPng(page),
+  })
+
+  const status = modal.locator('.status')
+  await expect(status).toContainText(/로컬 모델을 사용할 수 없어 기본 분석으로 처리했습니다/, {
+    timeout: 10_000,
+  })
+  await expect(status).not.toContainText(/CNN 실패|unavailable|offline|aborted/)
+
+  await modal.getByText('고급 검출 설정').click()
+  const diagnostic = modal.getByText('진단 상세')
+  await expect(diagnostic).toBeVisible()
+  await diagnostic.click()
+  await expect(modal.locator('.pv-diagnostic')).toContainText(/CNN 실패\(unavailable/)
+})
+
 test('실도면의 큰 축척 보정 뒤에도 검출한 문을 적용 결과에 보존한다', async ({ page }) => {
   await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
   const modal = page.locator('.modal')

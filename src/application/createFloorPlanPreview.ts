@@ -27,6 +27,7 @@ export interface FloorPlanPreviewResult {
   gray: Gray
   rawDetectedWidthMm: number
   sourceLabel: string
+  diagnosticLabel?: string
   roomSourceLabel: string
   usedSegmentation: boolean
   segmentationEngine?: string
@@ -69,6 +70,7 @@ export function createFloorPlanPreview(gateway: PlanVisionGateway): CreateFloorP
     async execute(input) {
       let gray = input.classicGray
       let sourceLabel = input.darkBackground ? '고전 CV(어두운 배경 자동 반전)' : '고전 CV'
+      let diagnosticLabel: string | undefined
       let usedSegmentation = false
       let masks: SemanticFloorPlanMasks | undefined
       if (input.useSegmentation) {
@@ -84,8 +86,9 @@ export function createFloorPlanPreview(gateway: PlanVisionGateway): CreateFloorP
               : error instanceof Error
                 ? error.message
                 : 'unknown'
-          sourceLabel = `CNN 실패(${detail}) → ${
-            input.darkBackground ? '고전 CV(어두운 배경 자동 반전)' : '고전 CV'
+          diagnosticLabel = `CNN 실패(${detail})`
+          sourceLabel = `로컬 모델을 사용할 수 없어 기본 분석으로 처리했습니다${
+            input.darkBackground ? '(어두운 배경 자동 반전)' : ''
           }`
         }
       }
@@ -122,6 +125,7 @@ export function createFloorPlanPreview(gateway: PlanVisionGateway): CreateFloorP
         gray,
         rawDetectedWidthMm,
         sourceLabel,
+        diagnosticLabel,
         roomSourceLabel,
         usedSegmentation,
         segmentationEngine: masks?.engineLabel,

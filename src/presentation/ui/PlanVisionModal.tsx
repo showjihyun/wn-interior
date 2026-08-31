@@ -39,6 +39,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null)
   const [srcUrl, setSrcUrl] = useState('')
   const [status, setStatus] = useState('')
+  const [diagnostic, setDiagnostic] = useState('')
   const [threshold, setThreshold] = useState(128)
   const [minThickness, setMinThickness] = useState(4)
   const [minLength, setMinLength] = useState(40)
@@ -97,6 +98,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     setKnownWidthMm(0)
     setAcceptEstimatedScale(false)
     setAppliedSummary(null)
+    setDiagnostic('')
     conversionStartedAtRef.current = performance.now()
     const im = new Image()
     im.onload = () => {
@@ -183,6 +185,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     previewPlanRef.current = null
     setPreviewPlan(null)
     setPreviewReady(false)
+    setDiagnostic('')
     let th = threshold
     if (useOtsu) {
       const c = document.createElement('canvas')
@@ -242,13 +245,21 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
       return
     }
     if (runGeneration !== runGenerationRef.current) return
-    const { plan: raw, gray, rawDetectedWidthMm, sourceLabel, roomSourceLabel } = preview
+    const {
+      plan: raw,
+      gray,
+      rawDetectedWidthMm,
+      sourceLabel,
+      diagnosticLabel,
+      roomSourceLabel,
+    } = preview
     if (preview.segmentationEngine) setNeuralDevice(preview.segmentationEngine)
     if (preview.roomPredictionEngine) setRaster2SeqDevice(preview.roomPredictionEngine)
     previewPlanRef.current = raw
     setPreviewPlan(raw)
     setDetectedWidthMm(rawDetectedWidthMm)
     setPreviewReady(true)
+    setDiagnostic(diagnosticLabel ?? '')
     // 프리뷰 렌더
     const cv = canvasRef.current
     cv.width = gray.width
@@ -618,6 +629,12 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
                   />
                 </label>
               </div>
+              {diagnostic && (
+                <details className="pv-diagnostic">
+                  <summary>진단 상세</summary>
+                  <code>{diagnostic}</code>
+                </details>
+              )}
             </details>
 
             <section className="pv-stage pv-review-stage">

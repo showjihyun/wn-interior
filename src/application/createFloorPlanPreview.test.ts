@@ -86,8 +86,11 @@ describe('CreateFloorPlanPreview', () => {
     })
 
     expect(result.usedSegmentation).toBe(false)
-    expect(result.sourceLabel).toContain('CNN 실패(offline)')
+    expect(result.sourceLabel).toContain('로컬 모델을 사용할 수 없어 기본 분석으로 처리했습니다')
     expect(result.sourceLabel).toContain('어두운 배경 자동 반전')
+    expect(result.sourceLabel).not.toContain('CNN 실패')
+    expect(result.sourceLabel).not.toContain('offline')
+    expect(result.diagnosticLabel).toContain('CNN 실패(offline)')
     expect(result.roomSourceLabel).toContain('Raster2Seq 거부')
   })
 

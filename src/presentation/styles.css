@@ -1160,6 +1160,26 @@ body,
   gap: 8px 16px;
   margin: 10px 0;
 }
+.pv-diagnostic {
+  margin-top: 10px;
+  border: 1px solid #3a424b;
+  border-radius: 6px;
+  background: #1e2328;
+  padding: 7px 9px;
+}
+.pv-diagnostic summary {
+  color: #9ea7af;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pv-diagnostic code {
+  display: block;
+  margin-top: 7px;
+  color: #c8cdd2;
+  font-size: 10.5px;
+  overflow-wrap: anywhere;
+}
 .pv-controls label {
   display: flex;
   flex-direction: column;

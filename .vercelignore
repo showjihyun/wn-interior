@@ -7,3 +7,9 @@ coverage/**
 test-results/**
 playwright-report/**
 blob-report/**
+.playwright-cli/**
+dist/**
+docs/**
+e2e/**
+shots/**
+tmp/**

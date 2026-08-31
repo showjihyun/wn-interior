@@ -6,7 +6,7 @@
 
 초기 권장 모델은 공식 코드와 pretrained model이 MIT인 TripoSR이다. 공식 기본 실행은 단일 이미지에 약 6GB VRAM을 사용하므로 현재 RTX 3060 12GB에서 시험할 수 있다. 실제 품질·입력 권리 검토 전에는 어떤 결과도 공개 manifest에 추가하지 않는다.
 
-`services/triposr-worker` 자체를 Vercel Python Function으로 배포하지 않는다. 이 worker는 CUDA PyTorch 기반 이미지, Git 빌드형 `torchmcubes`, 네이티브 `xatlas/moderngl`, 지속 모델 캐시가 필요한 GPU Docker 서비스다. `vercel services/triposr-worker`는 Vercel Python builder가 이 구성을 serverless 함수로 오판하므로 지원 경로가 아니다. 루트 `.vercelignore`는 `services/**`를 제외하고 `npm run test:vercel-boundary`가 이 경계를 검사한다. worker는 아래 Docker 명령으로 GPU 호스트에 독립 배포한다.
+`services/triposr-worker` 자체를 Vercel Python Function으로 배포하지 않는다. 이 worker는 CUDA PyTorch 기반 이미지, Git 빌드형 `torchmcubes`, 네이티브 `xatlas/moderngl`, 지속 모델 캐시가 필요한 GPU Docker 서비스다. `vercel services/triposr-worker`는 Vercel Python builder가 이 구성을 serverless 함수로 오판하므로 지원 경로가 아니다. 루트 `.vercelignore`는 `services/**`를 제외하고, `vercel.json`은 Vite `frontend`만 명시적 서비스로 선언한다. `npm run test:vercel-boundary`가 두 경계를 함께 검사한다. worker는 아래 Docker 명령으로 GPU 호스트에 독립 배포한다.
 
 설치·실행:
 

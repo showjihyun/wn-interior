@@ -120,6 +120,25 @@ export function Editor2D() {
     !!reviewDecision &&
     reviewNote.trim().length >= MIN_FLOOR_PLAN_REVIEW_NOTE_LENGTH &&
     (reviewDecision !== 'modified' || selectedTargetChanged)
+  const reviewSelectionEnabled = projectOrigin === 'cv' && !reviewCompleted && showDraftGuide
+
+  function activateSvgTarget(kind: 'wall' | 'room' | 'opening', id: string) {
+    if (tool !== 'select') return
+    if (reviewSelectionEnabled) setReviewTarget(`${kind}:${id}`)
+    if (kind === 'wall') select(`wall:${id}`)
+    if (kind === 'opening') setSelOpening(id)
+  }
+
+  function targetKeyDown(
+    event: React.KeyboardEvent<SVGGElement>,
+    kind: 'wall' | 'room' | 'opening',
+    id: string
+  ) {
+    if (tool !== 'select' || (event.key !== 'Enter' && event.key !== ' ')) return
+    event.preventDefault()
+    event.stopPropagation()
+    activateSvgTarget(kind, id)
+  }
 
   function toPlan(e: React.PointerEvent | React.MouseEvent): Pt {
     const svg = svgRef.current!
@@ -443,13 +462,35 @@ export function Editor2D() {
         {plan.rooms.map((r) => {
           const isReviewTarget =
             selectedReviewTarget?.kind === 'room' && selectedReviewTarget.id === r.id
+          const label = floorPlanReviewTargetLabel(plan, 'room', r.id) ?? `방 · ${r.name}`
           return (
-            <g key={r.id} data-review-highlight={isReviewTarget ? 'true' : undefined}>
+            <g
+              key={r.id}
+              className="ed2d-interactive"
+              data-review-highlight={isReviewTarget ? 'true' : undefined}
+              role="button"
+              tabIndex={tool === 'select' && reviewSelectionEnabled ? 0 : -1}
+              aria-disabled={tool !== 'select' || !reviewSelectionEnabled}
+              aria-label={label}
+              aria-pressed={isReviewTarget}
+              onClick={(event) => {
+                if (tool !== 'select' || !reviewSelectionEnabled) return
+                event.stopPropagation()
+                activateSvgTarget('room', r.id)
+              }}
+              onKeyDown={(event) => targetKeyDown(event, 'room', r.id)}
+            >
               <polygon
                 points={r.polygon.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="#f4f6f8"
                 stroke={isReviewTarget ? '#e58a00' : '#dfe4ea'}
                 strokeWidth={isReviewTarget ? 70 : 20}
+              />
+              <polygon
+                className="ed2d-focus-ring"
+                points={r.polygon.map((p) => `${p.x},${p.y}`).join(' ')}
+                fill="none"
+                strokeWidth={90}
               />
               <text
                 x={r.polygon.reduce((a, p) => a + p.x, 0) / r.polygon.length}
@@ -483,8 +524,34 @@ export function Editor2D() {
           const L = wallLength(w)
           const isReviewTarget =
             selectedReviewTarget?.kind === 'wall' && selectedReviewTarget.id === w.id
+          const label = floorPlanReviewTargetLabel(plan, 'wall', w.id) ?? `벽 ${w.id}`
           return (
-            <g key={w.id} data-review-highlight={isReviewTarget ? 'true' : undefined}>
+            <g
+              key={w.id}
+              className="ed2d-interactive"
+              data-review-highlight={isReviewTarget ? 'true' : undefined}
+              role="button"
+              tabIndex={tool === 'select' ? 0 : -1}
+              aria-disabled={tool !== 'select'}
+              aria-label={label}
+              aria-pressed={isReviewTarget || selectedId === `wall:${w.id}`}
+              onClick={(event) => {
+                // 선택 도구에서만 벽 선택 — 문/창문 배치 클릭은 svg까지 전파된다.
+                if (tool !== 'select') return
+                event.stopPropagation()
+                activateSvgTarget('wall', w.id)
+              }}
+              onKeyDown={(event) => targetKeyDown(event, 'wall', w.id)}
+            >
+              <line
+                className="ed2d-focus-ring"
+                x1={w.a.x}
+                y1={w.a.y}
+                x2={w.b.x}
+                y2={w.b.y}
+                strokeWidth={Math.max(w.thickness + 140, 320)}
+                strokeLinecap="round"
+              />
               <line
                 x1={w.a.x}
                 y1={w.a.y}
@@ -500,15 +567,9 @@ export function Editor2D() {
                 x2={w.b.x}
                 y2={w.b.y}
                 stroke="transparent"
-                strokeWidth={Math.max(w.thickness, 160)}
+                strokeWidth={Math.max(w.thickness, 320)}
+                className="ed2d-hit-target"
                 style={{ cursor: 'pointer' }}
-                onClick={(e) => {
-                  // 선택 도구에서만 벽 선택 — 문/창문 배치 클릭은 svg까지 전파되야 함
-                  if (tool === 'select') {
-                    e.stopPropagation()
-                    select(`wall:${w.id}`)
-                  }
-                }}
               />
               {/* 끝점 핸들 (선택 시) */}
               {selectedId === `wall:${w.id}` &&
@@ -580,18 +641,50 @@ export function Editor2D() {
           const isSel = selOpening === o.id
           const isReviewTarget =
             selectedReviewTarget?.kind === 'opening' && selectedReviewTarget.id === o.id
+          const label = floorPlanReviewTargetLabel(plan, 'opening', o.id) ?? `개구부 ${o.id}`
+          const hitPadding = Math.max(80, w.thickness / 2)
+          const hitHeight =
+            o.type === 'window'
+              ? Math.max(w.thickness + hitPadding * 2, 320)
+              : o.width + w.thickness / 2 + hitPadding
           return (
             <g
               key={o.id}
+              className="ed2d-interactive"
               data-testid={`opening-${o.id}`}
               data-review-highlight={isReviewTarget ? 'true' : undefined}
               transform={`translate(${mx},${my}) rotate(${(ang * 180) / Math.PI})`}
-              onClick={(e) => {
-                e.stopPropagation()
-                setSelOpening(o.id)
+              role="button"
+              tabIndex={tool === 'select' ? 0 : -1}
+              aria-disabled={tool !== 'select'}
+              aria-label={label}
+              aria-pressed={isReviewTarget || isSel}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (tool === 'select') activateSvgTarget('opening', o.id)
+                else setSelOpening(o.id)
               }}
+              onKeyDown={(event) => targetKeyDown(event, 'opening', o.id)}
               style={{ cursor: 'pointer' }}
             >
+              <rect
+                className="ed2d-hit-target"
+                x={-o.width / 2 - hitPadding}
+                y={-w.thickness / 2 - hitPadding}
+                width={o.width + hitPadding * 2}
+                height={hitHeight}
+                fill="transparent"
+              />
+              <rect
+                className="ed2d-focus-ring"
+                x={-o.width / 2 - hitPadding}
+                y={-w.thickness / 2 - hitPadding}
+                width={o.width + hitPadding * 2}
+                height={hitHeight}
+                rx={60}
+                fill="none"
+                strokeWidth={60}
+              />
               <rect
                 x={-o.width / 2}
                 y={-w.thickness / 2 - 10}

@@ -684,6 +684,24 @@ body,
   flex: 1;
   user-select: none;
 }
+.ed2d-interactive:focus {
+  outline: none;
+}
+.ed2d-interactive[aria-disabled='false'] {
+  cursor: pointer;
+}
+.ed2d-hit-target {
+  fill: transparent;
+  stroke: transparent;
+}
+.ed2d-focus-ring {
+  pointer-events: none;
+  stroke: #075fae;
+  opacity: 0;
+}
+.ed2d-interactive:focus-visible > .ed2d-focus-ring {
+  opacity: 1;
+}
 .room-label {
   font-size: 340px;
   fill: #9aa3ac;

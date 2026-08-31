@@ -182,6 +182,54 @@ test('CV 초안은 대표 요소의 판정 근거를 저장한 뒤에만 3D를 �
   })
 })
 
+test('2D 검수 요소는 키보드와 문 스윙 히트 영역으로 선택한다', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal.locator('input[type=file]').setInputFiles({
+    name: 'accessible-review-plan.png',
+    mimeType: 'image/png',
+    buffer: await makePlanPng(page),
+  })
+  await expect(modal.locator('.status')).toContainText(/벽 \d+개 · 방 \d+개/, {
+    timeout: 10_000,
+  })
+  await modal.getByLabel('도면 전체 가로 실측').fill('12000')
+  await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
+  await modal.getByRole('button', { name: /2D에서.*(보정|검수)/ }).click()
+
+  const review = page.getByRole('complementary', { name: '변환 초안 검수', exact: true })
+  const targetSelect = review.getByLabel('대표 검수 요소')
+  const wall = page.locator('.ed2d-svg [role="button"][aria-label^="벽 "]').first()
+  const room = page.locator('.ed2d-svg [role="button"][aria-label^="방 · "]').first()
+  const opening = page.locator('.ed2d-svg [role="button"][data-testid^="opening-"]').first()
+
+  await expect(wall).toHaveAttribute('tabindex', '0')
+  await wall.focus()
+  await page.keyboard.press('Enter')
+  await expect(targetSelect).toHaveValue(/^wall:/)
+
+  await room.focus()
+  await page.keyboard.press('Space')
+  await expect(targetSelect).toHaveValue(/^room:/)
+
+  await opening.focus()
+  await page.keyboard.press('Space')
+  await expect(targetSelect).toHaveValue(/^opening:/)
+
+  const openingBox = await opening.boundingBox()
+  expect(openingBox).not.toBeNull()
+  await targetSelect.selectOption({ value: '' })
+  await page.mouse.click(
+    openingBox!.x + openingBox!.width / 2,
+    openingBox!.y + openingBox!.height / 2
+  )
+  await expect(targetSelect).toHaveValue(/^opening:/)
+
+  await page.getByRole('button', { name: /벽 그리기/ }).click()
+  await expect(wall).toHaveAttribute('tabindex', '-1')
+})
+
 test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D 평면도로 변환한다', async ({ page }) => {
   await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
   const modal = page.locator('.modal')

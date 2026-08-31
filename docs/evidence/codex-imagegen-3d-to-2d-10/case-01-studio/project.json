@@ -1,0 +1,104 @@
+{
+  "id": "case-01-studio",
+  "label": "single room studio",
+  "plan": {
+    "unit": "mm",
+    "wallHeight": 2400,
+    "walls": [
+      {
+        "id": "north",
+        "a": {
+          "x": 0,
+          "y": 0
+        },
+        "b": {
+          "x": 8000,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "east",
+        "a": {
+          "x": 8000,
+          "y": 0
+        },
+        "b": {
+          "x": 8000,
+          "y": 6000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "south",
+        "a": {
+          "x": 8000,
+          "y": 6000
+        },
+        "b": {
+          "x": 0,
+          "y": 6000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "west",
+        "a": {
+          "x": 0,
+          "y": 6000
+        },
+        "b": {
+          "x": 0,
+          "y": 0
+        },
+        "thickness": 200
+      }
+    ],
+    "openings": [
+      {
+        "id": "o-west",
+        "wallId": "west",
+        "type": "entry",
+        "offset": 2500,
+        "width": 1000,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-north",
+        "wallId": "north",
+        "type": "window",
+        "offset": 3100,
+        "width": 1800,
+        "height": 1400,
+        "sill": 850
+      }
+    ],
+    "rooms": [
+      {
+        "id": "r1",
+        "name": "Studio",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 8000,
+            "y": 0
+          },
+          {
+            "x": 8000,
+            "y": 6000
+          },
+          {
+            "x": 0,
+            "y": 6000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      }
+    ]
+  }
+}

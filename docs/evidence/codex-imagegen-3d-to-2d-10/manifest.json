@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-08-31T13:27:40.203Z",
+  "condition": "structural-no-furniture",
+  "views": [
+    "top",
+    "iso-a",
+    "iso-b"
+  ],
+  "cases": [
+    {
+      "id": "case-01-studio",
+      "label": "single room studio",
+      "rooms": 1,
+      "walls": 4,
+      "openings": 2
+    },
+    {
+      "id": "case-02-dual-vertical",
+      "label": "two rooms divided vertically",
+      "rooms": 2,
+      "walls": 5,
+      "openings": 3
+    },
+    {
+      "id": "case-03-dual-horizontal",
+      "label": "two rooms divided horizontally",
+      "rooms": 2,
+      "walls": 5,
+      "openings": 3
+    },
+    {
+      "id": "case-04-three-bays",
+      "label": "three parallel bays",
+      "rooms": 3,
+      "walls": 6,
+      "openings": 4
+    },
+    {
+      "id": "case-05-four-grid",
+      "label": "four-room grid",
+      "rooms": 4,
+      "walls": 6,
+      "openings": 4
+    },
+    {
+      "id": "case-06-corridor-six",
+      "label": "six spaces around a corridor",
+      "rooms": 6,
+      "walls": 9,
+      "openings": 7
+    },
+    {
+      "id": "case-07-l-shape",
+      "label": "L-shaped exterior",
+      "rooms": 4,
+      "walls": 9,
+      "openings": 5
+    },
+    {
+      "id": "case-08-long-five",
+      "label": "five-room long plan",
+      "rooms": 5,
+      "walls": 8,
+      "openings": 6
+    },
+    {
+      "id": "case-09-central-spine",
+      "label": "central spine with four side rooms",
+      "rooms": 5,
+      "walls": 8,
+      "openings": 6
+    },
+    {
+      "id": "case-10-apartment",
+      "label": "sample apartment with mixed room sizes",
+      "rooms": 5,
+      "walls": 10,
+      "openings": 9
+    }
+  ]
+}

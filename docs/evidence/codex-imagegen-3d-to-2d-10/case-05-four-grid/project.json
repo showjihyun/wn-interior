@@ -1,0 +1,218 @@
+{
+  "id": "case-05-four-grid",
+  "label": "four-room grid",
+  "plan": {
+    "unit": "mm",
+    "wallHeight": 2400,
+    "walls": [
+      {
+        "id": "north",
+        "a": {
+          "x": 0,
+          "y": 0
+        },
+        "b": {
+          "x": 10000,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "east",
+        "a": {
+          "x": 10000,
+          "y": 0
+        },
+        "b": {
+          "x": 10000,
+          "y": 8000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "south",
+        "a": {
+          "x": 10000,
+          "y": 8000
+        },
+        "b": {
+          "x": 0,
+          "y": 8000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "west",
+        "a": {
+          "x": 0,
+          "y": 8000
+        },
+        "b": {
+          "x": 0,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "i1",
+        "a": {
+          "x": 5000,
+          "y": 0
+        },
+        "b": {
+          "x": 5000,
+          "y": 8000
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i2",
+        "a": {
+          "x": 0,
+          "y": 4000
+        },
+        "b": {
+          "x": 10000,
+          "y": 4000
+        },
+        "thickness": 120
+      }
+    ],
+    "openings": [
+      {
+        "id": "o-west",
+        "wallId": "west",
+        "type": "entry",
+        "offset": 3500,
+        "width": 1000,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-north",
+        "wallId": "north",
+        "type": "window",
+        "offset": 4100,
+        "width": 1800,
+        "height": 1400,
+        "sill": 850
+      },
+      {
+        "id": "o-i1",
+        "wallId": "i1",
+        "type": "door",
+        "offset": 3590,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-i2",
+        "wallId": "i2",
+        "type": "door",
+        "offset": 4590,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      }
+    ],
+    "rooms": [
+      {
+        "id": "r1",
+        "name": "NW",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 5000,
+            "y": 0
+          },
+          {
+            "x": 5000,
+            "y": 4000
+          },
+          {
+            "x": 0,
+            "y": 4000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r2",
+        "name": "NE",
+        "polygon": [
+          {
+            "x": 5000,
+            "y": 0
+          },
+          {
+            "x": 10000,
+            "y": 0
+          },
+          {
+            "x": 10000,
+            "y": 4000
+          },
+          {
+            "x": 5000,
+            "y": 4000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r3",
+        "name": "SW",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 4000
+          },
+          {
+            "x": 5000,
+            "y": 4000
+          },
+          {
+            "x": 5000,
+            "y": 8000
+          },
+          {
+            "x": 0,
+            "y": 8000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r4",
+        "name": "SE",
+        "polygon": [
+          {
+            "x": 5000,
+            "y": 4000
+          },
+          {
+            "x": 10000,
+            "y": 4000
+          },
+          {
+            "x": 10000,
+            "y": 8000
+          },
+          {
+            "x": 5000,
+            "y": 8000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      }
+    ]
+  }
+}

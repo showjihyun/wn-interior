@@ -1,0 +1,343 @@
+{
+  "id": "case-10-apartment",
+  "label": "sample apartment with mixed room sizes",
+  "plan": {
+    "unit": "mm",
+    "wallHeight": 2400,
+    "walls": [
+      {
+        "id": "w-n",
+        "a": {
+          "x": 0,
+          "y": 0
+        },
+        "b": {
+          "x": 10600,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "w-e",
+        "a": {
+          "x": 10600,
+          "y": 0
+        },
+        "b": {
+          "x": 10600,
+          "y": 7400
+        },
+        "thickness": 200
+      },
+      {
+        "id": "w-s",
+        "a": {
+          "x": 10600,
+          "y": 7400
+        },
+        "b": {
+          "x": 0,
+          "y": 7400
+        },
+        "thickness": 200
+      },
+      {
+        "id": "w-w",
+        "a": {
+          "x": 0,
+          "y": 7400
+        },
+        "b": {
+          "x": 0,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "i-master-e",
+        "a": {
+          "x": 4600,
+          "y": 0
+        },
+        "b": {
+          "x": 4600,
+          "y": 4600
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i-master-s",
+        "a": {
+          "x": 0,
+          "y": 4600
+        },
+        "b": {
+          "x": 4600,
+          "y": 4600
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i-bed2-w",
+        "a": {
+          "x": 2800,
+          "y": 4600
+        },
+        "b": {
+          "x": 2800,
+          "y": 7400
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i-bath-s",
+        "a": {
+          "x": 4600,
+          "y": 2400
+        },
+        "b": {
+          "x": 7200,
+          "y": 2400
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i-bath-e",
+        "a": {
+          "x": 7200,
+          "y": 0
+        },
+        "b": {
+          "x": 7200,
+          "y": 2400
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i-hall-e",
+        "a": {
+          "x": 4600,
+          "y": 4600
+        },
+        "b": {
+          "x": 4600,
+          "y": 7400
+        },
+        "thickness": 120
+      }
+    ],
+    "openings": [
+      {
+        "id": "o-entry",
+        "wallId": "w-s",
+        "type": "entry",
+        "offset": 5900,
+        "width": 1100,
+        "height": 2100,
+        "sill": 0
+      },
+      {
+        "id": "o-m1",
+        "wallId": "i-master-s",
+        "type": "door",
+        "offset": 3500,
+        "width": 850,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-m2",
+        "wallId": "i-bed2-w",
+        "type": "door",
+        "offset": 900,
+        "width": 800,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-bath",
+        "wallId": "i-bath-s",
+        "type": "door",
+        "offset": 700,
+        "width": 750,
+        "height": 2000,
+        "sill": 0
+      },
+      {
+        "id": "o-win-master",
+        "wallId": "w-n",
+        "type": "window",
+        "offset": 1300,
+        "width": 2000,
+        "height": 1500,
+        "sill": 900
+      },
+      {
+        "id": "o-win-bed2",
+        "wallId": "w-w",
+        "type": "window",
+        "offset": 1400,
+        "width": 1600,
+        "height": 1400,
+        "sill": 950
+      },
+      {
+        "id": "o-win-living-s",
+        "wallId": "w-s",
+        "type": "window",
+        "offset": 1800,
+        "width": 4200,
+        "height": 1600,
+        "sill": 500
+      },
+      {
+        "id": "o-win-living-e",
+        "wallId": "w-e",
+        "type": "window",
+        "offset": 2600,
+        "width": 2200,
+        "height": 1500,
+        "sill": 800
+      },
+      {
+        "id": "o-win-bath",
+        "wallId": "i-bath-e",
+        "type": "window",
+        "offset": 800,
+        "width": 700,
+        "height": 600,
+        "sill": 1500
+      }
+    ],
+    "rooms": [
+      {
+        "id": "r-master",
+        "name": "안방",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 4600,
+            "y": 0
+          },
+          {
+            "x": 4600,
+            "y": 4600
+          },
+          {
+            "x": 0,
+            "y": 4600
+          }
+        ],
+        "floorMaterialId": "f-wood-natural",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r-bath",
+        "name": "욕실",
+        "polygon": [
+          {
+            "x": 4600,
+            "y": 0
+          },
+          {
+            "x": 7200,
+            "y": 0
+          },
+          {
+            "x": 7200,
+            "y": 2400
+          },
+          {
+            "x": 4600,
+            "y": 2400
+          }
+        ],
+        "floorMaterialId": "f-tile-small",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r-bed2",
+        "name": "방2",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 4600
+          },
+          {
+            "x": 2800,
+            "y": 4600
+          },
+          {
+            "x": 2800,
+            "y": 7400
+          },
+          {
+            "x": 0,
+            "y": 7400
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-gray"
+      },
+      {
+        "id": "r-hall",
+        "name": "현관",
+        "polygon": [
+          {
+            "x": 2800,
+            "y": 4600
+          },
+          {
+            "x": 4600,
+            "y": 4600
+          },
+          {
+            "x": 4600,
+            "y": 7400
+          },
+          {
+            "x": 2800,
+            "y": 7400
+          }
+        ],
+        "floorMaterialId": "f-tile-gray",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r-living",
+        "name": "거실·주방",
+        "polygon": [
+          {
+            "x": 7200,
+            "y": 0
+          },
+          {
+            "x": 10600,
+            "y": 0
+          },
+          {
+            "x": 10600,
+            "y": 7400
+          },
+          {
+            "x": 4600,
+            "y": 7400
+          },
+          {
+            "x": 4600,
+            "y": 2400
+          },
+          {
+            "x": 7200,
+            "y": 2400
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      }
+    ]
+  }
+}

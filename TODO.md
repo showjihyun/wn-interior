@@ -387,6 +387,17 @@
 - [x] `960×540`, 150프레임, 30,000ms metadata와 대표 프레임 검증
 - [x] README 및 GIF 산출물 2회 비판 리뷰와 개선 기록
 
+### M42 Codex imagegen 3D→2D 10건 탐색 비교 ✅
+
+- [x] 방 1–6개·복도·L자·장방형·샘플 아파트 정답 Project 10건 고정
+- [x] 실제 HomePlan 3D top + 양방향 iso와 2D 정답 캡처
+- [x] 동일 prompt로 built-in imagegen 10건 생성, 사람 수정 없음
+- [x] bbox 정합, one-to-one wall matching, shape IoU·종횡비 오차 자동 산출
+- [x] 문·창문 위치를 comparison으로 수동 대조하고 반증 기록
+- [x] 전체 Project·입력·출력·overlay·metrics·HTML 보고서 보존
+
+판정: 방 개수는 10/10 보존했지만 평균 종횡비 오차 17.76%, 창 추가 5건과 문 누락·이동이 있어 mm 도면으로 직접 사용할 수 없다. 반복 사용자 요구가 확인되기 전 screenshot-only 역변환기는 다음 개발 항목으로 승격하지 않는다.
+
 ### M24 2D→3D 정확도 2,200건 감사 ✅
 
 - [x] CubiCasa5K 실제 도면 1,000건 층화 표본 추출 + 이미지/SVG CRC 검증

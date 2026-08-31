@@ -1,0 +1,149 @@
+{
+  "id": "case-02-dual-vertical",
+  "label": "two rooms divided vertically",
+  "plan": {
+    "unit": "mm",
+    "wallHeight": 2400,
+    "walls": [
+      {
+        "id": "north",
+        "a": {
+          "x": 0,
+          "y": 0
+        },
+        "b": {
+          "x": 9000,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "east",
+        "a": {
+          "x": 9000,
+          "y": 0
+        },
+        "b": {
+          "x": 9000,
+          "y": 6000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "south",
+        "a": {
+          "x": 9000,
+          "y": 6000
+        },
+        "b": {
+          "x": 0,
+          "y": 6000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "west",
+        "a": {
+          "x": 0,
+          "y": 6000
+        },
+        "b": {
+          "x": 0,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "i1",
+        "a": {
+          "x": 4300,
+          "y": 0
+        },
+        "b": {
+          "x": 4300,
+          "y": 6000
+        },
+        "thickness": 120
+      }
+    ],
+    "openings": [
+      {
+        "id": "o-west",
+        "wallId": "west",
+        "type": "entry",
+        "offset": 2500,
+        "width": 1000,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-north",
+        "wallId": "north",
+        "type": "window",
+        "offset": 3600,
+        "width": 1800,
+        "height": 1400,
+        "sill": 850
+      },
+      {
+        "id": "o-i1",
+        "wallId": "i1",
+        "type": "door",
+        "offset": 2590,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      }
+    ],
+    "rooms": [
+      {
+        "id": "r1",
+        "name": "West",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 4300,
+            "y": 0
+          },
+          {
+            "x": 4300,
+            "y": 6000
+          },
+          {
+            "x": 0,
+            "y": 6000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r2",
+        "name": "East",
+        "polygon": [
+          {
+            "x": 4300,
+            "y": 0
+          },
+          {
+            "x": 9000,
+            "y": 0
+          },
+          {
+            "x": 9000,
+            "y": 6000
+          },
+          {
+            "x": 4300,
+            "y": 6000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      }
+    ]
+  }
+}

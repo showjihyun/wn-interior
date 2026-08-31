@@ -84,3 +84,7 @@ Avoid: invented rooms, curved walls, perspective, 3D shading, dimensions not sup
 - **선행 결정:** 구조화 상태 상한선 비교를 바로 실행할지, HomePlan의 screenshot-only 역변환기를 먼저 개발해 공정 비교할지 선택
 
 권장안은 먼저 10건 탐색 벤치마크를 실행해 오류 유형과 평가 자동화 비용을 확인하는 것이다. 그 결과에서 반복되는 오류가 확인될 때만 screenshot-only 역변환기 개발을 다음 항목으로 승격한다.
+
+## 실행 결과
+
+권장한 10건 탐색 벤치마크를 2026-08-31 실행했다. 결과와 전체 입력·출력 증거는 [HomePlan vs Codex imagegen 3D→2D 탐색 비교](CODEX-IMAGEGEN-3D-TO-2D-RESULTS.md)에 보존한다.

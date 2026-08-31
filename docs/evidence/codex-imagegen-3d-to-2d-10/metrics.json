@@ -1,0 +1,354 @@
+{
+  "summary": {
+    "cases": 10,
+    "mean_wall_precision": 0.9089,
+    "mean_wall_recall": 0.9386,
+    "mean_wall_f1": 0.9176,
+    "mean_opening_f1": 0.874,
+    "mean_shape_iou_after_bbox_alignment": 0.8542,
+    "mean_aspect_error": 0.1776,
+    "exact_room_count": 10
+  },
+  "results": [
+    {
+      "id": "case-01-studio",
+      "label": "single room studio",
+      "rooms": {
+        "truth": 1,
+        "predicted": 1
+      },
+      "openings": {
+        "truth": 2,
+        "predicted": 2,
+        "matched": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "review": "manual side-by-side, no correction",
+        "note": "entry and north window preserved"
+      },
+      "shape_iou_after_bbox_alignment": 0.8379,
+      "aspect_error": 0.2227,
+      "walls": {
+        "truth": 4,
+        "predicted": 6,
+        "matched_one_to_one": 4,
+        "precision": 0.6667,
+        "recall": 1.0,
+        "f1": 0.8
+      },
+      "bbox": [
+        131.0,
+        118.0,
+        1156.0,
+        1107.0
+      ]
+    },
+    {
+      "id": "case-02-dual-vertical",
+      "label": "two rooms divided vertically",
+      "rooms": {
+        "truth": 2,
+        "predicted": 2
+      },
+      "openings": {
+        "truth": 3,
+        "predicted": 4,
+        "matched": 3,
+        "precision": 0.75,
+        "recall": 1.0,
+        "f1": 0.8571,
+        "review": "manual side-by-side, no correction",
+        "note": "extra north window"
+      },
+      "shape_iou_after_bbox_alignment": 0.8758,
+      "aspect_error": 0.1093,
+      "walls": {
+        "truth": 5,
+        "predicted": 6,
+        "matched_one_to_one": 5,
+        "precision": 0.8333,
+        "recall": 1.0,
+        "f1": 0.9091
+      },
+      "bbox": [
+        141.0,
+        227.0,
+        1131.0,
+        968.0
+      ]
+    },
+    {
+      "id": "case-03-dual-horizontal",
+      "label": "two rooms divided horizontally",
+      "rooms": {
+        "truth": 2,
+        "predicted": 2
+      },
+      "openings": {
+        "truth": 3,
+        "predicted": 4,
+        "matched": 3,
+        "precision": 0.75,
+        "recall": 1.0,
+        "f1": 0.8571,
+        "review": "manual side-by-side, no correction",
+        "note": "extra south window"
+      },
+      "shape_iou_after_bbox_alignment": 0.867,
+      "aspect_error": 0.1155,
+      "walls": {
+        "truth": 5,
+        "predicted": 5,
+        "matched_one_to_one": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "bbox": [
+        79.0,
+        193.0,
+        1188.0,
+        1008.0
+      ]
+    },
+    {
+      "id": "case-04-three-bays",
+      "label": "three parallel bays",
+      "rooms": {
+        "truth": 3,
+        "predicted": 3
+      },
+      "openings": {
+        "truth": 4,
+        "predicted": 4,
+        "matched": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "review": "manual side-by-side, no correction",
+        "note": "all openings preserved"
+      },
+      "shape_iou_after_bbox_alignment": 0.856,
+      "aspect_error": 0.0471,
+      "walls": {
+        "truth": 6,
+        "predicted": 6,
+        "matched_one_to_one": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "bbox": [
+        70.0,
+        217.0,
+        1211.0,
+        979.0
+      ]
+    },
+    {
+      "id": "case-05-four-grid",
+      "label": "four-room grid",
+      "rooms": {
+        "truth": 4,
+        "predicted": 4
+      },
+      "openings": {
+        "truth": 4,
+        "predicted": 5,
+        "matched": 4,
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8889,
+        "review": "manual side-by-side, no correction",
+        "note": "extra south window"
+      },
+      "shape_iou_after_bbox_alignment": 0.8849,
+      "aspect_error": 0.2148,
+      "walls": {
+        "truth": 6,
+        "predicted": 7,
+        "matched_one_to_one": 5,
+        "precision": 0.7143,
+        "recall": 0.8333,
+        "f1": 0.7692
+      },
+      "bbox": [
+        127.0,
+        79.0,
+        1137.0,
+        1108.0
+      ]
+    },
+    {
+      "id": "case-06-corridor-six",
+      "label": "six spaces around a corridor",
+      "rooms": {
+        "truth": 6,
+        "predicted": 6
+      },
+      "openings": {
+        "truth": 7,
+        "predicted": 6,
+        "matched": 4,
+        "precision": 0.6667,
+        "recall": 0.5714,
+        "f1": 0.6154,
+        "review": "manual side-by-side, no correction",
+        "note": "room count preserved but three internal door locations were omitted or moved"
+      },
+      "shape_iou_after_bbox_alignment": 0.8194,
+      "aspect_error": 0.0963,
+      "walls": {
+        "truth": 9,
+        "predicted": 9,
+        "matched_one_to_one": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "bbox": [
+        45.0,
+        166.0,
+        1223.0,
+        1035.0
+      ]
+    },
+    {
+      "id": "case-07-l-shape",
+      "label": "L-shaped exterior",
+      "rooms": {
+        "truth": 4,
+        "predicted": 4
+      },
+      "openings": {
+        "truth": 5,
+        "predicted": 5,
+        "matched": 4,
+        "precision": 0.8,
+        "recall": 0.8,
+        "f1": 0.8,
+        "review": "manual side-by-side, no correction",
+        "note": "one horizontal-wall door moved to the vertical partition"
+      },
+      "shape_iou_after_bbox_alignment": 0.8647,
+      "aspect_error": 0.1747,
+      "walls": {
+        "truth": 9,
+        "predicted": 7,
+        "matched_one_to_one": 7,
+        "precision": 1.0,
+        "recall": 0.7778,
+        "f1": 0.875
+      },
+      "bbox": [
+        94.0,
+        91.0,
+        1172.0,
+        1136.0
+      ]
+    },
+    {
+      "id": "case-08-long-five",
+      "label": "five-room long plan",
+      "rooms": {
+        "truth": 5,
+        "predicted": 5
+      },
+      "openings": {
+        "truth": 6,
+        "predicted": 7,
+        "matched": 6,
+        "precision": 0.8571,
+        "recall": 1.0,
+        "f1": 0.9231,
+        "review": "manual side-by-side, no correction",
+        "note": "extra south window"
+      },
+      "shape_iou_after_bbox_alignment": 0.8001,
+      "aspect_error": 0.3468,
+      "walls": {
+        "truth": 8,
+        "predicted": 8,
+        "matched_one_to_one": 7,
+        "precision": 0.875,
+        "recall": 0.875,
+        "f1": 0.875
+      },
+      "bbox": [
+        65.0,
+        274.0,
+        1241.0,
+        917.0
+      ]
+    },
+    {
+      "id": "case-09-central-spine",
+      "label": "central spine with four side rooms",
+      "rooms": {
+        "truth": 5,
+        "predicted": 5
+      },
+      "openings": {
+        "truth": 6,
+        "predicted": 7,
+        "matched": 6,
+        "precision": 0.8571,
+        "recall": 1.0,
+        "f1": 0.9231,
+        "review": "manual side-by-side, no correction",
+        "note": "extra east window"
+      },
+      "shape_iou_after_bbox_alignment": 0.8726,
+      "aspect_error": 0.2165,
+      "walls": {
+        "truth": 8,
+        "predicted": 8,
+        "matched_one_to_one": 8,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "bbox": [
+        110.0,
+        53.0,
+        1149.0,
+        1138.0
+      ]
+    },
+    {
+      "id": "case-10-apartment",
+      "label": "sample apartment with mixed room sizes",
+      "rooms": {
+        "truth": 5,
+        "predicted": 5
+      },
+      "openings": {
+        "truth": 9,
+        "predicted": 7,
+        "matched": 7,
+        "precision": 1.0,
+        "recall": 0.7778,
+        "f1": 0.875,
+        "review": "manual side-by-side, no correction",
+        "note": "one internal door and the bathroom window omitted"
+      },
+      "shape_iou_after_bbox_alignment": 0.8639,
+      "aspect_error": 0.2324,
+      "walls": {
+        "truth": 10,
+        "predicted": 9,
+        "matched_one_to_one": 9,
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1": 0.9474
+      },
+      "bbox": [
+        91.0,
+        92.0,
+        1174.0,
+        1077.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,329 @@
+{
+  "id": "case-06-corridor-six",
+  "label": "six spaces around a corridor",
+  "plan": {
+    "unit": "mm",
+    "wallHeight": 2400,
+    "walls": [
+      {
+        "id": "north",
+        "a": {
+          "x": 0,
+          "y": 0
+        },
+        "b": {
+          "x": 12000,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "east",
+        "a": {
+          "x": 12000,
+          "y": 0
+        },
+        "b": {
+          "x": 12000,
+          "y": 8000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "south",
+        "a": {
+          "x": 12000,
+          "y": 8000
+        },
+        "b": {
+          "x": 0,
+          "y": 8000
+        },
+        "thickness": 200
+      },
+      {
+        "id": "west",
+        "a": {
+          "x": 0,
+          "y": 8000
+        },
+        "b": {
+          "x": 0,
+          "y": 0
+        },
+        "thickness": 200
+      },
+      {
+        "id": "i1",
+        "a": {
+          "x": 0,
+          "y": 3000
+        },
+        "b": {
+          "x": 12000,
+          "y": 3000
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i2",
+        "a": {
+          "x": 0,
+          "y": 5000
+        },
+        "b": {
+          "x": 12000,
+          "y": 5000
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i3",
+        "a": {
+          "x": 4000,
+          "y": 0
+        },
+        "b": {
+          "x": 4000,
+          "y": 3000
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i4",
+        "a": {
+          "x": 8000,
+          "y": 0
+        },
+        "b": {
+          "x": 8000,
+          "y": 3000
+        },
+        "thickness": 120
+      },
+      {
+        "id": "i5",
+        "a": {
+          "x": 6000,
+          "y": 5000
+        },
+        "b": {
+          "x": 6000,
+          "y": 8000
+        },
+        "thickness": 120
+      }
+    ],
+    "openings": [
+      {
+        "id": "o-west",
+        "wallId": "west",
+        "type": "entry",
+        "offset": 3500,
+        "width": 1000,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-north",
+        "wallId": "north",
+        "type": "window",
+        "offset": 5100,
+        "width": 1800,
+        "height": 1400,
+        "sill": 850
+      },
+      {
+        "id": "o-i1",
+        "wallId": "i1",
+        "type": "door",
+        "offset": 5590,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-i2",
+        "wallId": "i2",
+        "type": "door",
+        "offset": 5590,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-i3",
+        "wallId": "i3",
+        "type": "door",
+        "offset": 1090,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-i4",
+        "wallId": "i4",
+        "type": "door",
+        "offset": 1090,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      },
+      {
+        "id": "o-i5",
+        "wallId": "i5",
+        "type": "door",
+        "offset": 1090,
+        "width": 820,
+        "height": 2050,
+        "sill": 0
+      }
+    ],
+    "rooms": [
+      {
+        "id": "r1",
+        "name": "N1",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 4000,
+            "y": 0
+          },
+          {
+            "x": 4000,
+            "y": 3000
+          },
+          {
+            "x": 0,
+            "y": 3000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r2",
+        "name": "N2",
+        "polygon": [
+          {
+            "x": 4000,
+            "y": 0
+          },
+          {
+            "x": 8000,
+            "y": 0
+          },
+          {
+            "x": 8000,
+            "y": 3000
+          },
+          {
+            "x": 4000,
+            "y": 3000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r3",
+        "name": "N3",
+        "polygon": [
+          {
+            "x": 8000,
+            "y": 0
+          },
+          {
+            "x": 12000,
+            "y": 0
+          },
+          {
+            "x": 12000,
+            "y": 3000
+          },
+          {
+            "x": 8000,
+            "y": 3000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r4",
+        "name": "Corridor",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 3000
+          },
+          {
+            "x": 12000,
+            "y": 3000
+          },
+          {
+            "x": 12000,
+            "y": 5000
+          },
+          {
+            "x": 0,
+            "y": 5000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r5",
+        "name": "S1",
+        "polygon": [
+          {
+            "x": 0,
+            "y": 5000
+          },
+          {
+            "x": 6000,
+            "y": 5000
+          },
+          {
+            "x": 6000,
+            "y": 8000
+          },
+          {
+            "x": 0,
+            "y": 8000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      },
+      {
+        "id": "r6",
+        "name": "S2",
+        "polygon": [
+          {
+            "x": 6000,
+            "y": 5000
+          },
+          {
+            "x": 12000,
+            "y": 5000
+          },
+          {
+            "x": 12000,
+            "y": 8000
+          },
+          {
+            "x": 6000,
+            "y": 8000
+          }
+        ],
+        "floorMaterialId": "f-vinyl-oak",
+        "wallMaterialId": "w-silk-white"
+      }
+    ]
+  }
+}

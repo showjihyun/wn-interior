@@ -1,0 +1,8 @@
+Use case: scientific-educational
+Asset type: geometry reconstruction benchmark output
+Input images: Image 1 is a top view; Images 2 and 3 are opposite isometric views of the exact same unfurnished interior.
+Primary request: reconstruct a single clean orthographic 2D floor plan from the supplied views.
+Style/medium: precise black architectural line drawing on a pure white background, no perspective.
+Composition: centered plan, preserve the exterior aspect ratio and relative wall lengths.
+Constraints: preserve the exterior outline, room adjacency, wall count, wall placement, door locations, window locations and relative dimensions. Show conventional door swings and thin window openings. Omit furniture, floor textures, shadows, grid, UI controls, measurements, room labels, legends and decorative additions.
+Avoid: invented or missing rooms, curved walls, perspective, 3D shading, text, dimension numbers, unsupported openings, logos or watermarks.

@@ -26,7 +26,7 @@ test('개발 전용 KIVIK 로컬 검수 메시를 실제 방에 배치하고 회
   )
   const placementId = await page.evaluate(() => {
     window.__hp3d_store.setState({ placements: [] })
-    return window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 5600, z: 3600 })
+    return window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 9000, z: 5000 })
   })
   expect((await glbResponse).status()).toBe(200)
   await page.waitForFunction(() => {

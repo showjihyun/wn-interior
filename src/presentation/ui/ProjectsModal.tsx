@@ -29,7 +29,10 @@ export function ProjectsModal({ onClose }: { onClose: () => void }) {
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>📁 내 프로젝트</h3>
-        <p className="hint">브라우저(세션)별로 저장됩니다. 나중에 계정 DB와 동기화될 예정입니다.</p>
+        <p className="hint">
+          현재 탭 세션에 자동 저장됩니다. 새로고침 후에는 유지되지만 탭을 닫으면 삭제됩니다. 장기
+          보관은 상단 내보내기를 사용하세요.
+        </p>
         <button
           className="primary"
           style={{ margin: '10px 0' }}

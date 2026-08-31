@@ -53,15 +53,15 @@ test('배치 가구와 충돌하면 통과하지 못한다', async ({ page }) =>
       Number.isFinite((window as any).__hp3d_walk?.x) &&
       Number.isFinite((window as any).__hp3d_walk?.z)
   )
-  // 스폰 좌표 확인 후 정면 북쪽 1.5m 지점에 소파 배치
+  // 스폰 좌표 확인 후 정면 북쪽 1m 지점에 의자 배치
   const spawn = await page.evaluate(() => ({ ...(window as any).__hp3d_walk }))
   await page.evaluate(({ x, z }) => {
-    window.__hp3d_store.getState().addPlacement('p-sofa3', { x, z: z - 1500 })
+    window.__hp3d_store.getState().addPlacement('p-chair', { x, z: z - 1000 })
   }, spawn)
   await page.waitForFunction(() => {
     const placement = window.__hp3d_store
       .getState()
-      .placements.find((candidate) => candidate.productId === 'p-sofa3')
+      .placements.find((candidate) => candidate.productId === 'p-chair')
     return Number.isFinite(placement?.pos.x) && Number.isFinite(placement?.pos.z)
   })
 
@@ -72,7 +72,7 @@ test('배치 가구와 충돌하면 통과하지 못한다', async ({ page }) =>
   const final = await page.evaluate(() => ({ ...(window as any).__hp3d_walk }))
   const sofa = await page.evaluate(() => {
     const s = window.__hp3d_store.getState()
-    const p = s.placements.find((x: any) => x.productId === 'p-sofa3')
+    const p = s.placements.find((x: any) => x.productId === 'p-chair')
     return { cz: p.pos.z, d: s.productById(p.productId).dims.d }
   })
   // 소파 중심을 뚫지 못함: 캐릭터 z는 소파 남단 + 반경 이상

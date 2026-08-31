@@ -60,7 +60,7 @@ test('IKEA KIVIK을 공식 좌석폭·깊이·높이와 2개 쿠션의 낮은 �
 
   await page.evaluate(() => {
     window.__hp3d_store.setState({ placements: [] })
-    window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 5600, z: 3600 })
+    window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 9000, z: 5000 })
   })
   await page.waitForFunction(() => {
     let found = false

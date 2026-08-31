@@ -51,6 +51,31 @@ describe('canDropAt (이동 확정 검사)', () => {
     expect(r.reason).toBe('out-of-room')
   })
 
+  it('제품 중심이 방 안이어도 바닥 footprint가 방 경계를 넘으면 거절한다', () => {
+    const plan = {
+      unit: 'mm' as const,
+      wallHeight: 2400,
+      walls: [],
+      openings: [],
+      rooms: [
+        {
+          id: 'compact-room',
+          name: '작은 방',
+          polygon: [
+            { x: 0, y: 0 },
+            { x: 4000, y: 0 },
+            { x: 4000, y: 4000 },
+            { x: 0, y: 4000 },
+          ],
+        },
+      ],
+    }
+
+    const result = canDropAt(plan, sofa, [], null, 500, 2000, 0, () => sofa)
+
+    expect(result).toEqual({ ok: false, reason: 'out-of-room' })
+  })
+
   it('다른 가구와 겹치면 collision 거절 (러그는 예외 — 바닥재성)', () => {
     // productOf 콜백은 productId를 받는다
     // 소파가 러그 위로 이동 → 러그는 겹침 예외라 통과

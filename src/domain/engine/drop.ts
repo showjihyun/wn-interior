@@ -2,12 +2,35 @@
 // Drop 유효성 검사 (순수함수) — 이동 완료/신규 배치 확정 시 호출
 // ─────────────────────────────────────────────────────────────
 import type { FloorPlan, Placement, Product } from '../model'
-import { footprintAABB, aabbOverlap, roomAt } from './geom'
+import { footprintAABB, aabbOverlap, pointInPolygon, roomAt } from './geom'
 import { resolveAuthoritativePlacementGeometry } from '../authoritativePlacementGeometry'
 
 export interface DropResult {
   ok: boolean
   reason?: 'out-of-room' | 'collision'
+}
+
+function footprintCorners(
+  width: number,
+  depth: number,
+  x: number,
+  z: number,
+  rotY: number
+): Array<{ x: number; z: number }> {
+  const radians = (rotY * Math.PI) / 180
+  const cos = Math.cos(radians)
+  const sin = Math.sin(radians)
+  const halfWidth = Math.max(0, width / 2 - 1)
+  const halfDepth = Math.max(0, depth / 2 - 1)
+  return [
+    [-halfWidth, -halfDepth],
+    [halfWidth, -halfDepth],
+    [halfWidth, halfDepth],
+    [-halfWidth, halfDepth],
+  ].map(([localX, localZ]) => ({
+    x: x + localX * cos - localZ * sin,
+    z: z + localX * sin + localZ * cos,
+  }))
 }
 
 /**
@@ -26,9 +49,18 @@ export function canDropAt(
   rotY: number,
   productOf: (id: string) => Product | undefined
 ): DropResult {
-  if (!roomAt(plan, x, z)) return { ok: false, reason: 'out-of-room' }
+  const room = roomAt(plan, x, z)
+  if (!room) return { ok: false, reason: 'out-of-room' }
 
   const selfGeometry = resolveAuthoritativePlacementGeometry(product)
+  if (
+    product.mount === 'floor' &&
+    footprintCorners(selfGeometry.dims.w, selfGeometry.dims.d, x, z, rotY).some(
+      (corner) => !pointInPolygon(corner.x, corner.z, room.polygon)
+    )
+  ) {
+    return { ok: false, reason: 'out-of-room' }
+  }
   if (selfGeometry.blocksFloor) {
     // 러그처럼 얇은 바닥재성 제품은 겹침 허용 (높이 50mm 이하)
     const selfBox = footprintAABB(selfGeometry.dims.w, selfGeometry.dims.d, x, z, rotY)

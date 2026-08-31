@@ -14,7 +14,7 @@ import { HttpPlanVisionGateway } from './infrastructure/cv/HttpPlanVisionGateway
 import { BrowserMaskDecoder } from './infrastructure/cv/BrowserMaskDecoder'
 import { LocalStorageAiSettingsRepository } from './infrastructure/persistence/LocalStorageAiSettingsRepository'
 import { LocalStorageLegacyProjectSource } from './infrastructure/persistence/LocalStorageLegacyProjectSource'
-import { LocalStorageProjectRepository } from './infrastructure/persistence/LocalStorageProjectRepository'
+import { SessionStorageProjectRepository } from './infrastructure/persistence/LocalStorageProjectRepository'
 import {
   BrowserIdGenerator,
   BrowserScheduler,
@@ -49,7 +49,7 @@ export interface ApplicationComposition {
 }
 
 export function createApplicationComposition(): ApplicationComposition {
-  const projectRepository = new LocalStorageProjectRepository()
+  const projectRepository = new SessionStorageProjectRepository()
   const ids = new BrowserIdGenerator()
   const clock = new SystemClock()
   const baseProductCatalog = new StaticProductCatalog()

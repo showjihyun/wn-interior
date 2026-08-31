@@ -25,7 +25,7 @@ domain <- application <- infrastructure
 
 - `domain`: 단위가 mm인 모델, 기하·배치·보행·도면 해석 규칙. React, Zustand, Three.js, DOM, 네트워크, 저장소를 참조하지 않는다.
 - `application`: 프로젝트 생명주기와 AI 도면 해석 유스케이스, 외부 의존성 포트. 도메인만 참조한다.
-- `infrastructure`: localStorage 프로젝트/설정 저장소, OpenAI 호환 HTTP, CV/Raster2Seq HTTP, 브라우저 다운로드 구현.
+- `infrastructure`: sessionStorage 프로젝트 저장소, localStorage 설정 저장소, OpenAI 호환 HTTP, CV/Raster2Seq HTTP, 브라우저 다운로드 구현.
 - `presentation`: React/R3F/SVG 화면과 Zustand 상태 어댑터. 구체 인프라는 직접 참조하지 않고 조립 루트가 제공한 유스케이스·포트를 사용한다.
 - `compositionRoot.ts`: 실제 어댑터를 생성하고 애플리케이션과 프레젠테이션을 연결하는 유일한 위치다.
 
@@ -35,14 +35,14 @@ domain <- application <- infrastructure
 2. 프로젝트 저장소, AI 설정 저장소, ID, 시계, AI/CV 게이트웨이를 애플리케이션 포트로 정의한다.
 3. 프로젝트 초기화·마이그레이션·생성·가져오기·저장을 `ProjectService` 유스케이스로 이동한다.
 4. AI 요청 재시도·오류 매핑·응답 정규화를 `AnalyzeFloorPlan` 유스케이스와 HTTP 어댑터로 분리한다.
-5. localStorage, fetch, 다운로드를 `infrastructure` 구현으로 이동한다.
+5. 브라우저 저장소, fetch, 다운로드를 `infrastructure` 구현으로 이동한다.
 6. Zustand를 팩터리로 바꾸고 의존성을 주입한다. 화면은 조립된 `useStore`와 포트만 사용한다.
 7. 레이어 역참조를 잡는 의존성 정책 테스트와 ESLint 규칙을 추가한다.
 8. 대상 테스트 RED/GREEN 후 계약 검사, 커버리지, 빌드, E2E/preview를 실행한다.
 
 ## 호환성과 비목표
 
-- `Project.version = 1` 및 localStorage 키를 유지해 기존 프로젝트를 보존한다.
+- `Project.version = 1` 문서 형식은 유지한다. 프로젝트는 탭별 sessionStorage에 저장하며 장기 보관은 JSON 내보내기를 사용한다.
 - UI 문구, 사용자 흐름, 2D/3D 렌더 결과, CV 알고리즘은 의도적으로 변경하지 않는다.
 - 대형 React 컴포넌트의 시각적 하위 컴포넌트 분리는 이번 의존성 마이그레이션 이후 별도 단계로 다룬다. 먼저 외부 효과를 경계 밖으로 이동해야 이후 분할이 안전하다.
 
@@ -60,7 +60,7 @@ domain <- application <- infrastructure
 src/
   domain/          # 모델, 기하/CV 계산, 배치·개구부·보행·구조 규칙
   application/     # 프로젝트/편집/히스토리/자동저장/AI·CV/견적 유스케이스와 포트
-  infrastructure/  # HTTP DTO·timeout·mask decode, localStorage decoder, 정적 카탈로그
+  infrastructure/  # HTTP DTO·timeout·mask decode, 브라우저 저장소 decoder, 정적 카탈로그
   presentation/    # React, Zustand 바인딩, SVG/R3F 렌더링, presenter
   compositionRoot.ts
   main.tsx

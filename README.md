@@ -70,7 +70,7 @@ flowchart LR
     Project --> Store[Zustand store + history]
     Store --> SVG[SVG 2D editor]
     Store --> R3F[Three.js / R3F scene]
-    Store --> Storage[StorageAdapter / localStorage]
+    Store --> Storage[StorageAdapter / sessionStorage projects]
     SVG --> Store
     R3F --> Store
 ```
@@ -83,7 +83,7 @@ flowchart LR
 | 2D / 3D         | Both views read and mutate the same project state.                                      |
 | Import          | Invalid walls, rooms, and openings are rejected or normalized before store load.        |
 | Scale           | Apply is blocked until measured scale or explicit estimated-scale consent exists.       |
-| Persistence     | Project IDs isolate imports so a converted plan cannot overwrite the current project.   |
+| Persistence     | Project IDs isolate imports; each tab session autosaves separately and survives reload. |
 | Research models | Non-commercial checkpoints are development/research-only and production-off by default. |
 
 ### Import pipeline
@@ -106,7 +106,7 @@ RGBA image
 src/
 ├─ domain/              Millimetre models and geometry/placement/walk rules
 ├─ application/         Editing, history, project, CV, quote and autosave use cases
-├─ infrastructure/      HTTP/localStorage adapters and sourced retail snapshots
+├─ infrastructure/      HTTP/browser-storage adapters and sourced retail snapshots
 ├─ presentation/        React/Zustand bindings, SVG/R3F views and texture engine
 ├─ compositionRoot.ts   Concrete dependency wiring
 └─ main.tsx             Runtime bootstrap
@@ -272,7 +272,7 @@ The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-
   → Zustand 단일 스토어
      ├─ SVG 2D 편집기
      ├─ Three.js / R3F 3D 씬
-     └─ StorageAdapter / localStorage
+     └─ StorageAdapter / sessionStorage projects + localStorage settings
 ```
 
 ### 핵심 불변식
@@ -292,7 +292,7 @@ The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-
 src/
 ├─ domain/              mm 모델과 지오메트리·배치·보행 규칙
 ├─ application/         편집·히스토리·프로젝트·CV·견적·자동저장 유스케이스
-├─ infrastructure/      HTTP/localStorage 어댑터와 실상품 스냅샷
+├─ infrastructure/      HTTP/브라우저 저장소 어댑터와 실상품 스냅샷
 ├─ presentation/        React/Zustand 바인딩, SVG/R3F 화면과 텍스처 엔진
 ├─ compositionRoot.ts   구체 의존성 조립
 └─ main.tsx             런타임 부트스트랩

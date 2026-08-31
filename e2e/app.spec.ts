@@ -3,6 +3,20 @@
 const S = async (page: Page, expr: string) =>
   page.evaluate(`(window.__hp3d_store.getState())${expr}`)
 
+const worldPoint = async (page: Page, x: number, z: number) =>
+  page.evaluate(
+    ({ x, z }) => {
+      const camera = (window as any).__hp3d_cam
+      const rect = document.querySelector('.viewport canvas')!.getBoundingClientRect()
+      const projected = camera.position.clone().set(x, 0, z).project(camera)
+      return {
+        x: rect.x + ((projected.x + 1) / 2) * rect.width,
+        y: rect.y + ((1 - projected.y) / 2) * rect.height,
+      }
+    },
+    { x, z }
+  )
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear())
   await page.goto('/')
@@ -24,21 +38,22 @@ test('앱이 로드되고 샘플 아파트 3D 캔버스가 렌더된다', async 
 })
 
 test('카탈로그 제품 클릭 → 캔버스 클릭 배치 → 선택·인스펙터 표시', async ({ page }) => {
+  await page.evaluate(() => window.__hp3d_store.setState({ placements: [] }))
+  await page.getByRole('button', { name: '탑뷰' }).click()
+  await page.waitForTimeout(500)
   const before = await S(page, '.placements.length')
   await page.getByRole('button', { name: /거실/ }).click()
   await page.getByText('3인용 패브릭 소파').first().click()
   expect(await S(page, '.pendingProductId')).toBe('p-sofa3')
 
-  const canvas = page.locator('.viewport canvas')
-  const box = (await canvas.boundingBox())!
-  const cx = box.x + box.width * 0.55
-  const cy = box.y + box.height * 0.6
-  await page.mouse.move(cx, cy)
+  const point = await worldPoint(page, 9000, 5000)
+  await page.mouse.move(point.x, point.y)
   await page.waitForTimeout(250)
-  await page.mouse.click(cx, cy)
+  await page.mouse.click(point.x, point.y)
 
   expect(await S(page, '.placements.length')).toBe(before + 1)
   expect(await S(page, '.placements.at(-1).productId')).toBe('p-sofa3')
+  expect(await S(page, '.placements.at(-1).roomId')).toBeTruthy()
   expect(await S(page, '.selectedId')).not.toBeNull()
   await expect(page.locator('.inspector h4')).toContainText('소파')
 })
@@ -46,7 +61,8 @@ test('카탈로그 제품 클릭 → 캔버스 클릭 배치 → 선택·인스�
 test('인스펙터 회전 버튼이 rotY를 정확히 변경한다', async ({ page }) => {
   await page.evaluate(() => {
     const s = window.__hp3d_store.getState()
-    s.addPlacement('p-dining-table', { x: 9000, z: 2000 })
+    window.__hp3d_store.setState({ placements: [] })
+    s.addPlacement('p-dining-table', { x: 9000, z: 5000 })
   })
   await expect(page.locator('.inspector h4')).toContainText('식탁')
   const r0 = await S(page, '.placements.at(-1).rotY')
@@ -57,9 +73,10 @@ test('인스펙터 회전 버튼이 rotY를 정확히 변경한다', async ({ pa
 })
 
 test('색상 스와치가 colorway를 변경한다', async ({ page }) => {
-  await page.evaluate(() =>
-    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
-  )
+  await page.evaluate(() => {
+    window.__hp3d_store.setState({ placements: [] })
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 5000 })
+  })
   await page.locator('.swatches .sw').nth(2).click()
   const color = ((await S(page, '.placements.at(-1).colorway')) as string).toLowerCase()
   const expected = (
@@ -79,9 +96,10 @@ test('벽걸이 TV 설치 높이 슬라이더가 elevationOverride를 변경한�
 })
 
 test('Delete 키로 선택 제품이 삭제되고 Undo로 복원된다', async ({ page }) => {
-  await page.evaluate(() =>
-    window.__hp3d_store.getState().addPlacement('p-chair', { x: 7000, z: 3000 })
-  )
+  await page.evaluate(() => {
+    window.__hp3d_store.setState({ placements: [] })
+    window.__hp3d_store.getState().addPlacement('p-chair', { x: 9000, z: 5000 })
+  })
   const n = await S(page, '.placements.length')
   await page.keyboard.press('Delete')
   expect(await S(page, '.placements.length')).toBe(n - 1)
@@ -221,9 +239,10 @@ test('시점 프리셋: 탑뷰 ↔ 워크스루 ↔ 아이소 전환', async ({ 
 
 test('3D에서 제품 선택 시 좌측 카탈로그 카드도 하이라이트된다', async ({ page }) => {
   // 배치 + 선택 (스토어 직접)
-  await page.evaluate(() =>
-    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
-  )
+  await page.evaluate(() => {
+    window.__hp3d_store.setState({ placements: [] })
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 5000 })
+  })
   await expect(page.locator('.pcard.sel')).toHaveCount(0) // 거실 탭이 아니면 미표시
   await page.getByRole('button', { name: /거실/ }).click()
   const sel = page.locator('.pcard.sel')
@@ -242,14 +261,13 @@ test('단순 클릭 선택은 이동 모드 진입이 아니며, 이어서 드�
     s.commit((d) => {
       d.placements = []
     })
-    s.addPlacement('p-sofa3', { x: 5300, z: 3700 })
+    s.addPlacement('p-sofa3', { x: 9000, z: 5000 })
   })
   await page.getByRole('button', { name: '탑뷰' }).click()
   await page.waitForTimeout(700)
-  const canvas = page.locator('.viewport canvas')
-  const box = (await canvas.boundingBox())!
-  const cx = box.x + box.width * 0.5
-  const cy = box.y + box.height * 0.5
+  const point = await worldPoint(page, 9000, 5000)
+  const cx = point.x
+  const cy = point.y
 
   // 1) 단순 클릭 = 선택만. 이동확정 버튼이 떠서는 안 됨
   await page.mouse.click(cx, cy)
@@ -264,7 +282,7 @@ test('단순 클릭 선택은 이동 모드 진입이 아니며, 이어서 드�
   await page.waitForTimeout(200)
   expect(await S(page, '.moving.id')).toBeTruthy()
   const pos = await S(page, '.placements.at(-1).pos')
-  expect(pos.x).not.toBe(5300) // 실제 이동됨
+  expect(pos.x).not.toBe(9000) // 실제 이동됨
 })
 
 test('드래그 이동 중엔 카메라가 회전하지 않고, 완료 버튼으로 확정된다', async ({ page }) => {
@@ -273,15 +291,14 @@ test('드래그 이동 중엔 카메라가 회전하지 않고, 완료 버튼으
     s.commit((d) => {
       d.placements = []
     })
-    s.addPlacement('p-sofa3', { x: 5300, z: 3700 }) // 도면 중앙 = 탑뷰 화면 정중앙
+    s.addPlacement('p-sofa3', { x: 9000, z: 5000 })
   })
   await page.getByRole('button', { name: '탑뷰' }).click()
   await page.waitForTimeout(700)
   const cam0 = await page.evaluate(() => JSON.stringify(window.__hp3d_cam.position))
-  const canvas = page.locator('.viewport canvas')
-  const box = (await canvas.boundingBox())!
-  const sx = box.x + box.width * 0.5
-  const sy = box.y + box.height * 0.5
+  const point = await worldPoint(page, 9000, 5000)
+  const sx = point.x
+  const sy = point.y
   await page.mouse.move(sx, sy)
   await page.mouse.down()
   await page.mouse.move(sx + 120, sy - 60, { steps: 8 })
@@ -303,16 +320,15 @@ test('방 밖으로 이동 확정 시 Toast가 뜨고 원위치로 복귀된다'
     s.commit((d) => {
       d.placements = []
     })
-    s.addPlacement('p-sofa3', { x: 5300, z: 3700 })
+    s.addPlacement('p-sofa3', { x: 9000, z: 5000 })
   })
   await page.waitForTimeout(400)
   // 드래그로 이동 확정 대기 진입 (탑뷰 중앙에서 약간 이동)
   await page.getByRole('button', { name: '탑뷰' }).click()
   await page.waitForTimeout(600)
-  const canvas = page.locator('.viewport canvas')
-  const box = (await canvas.boundingBox())!
-  const cx = box.x + box.width * 0.5
-  const cy = box.y + box.height * 0.5
+  const point = await worldPoint(page, 9000, 5000)
+  const cx = point.x
+  const cy = point.y
   await page.mouse.move(cx, cy)
   await page.mouse.down()
   await page.mouse.move(cx + 60, cy - 40, { steps: 6 })
@@ -338,9 +354,9 @@ test('가격 탭: 배치 제품 합산 + 미확인 분리 + 출처 새창 링크
     s.commit((d) => {
       d.placements = []
     })
-    s.addPlacement('lg-cordzero-r5', { x: 6000, z: 3000 })
-    s.addPlacement('lg-cordzero-r5', { x: 7000, z: 3000 })
-    s.addPlacement('p-sofa3', { x: 5000, z: 4000 })
+    s.addPlacement('lg-cordzero-r5', { x: 250, z: 250 })
+    s.addPlacement('lg-cordzero-r5', { x: 750, z: 250 })
+    s.addPlacement('p-sofa3', { x: 2000, z: 500 })
   })
   await page.getByRole('button', { name: /가격/ }).click()
   // R5 900,000×2 = 1,800,000 (소파는 가격 미확인 → 견적 필요)
@@ -376,19 +392,20 @@ test('카탈로그 카드에 색상 스와철과 "배치 N개" 뱃지가 표시�
   await expect(card.locator('.placed-badge')).toHaveCount(0)
 
   await page.evaluate(() =>
-    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 1250, z: 500 })
   )
   await expect(card.locator('.placed-badge')).toHaveText('배치 1개')
   await page.evaluate(() =>
-    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 3500 })
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 3500, z: 500 })
   )
   await expect(card.locator('.placed-badge')).toHaveText('배치 2개')
 })
 
 test('인스펙터 치수 오버라이드: 유사 제품을 실측에 맞게 조정 + 실측 복귀', async ({ page }) => {
-  await page.evaluate(() =>
-    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 5000, z: 3500 })
-  )
+  await page.evaluate(() => {
+    window.__hp3d_store.setState({ placements: [] })
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 5000 })
+  })
   await expect(page.locator('.inspector h4')).toContainText('소파')
 
   // W 2100 → 1800 오버라이드
@@ -447,6 +464,42 @@ test('다중 프로젝트: 새 프로젝트 생성 → 도면 그리기 → 전�
     .click()
   const walls = await page.evaluate(() => window.__hp3d_store.getState().projects.length)
   expect(walls).toBeGreaterThanOrEqual(2)
+})
+
+test('같은 브라우저의 접속 세션마다 프로젝트를 격리하고 새로고침 후 저장을 복구한다', async ({
+  context,
+}) => {
+  const sessionA = await context.newPage()
+  await sessionA.goto('/')
+  await sessionA.evaluate(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+  await sessionA.reload()
+  await sessionA.waitForFunction(() => !!(window as any).__hp3d_store)
+  await sessionA.evaluate(() => window.__hp3d_store.getState().newProject('세션 A 전용'))
+  await sessionA.reload()
+  await sessionA.waitForFunction(() => !!(window as any).__hp3d_store)
+  expect(await S(sessionA, '.projectName')).toBe('세션 A 전용')
+  await sessionA.getByRole('button', { name: /📁 프로젝트/ }).click()
+  await expect(sessionA.locator('.modal .hint').first()).toContainText('현재 탭 세션에 자동 저장')
+
+  const sessionB = await context.newPage()
+  await sessionB.goto('/')
+  await sessionB.waitForFunction(() => !!(window as any).__hp3d_store)
+  const otherName = await sessionB.evaluate(() => window.__hp3d_store.getState().projectName)
+  expect(otherName).not.toBe('세션 A 전용')
+
+  await sessionB.evaluate(() => window.__hp3d_store.getState().newProject('세션 B 전용'))
+  await sessionB.reload()
+  await sessionB.waitForFunction(() => !!(window as any).__hp3d_store)
+  expect(await sessionB.evaluate(() => window.__hp3d_store.getState().projectName)).toBe(
+    '세션 B 전용'
+  )
+
+  await sessionA.reload()
+  await sessionA.waitForFunction(() => !!(window as any).__hp3d_store)
+  expect(await S(sessionA, '.projectName')).toBe('세션 A 전용')
 })
 
 test('기존 단일 슬롯 데이터는 첫 로드 시 마이그레이션된다', async ({ page }) => {
@@ -641,14 +694,13 @@ test('한샘 슬라이딩 붙박이장은 벽자석 스냅으로 배치된다', 
   })
   await page.getByRole('button', { name: /수납/ }).click()
   await page.getByText('슬라이딩 붙박이장 2400').first().click()
-  // 탑뷰에서 클릭해야 플랜 좌표 예측이 정확 (북벽 y=0 ≈ 화면 25% 높이)
+  // 탑뷰에서 북벽의 안방 구간을 클릭해 전체 footprint가 같은 방 안에 남도록 한다.
   await page.getByRole('button', { name: '탑뷰' }).click()
   await page.waitForTimeout(600)
-  const canvas = page.locator('.viewport canvas')
-  const box = (await canvas.boundingBox())!
-  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.25)
+  const point = await worldPoint(page, 2500, 0)
+  await page.mouse.move(point.x, point.y)
   await page.waitForTimeout(250)
-  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.25)
+  await page.mouse.click(point.x, point.y)
   await page.waitForTimeout(200)
   const last = await page.evaluate(() => {
     const s = window.__hp3d_store.getState()

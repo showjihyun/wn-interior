@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createApplicationComposition } from '../../compositionRoot'
 import { CATALOG } from '../../infrastructure/reference-data/data/catalog'
+import { roomAt } from '../../domain/engine/geom'
 
 const { runtime } = createApplicationComposition()
 const useStore = runtime.store
@@ -9,14 +10,51 @@ const S = () => useStore.getState()
 describe('스토어 — 배치/Undo/Redo', () => {
   beforeEach(() => {
     S().resetToSample()
-    useStore.setState({ variants: [], customProducts: [] })
+    useStore.setState({
+      placements: [],
+      past: [],
+      future: [],
+      variants: [],
+      customProducts: [],
+    })
   })
 
   it('제품을 배치하면 placements에 추가되고 선택된다', () => {
-    const id = S().addPlacement('p-sofa3', { x: 5000, z: 3000 })
+    const id = S().addPlacement('p-sofa3', { x: 9000, z: 5000 })
     expect(id).not.toBeNull()
     expect(S().placements.some((p) => p.id === id)).toBe(true)
     expect(S().selectedId).toBe(id)
+  })
+
+  it('초기 배치를 스토어 경계에서 검증하고 확정된 방 ID를 함께 저장한다', () => {
+    useStore.setState({ placements: [], past: [], future: [], toast: null })
+    const expectedRoom = roomAt(S().plan, 9000, 5000)
+
+    const id = S().addPlacement('p-sofa3', { x: 9000, z: 5000 })
+
+    expect(expectedRoom).toBeDefined()
+    expect(id).not.toBeNull()
+    expect(S().placements).toHaveLength(1)
+    expect(S().placements[0].roomId).toBe(expectedRoom?.id)
+  })
+
+  it('방 밖이나 기존 가구와 겹치는 초기 배치는 상태와 히스토리에 남기지 않는다', () => {
+    useStore.setState({ placements: [], past: [], future: [], toast: null })
+
+    const outsideId = S().addPlacement('p-sofa3', { x: 12000, z: 9000 })
+
+    expect(outsideId).toBeNull()
+    expect(S().placements).toHaveLength(0)
+    expect(S().past).toHaveLength(0)
+
+    const validId = S().addPlacement('p-sofa3', { x: 9000, z: 5000 })
+    const historyAfterValid = S().past.length
+    const collisionId = S().addPlacement('p-chair', { x: 9000, z: 5000 })
+
+    expect(validId).not.toBeNull()
+    expect(collisionId).toBeNull()
+    expect(S().placements).toHaveLength(1)
+    expect(S().past).toHaveLength(historyAfterValid)
   })
 
   it('undo는 마지막 커밋을 되돌린다', () => {
@@ -30,7 +68,7 @@ describe('스토어 — 배치/Undo/Redo', () => {
   })
 
   it('removePlacement 후 undo로 복원된다', () => {
-    const id = S().addPlacement('p-rug', { x: 5000, z: 3000 })
+    const id = S().addPlacement('p-chair', { x: 9000, z: 5000 })
     S().removePlacement(id!)
     expect(S().placements.some((p) => p.id === id)).toBe(false)
     S().undo()
@@ -38,9 +76,9 @@ describe('스토어 — 배치/Undo/Redo', () => {
   })
 
   it('드래그 이동(move)은 히스토리를 만들지 않고, updatePlacement 커밋 1회만 기록된다', () => {
-    const id = S().addPlacement('p-desk', { x: 1000, z: 5500 })!
+    const id = S().addPlacement('p-chair', { x: 9000, z: 5000 })!
     const histLen = S().past.length
-    S().movePlacement(id, 1200, 5700) // 드래그 중
+    S().movePlacement(id, 9200, 5200) // 드래그 중
     expect(S().past.length).toBe(histLen)
     const moved = S().placements.find((p) => p.id === id)!
     S().updatePlacement(id, { pos: moved.pos }) // 드롭 시점
@@ -121,12 +159,18 @@ describe('스토어 — 커스텀 제품', () => {
 describe('스토어 — 회귀 (E2E에서 발견된 버그)', () => {
   beforeEach(() => {
     S().resetToSample()
-    useStore.setState({ variants: [], customProducts: [] })
+    useStore.setState({
+      placements: [],
+      past: [],
+      future: [],
+      variants: [],
+      customProducts: [],
+    })
   })
 
   it('setPending(null)은 배치 직후의 선택을 지우지 않는다', () => {
     // 버그: 고스트 클릭 → addPlacement(선택 설정) → setPending(null)이 선택을 덮어씀
-    S().addPlacement('p-sofa3', { x: 5000, z: 3000 })
+    S().addPlacement('p-sofa3', { x: 9000, z: 5000 })
     const selBefore = S().selectedId
     expect(selBefore).not.toBeNull()
     S().setPending(null)
@@ -134,7 +178,7 @@ describe('스토어 — 회귀 (E2E에서 발견된 버그)', () => {
   })
 
   it('새 pending 제품 지정 시엔 기존 선택이 해제된다', () => {
-    S().addPlacement('p-sofa3', { x: 5000, z: 3000 })
+    S().addPlacement('p-sofa3', { x: 9000, z: 5000 })
     expect(S().selectedId).not.toBeNull()
     S().setPending('p-bed-queen')
     expect(S().selectedId).toBeNull()

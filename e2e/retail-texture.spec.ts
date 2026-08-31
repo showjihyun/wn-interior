@@ -31,7 +31,7 @@ test('IKEA 실상품 이미지·가격 기준을 표시하고 3D 텍스처로 �
 
   await page.evaluate(() => {
     window.__hp3d_store.setState({ placements: [] })
-    window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 5600, z: 3600 })
+    window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 9000, z: 5000 })
     window.__hp3d_store.getState().setMode('3d')
   })
   if (capability === 'local-review-mesh') {
@@ -83,7 +83,7 @@ test('공식 사진 투영면은 상품군과 관계없이 원본 crop 비율을
       const state = window.__hp3d_store.getState()
       const product = state.productById(id)
       window.__hp3d_store.setState({ placements: [] })
-      state.addPlacement(id, { x: 5600, z: 3600 })
+      state.addPlacement(id, { x: 9000, z: 5000 })
       const appearance = product.appearance
       if (!appearance) throw new Error(`retail-appearance-missing:${id}`)
       return {

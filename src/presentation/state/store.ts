@@ -6,6 +6,7 @@ import type { FloorPlan, Opening, Placement, Product, Project, Pt, Wall } from '
 import type { AiSettings } from '../../application/aiSettings'
 import { canDropAt } from '../../domain/engine/drop'
 import { resolveDims } from '../../domain/engine/dims'
+import { roomAt } from '../../domain/engine/geom'
 import type {
   AiSettingsRepository,
   Clock,
@@ -289,15 +290,39 @@ export function createAppStore({
       },
 
       addPlacement: (productId, pos, rotY = 0) => {
-        const prod = get().productById(productId)
+        const state = get()
+        const prod = state.productById(productId)
         if (!prod) return null
+        const x = Math.round(pos.x)
+        const z = Math.round(pos.z)
+        const result = canDropAt(
+          state.plan,
+          prod,
+          state.placements,
+          null,
+          x,
+          z,
+          rotY,
+          state.productById
+        )
+        if (!result.ok) {
+          state.showToast(
+            result.reason === 'out-of-room'
+              ? '방 안에만 배치할 수 있어요'
+              : '공간이 부족해 배치할 수 없어요'
+          )
+          return null
+        }
+        const room = roomAt(state.plan, x, z)
+        if (!room) return null
         const id = uid()
         commitEdit({
           type: 'add-placement',
           placement: {
             id,
             productId,
-            pos: { x: Math.round(pos.x), y: 0, z: Math.round(pos.z) },
+            roomId: room.id,
+            pos: { x, y: 0, z },
             rotY,
             colorway: prod.colorways?.[0],
           },
@@ -345,7 +370,10 @@ export function createAppStore({
         commitEdit({
           type: 'update-placement',
           id,
-          patch: { pos: { ...placement.pos, x: Math.round(x), z: Math.round(z) } },
+          patch: {
+            pos: { ...placement.pos, x: Math.round(x), z: Math.round(z) },
+            roomId: roomAt(state.plan, x, z)?.id,
+          },
         })
         return true
       },

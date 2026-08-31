@@ -31,7 +31,7 @@
 - Vite + React18 + TS + @react-three/fiber + drei + zustand
 - 단일 데이터 소스: `Project{plan, placements}` → 2D(SVG)/3D(three.js) 모두 이것만 렌더
 - 단위: 전부 mm 내부 저장, 화면에 cm/m 병기
-- Undo/Redo: zustand 스냅샷 스택, localStorage 자동저장(debounce)
+- Undo/Redo: zustand 스냅샷 스택, 탭별 sessionStorage 자동저장(debounce)
 
 ---
 
@@ -49,7 +49,7 @@
 
 ### M2 스토어 & 엔진 ✅
 
-- [x] zustand 스토어: 배치/선택/Undo-Redo/localStorage 자동저장
+- [x] zustand 스토어: 배치/선택/Undo-Redo/sessionStorage 자동저장
 - [x] geom.ts: 벽 스냅/AABB 충돌/point-in-room 유틸
 - [x] textures.ts: 절차 텍스처(마루/장판/타일/벽지) 실규격 반복
 
@@ -260,6 +260,7 @@
 ### M23 사용자 검증 ← **다음 진행**
 
 - [x] 20분 과업·성공 지표·종료 질문 문서화 (`docs/USER-VALIDATION.md`)
+- [x] 실제 사용자 대체가 아닌 가상 페르소나 3명 휴리스틱 사전 점검 (`docs/evidence/PERSONA-USER-VALIDATION-2026-08-31.md`)
 - [ ] 이사 예정 사용자 3~5명 모집 및 본인 도면 확보
 - [ ] 관찰 세션 실행, 완료 시간·힌트·수동 보정 수 기록
 - [ ] 반복 이슈를 P0~P3로 분류하고 다음 개발 범위 확정
@@ -361,9 +362,10 @@
 
 ### M17 세션별 다중 프로젝트 저장소 ✅
 
-- [x] StorageAdapter 인터페이스 + LocalStorageAdapter (TDD 6종: 사이클/격리/덮어쓰기/손상 복구)
+- [x] StorageAdapter 인터페이스 + SessionStorageProjectRepository (사이클/탭 격리/덮어쓰기/손상 복구)
 - [x] store 통합: projectId·newProject/openProject/deleteProject, 기존 단일 슬롯 자동 마이그레이션
 - [x] 📁 프로젝트 모달 (목록/생성/열기/삭제, 현재 프로젝트 표시)
+- [x] 동일 브라우저 탭별 저장소 격리 + 같은 탭 새로고침 복구 E2E
 - [x] DB 전환 준비: 어댑터 교체만으로 계정별 CRUD 확장 (Vercel KV/Postgres 계획)
 
 ### AI 기본 모델 변경 ✅

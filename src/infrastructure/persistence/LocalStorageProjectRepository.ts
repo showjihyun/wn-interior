@@ -99,3 +99,9 @@ export class LocalStorageProjectRepository implements ProjectRepository {
     )
   }
 }
+
+export class SessionStorageProjectRepository extends LocalStorageProjectRepository {
+  constructor(storage: KeyValueStorage = sessionStorage) {
+    super(storage)
+  }
+}

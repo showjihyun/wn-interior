@@ -10,7 +10,7 @@ import { Html } from '@react-three/drei'
 import type { FloorPlan, Placement, Product } from '../../domain/model'
 import { useStore, useStoreApi } from '../AppRuntimeContext'
 import { Shape } from './shapes'
-import { roomAt, snapPlacement as resolveSnap } from '../../domain/engine/geom'
+import { snapPlacement as resolveSnap } from '../../domain/engine/geom'
 import { resolveDims } from '../../domain/engine/dims'
 import { canDropAt } from '../../domain/engine/drop'
 import { getPlanCenter } from '../../domain/planBounds'
@@ -252,7 +252,17 @@ function Ghost({ plan }: { plan: FloorPlan }) {
     const hit = rayGround(e.ray)
     if (!hit || !product) return
     const s = resolveSnap(plan, product, hit.x, hit.y, ghost?.rotY ?? 0)
-    setGhost({ x: s.x, z: s.z, rotY: s.rotY, ok: !!roomAt(plan, s.x, s.z) })
+    const validation = canDropAt(
+      plan,
+      product,
+      store.getState().placements,
+      null,
+      s.x,
+      s.z,
+      s.rotY,
+      (pid) => store.getState().productById(pid)
+    )
+    setGhost({ x: s.x, z: s.z, rotY: s.rotY, ok: validation.ok })
   }
 
   function confirm(e: ThreeEvent<MouseEvent>) {
@@ -280,7 +290,8 @@ function Ghost({ plan }: { plan: FloorPlan }) {
         )
       return
     }
-    addPlacement(pendingId, { x: candidate.x, z: candidate.z }, candidate.rotY)
+    const placementId = addPlacement(pendingId, { x: candidate.x, z: candidate.z }, candidate.rotY)
+    if (!placementId) return
     setPending(null)
     setGhost(null)
   }

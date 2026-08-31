@@ -2,6 +2,20 @@
 import { test, expect, type Page } from '@playwright/test'
 import { createGeneratedMeshE2EFixture } from '../scripts/generated-mesh-fixture'
 
+const worldPoint = async (page: Page, x: number, z: number) =>
+  page.evaluate(
+    ({ x, z }) => {
+      const camera = (window as any).__hp3d_cam
+      const rect = document.querySelector('.viewport canvas')!.getBoundingClientRect()
+      const projected = camera.position.clone().set(x, 0, z).project(camera)
+      return {
+        x: rect.x + ((projected.x + 1) / 2) * rect.width,
+        y: rect.y + ((1 - projected.y) / 2) * rect.height,
+      }
+    },
+    { x, z }
+  )
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear())
 })
@@ -47,13 +61,15 @@ test('프로덕션 빌드: 제품 배치 → 선택 → 2D 전환', async ({ pag
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__hp3d_store)
   await page.waitForTimeout(600)
+  await page.evaluate(() => window.__hp3d_store.setState({ placements: [] }))
+  await page.getByRole('button', { name: '탑뷰' }).click()
+  await page.waitForTimeout(500)
   await page.getByRole('button', { name: /거실/ }).click()
   await page.getByText('3인용 패브릭 소파').first().click()
-  const canvas = page.locator('.viewport canvas')
-  const box = (await canvas.boundingBox())!
-  await page.mouse.move(box.x + box.width * 0.55, box.y + box.height * 0.6)
+  const point = await worldPoint(page, 9000, 5000)
+  await page.mouse.move(point.x, point.y)
   await page.waitForTimeout(250)
-  await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.6)
+  await page.mouse.click(point.x, point.y)
   expect(
     await page.evaluate(() => window.__hp3d_store.getState().placements.at(-1)?.productId)
   ).toBe('p-sofa3')
@@ -87,7 +103,7 @@ test('프로덕션 빌드: IKEA 실상품 이미지와 3D 텍스처 자산을 �
 
   await page.evaluate(() => {
     window.__hp3d_store.setState({ placements: [] })
-    window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 5600, z: 3600 })
+    window.__hp3d_store.getState().addPlacement('ik-kivik-3seat', { x: 9000, z: 5000 })
   })
   await page.waitForFunction(
     () =>

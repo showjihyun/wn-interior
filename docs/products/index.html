@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="HomePlan 3D의 제품 아키텍처와 사용자·데이터·개발 워크플로우 문서 지도"
+    />
+    <title>HomePlan 3D · Product Documents</title>
+    <link rel="stylesheet" href="product-docs.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">본문으로 건너뛰기</a>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="index.html" aria-label="HomePlan 3D 제품 문서 홈">
+          <span class="brand-mark" aria-hidden="true"></span><span>HomePlan / Product Docs</span>
+        </a>
+        <nav class="global-nav" aria-label="제품 문서">
+          <a href="index.html" aria-current="page">개요</a>
+          <a href="architecture.html">아키텍처</a>
+          <a href="workflow.html">워크플로우</a>
+          <a href="../../README.ko.md">README</a>
+        </nav>
+      </div>
+      <div class="page-progress" aria-hidden="true"></div>
+    </header>
+
+    <main id="content">
+      <header class="hero">
+        <p class="eyebrow">Product system / 2026.08</p>
+        <h1>공간을 <em>한 번만</em><br />정의하는 제품</h1>
+        <div class="hero-summary">
+          <p>
+            HomePlan 3D는 평면도 초안, 2D 편집, 3D 배치, 견적과 저장을 하나의 mm 기반 프로젝트로
+            연결합니다. 이 문서 세트는 무엇이 실제로 보장되고 어디부터 사람의 판단이 필요한지
+            설명합니다.
+          </p>
+          <dl class="hero-meta">
+            <div>
+              <dt>Code baseline</dt>
+              <dd>main · 2026-08-31</dd>
+            </div>
+            <div>
+              <dt>Runtime</dt>
+              <dd>Browser first</dd>
+            </div>
+            <div>
+              <dt>Unit</dt>
+              <dd>millimetres</dd>
+            </div>
+          </dl>
+        </div>
+      </header>
+
+      <div class="document-shell">
+        <aside class="rail" aria-label="이 페이지 목차">
+          <div class="rail-inner">
+            <p class="rail-label">On this page</p>
+            <nav class="section-nav">
+              <a href="#promise" data-number="01">제품 약속</a>
+              <a href="#documents" data-number="02">문서 지도</a>
+              <a href="#truth" data-number="03">사실과 한계</a>
+              <a href="#review" data-number="04">비판적 판단</a>
+            </nav>
+          </div>
+        </aside>
+
+        <article class="document">
+          <section class="doc-section" id="promise">
+            <span class="section-number">01</span>
+            <p class="kicker">The promise</p>
+            <h2>도면을 결과 이미지가 아니라 수정 가능한 공간 모델로 바꾼다.</h2>
+            <p class="lead">
+              입력 이미지는 끝점이 아닙니다. 사용자가 축척과 검출 결과를 검토한 뒤
+              <code>Project</code>에 적용하고, 동일한 상태를 SVG 2D와 Three.js 3D가 함께 읽습니다.
+              배치·연결·가격·저장도 이 프로젝트를 중심으로 움직입니다.
+            </p>
+            <p class="manifesto">자동 변환의 자신감보다 수정 가능성과 실패의 가시성을 우선한다.</p>
+            <div class="truth-strip" aria-label="제품 핵심 불변식">
+              <div>
+                <strong>1 state</strong><span>2D와 3D가 같은 프로젝트 상태를 읽고 수정</span>
+              </div>
+              <div><strong>mm</strong><span>저장되는 공간·제품 치수의 공통 단위</span></div>
+              <div>
+                <strong>draft</strong><span>CV 결과는 자동 정답이 아니라 검토 가능한 초안</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="doc-section" id="documents">
+            <span class="section-number">02</span>
+            <p class="kicker">Document map</p>
+            <h2>읽는 목적에 따라 두 경로로 나뉩니다.</h2>
+            <p class="lead">
+              구조를 바꾸려면 아키텍처부터, 사용자 여정이나 배포 절차를 이해하려면 워크플로우부터
+              읽으십시오. 각 문서는 구현 사실과 운영상 미해결 항목을 분리합니다.
+            </p>
+            <div class="document-cards">
+              <a class="document-card" href="architecture.html">
+                <span class="doc-code">DOC.01</span>
+                <span>
+                  <h2>System architecture</h2>
+                  <p>레이어, 런타임 조립, 상태 흐름, 저장·외부 서비스·배포 경계</p>
+                </span>
+                <span class="arrow" aria-hidden="true">→</span>
+              </a>
+              <a class="document-card" href="workflow.html">
+                <span class="doc-code">DOC.02</span>
+                <span>
+                  <h2>Product workflows</h2>
+                  <p>도면→3D, 설치 의존성, 카탈로그 import, 개발 검증과 장애 복구</p>
+                </span>
+                <span class="arrow" aria-hidden="true">→</span>
+              </a>
+              <a class="document-card" href="../../README.ko.md">
+                <span class="doc-code">ENTRY</span>
+                <span>
+                  <h2>Repository README</h2>
+                  <p>제품 소개, 빠른 실행, 검증 명령과 공개 라이선스 경계</p>
+                </span>
+                <span class="arrow" aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </section>
+
+          <section class="doc-section" id="truth">
+            <span class="section-number">03</span>
+            <p class="kicker">Truth boundaries</p>
+            <h2>구현된 것과 입증되지 않은 것을 같은 문장에 섞지 않습니다.</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>영역</th>
+                    <th>현재 사실</th>
+                    <th>판정</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>도면 편집</td>
+                    <td>동일한 mm 프로젝트를 SVG 2D와 R3F 3D가 공유</td>
+                    <td><span class="status good">구현·브라우저 검증</span></td>
+                  </tr>
+                  <tr>
+                    <td>프로젝트 저장</td>
+                    <td>URL 워크스페이스별 IndexedDB, sessionStorage 캐시·폴백, JSON 왕복</td>
+                    <td><span class="status good">로컬 지속성</span></td>
+                  </tr>
+                  <tr>
+                    <td>도면 인식</td>
+                    <td>브라우저 CV 기본, 로컬 CNN/Raster2Seq는 선택적 연구 모드</td>
+                    <td><span class="status caution">사용자 보정 필수</span></td>
+                  </tr>
+                  <tr>
+                    <td>외부 AI</td>
+                    <td>OpenAI 호환 포트와 오류 매핑은 있으나 자격 증명·쿼터에 의존</td>
+                    <td><span class="status open">조건부</span></td>
+                  </tr>
+                  <tr>
+                    <td>사용자 가치</td>
+                    <td>실사용자 3–5명 관찰 세션은 아직 완료되지 않음</td>
+                    <td><span class="status caution">미검증</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="doc-section" id="review">
+            <span class="section-number">04</span>
+            <p class="kicker">Expert review</p>
+            <h2>다음 개발 항목은 새 기능이 아니라 반복 실패의 증거에서 나와야 합니다.</h2>
+            <p class="lead">
+              자동 테스트 범위는 넓지만 사용성의 최종 증거는 아닙니다. 현재 가장 큰 불확실성은 대상
+              사용자가 축척 검토, 객체 연결, 저장·복구를 힌트 없이 반복해서 완수하는지입니다.
+            </p>
+            <div class="review-list">
+              <div class="review-item">
+                <span class="review-rank">PRIORITY 1</span>
+                <div>
+                  <h3>관찰 세션에서 반복 문제를 수집</h3>
+                  <p>
+                    3–5명의 실제 이사·리모델링 예정 사용자를 대상으로 과업 완료 시간, 힌트 수, 보정
+                    횟수와 중단 지점을 기록합니다.
+                  </p>
+                </div>
+              </div>
+              <div class="review-item">
+                <span class="review-rank">PRIORITY 2</span>
+                <div>
+                  <h3>반복된 문제만 P0–P3로 분류</h3>
+                  <p>
+                    한 번의 취향 피드백보다 재현되는 데이터 손실·오배치·이해 실패를 먼저 다룹니다.
+                  </p>
+                </div>
+              </div>
+              <div class="review-item">
+                <span class="review-rank">BOUNDARY</span>
+                <div>
+                  <h3>클라우드 동기화는 현재 약속이 아님</h3>
+                  <p>
+                    IndexedDB는 같은 브라우저의 지속성을 제공하지만 계정·기기 간 동기화는 제공하지
+                    않습니다. 장기 보관에는 JSON 내보내기가 필요합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>HomePlan 3D product system documents</span
+        ><span>Maintained from code evidence · <span data-year></span></span>
+      </div>
+    </footer>
+    <script src="product-docs.js"></script>
+  </body>
+</html>

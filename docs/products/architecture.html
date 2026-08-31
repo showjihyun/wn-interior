@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="HomePlan 3D 시스템 아키텍처, 상태 흐름과 운영 경계" />
+    <title>Architecture · HomePlan 3D</title>
+    <link rel="stylesheet" href="product-docs.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">본문으로 건너뛰기</a>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="index.html" aria-label="HomePlan 3D 제품 문서 홈"
+          ><span class="brand-mark" aria-hidden="true"></span
+          ><span>HomePlan / Product Docs</span></a
+        >
+        <nav class="global-nav" aria-label="제품 문서">
+          <a href="index.html">개요</a><a href="architecture.html" aria-current="page">아키텍처</a
+          ><a href="workflow.html">워크플로우</a><a href="../../README.ko.md">README</a>
+        </nav>
+      </div>
+      <div class="page-progress" aria-hidden="true"></div>
+    </header>
+
+    <main id="content">
+      <header class="hero">
+        <p class="eyebrow">Document 01 / System architecture</p>
+        <h1>안쪽은 규칙,<br />바깥쪽은 <em>교체 가능성</em></h1>
+        <div class="hero-summary">
+          <p>
+            React, Three.js, 브라우저 저장소와 외부 AI가 핵심 공간 규칙을 지배하지 않도록 의존성
+            방향을 안쪽으로 고정합니다.
+          </p>
+          <dl class="hero-meta">
+            <div>
+              <dt>Pattern</dt>
+              <dd>Clean architecture</dd>
+            </div>
+            <div>
+              <dt>Source of truth</dt>
+              <dd>Project v1</dd>
+            </div>
+            <div>
+              <dt>Renderers</dt>
+              <dd>SVG + R3F</dd>
+            </div>
+          </dl>
+        </div>
+      </header>
+
+      <div class="document-shell">
+        <aside class="rail" aria-label="이 페이지 목차">
+          <div class="rail-inner">
+            <p class="rail-label">Architecture</p>
+            <nav class="section-nav">
+              <a href="#invariants" data-number="01">핵심 불변식</a
+              ><a href="#layers" data-number="02">레이어와 의존성</a
+              ><a href="#runtime" data-number="03">런타임 조립</a
+              ><a href="#state" data-number="04">상태·트랜잭션</a
+              ><a href="#boundaries" data-number="05">운영 경계</a
+              ><a href="#assessment" data-number="06">비판적 평가</a>
+            </nav>
+          </div>
+        </aside>
+
+        <article class="document">
+          <section class="doc-section" id="invariants">
+            <span class="section-number">01</span>
+            <p class="kicker">Invariants</p>
+            <h2>뷰보다 데이터가 먼저입니다.</h2>
+            <p class="lead">
+              시스템의 중심은 화면 컴포넌트가 아니라 버전이 고정된 <code>Project</code>입니다.
+              좌표와 치수, 배치, 사용자 제품, 도면 검토 근거가 이 경계 안에서 이동합니다.
+            </p>
+            <div class="code-block" role="img" aria-label="프로젝트 데이터 구조">
+              Project v1 ├─ plan: FloorPlan { unit: "mm", walls, openings, rooms } ├─ placements:
+              Placement[] { productId, pos, rotY, supportPlacementId? } ├─ customProducts: Product[]
+              ├─ floorPlanReview?: source image + scale + evidence └─ id / name / origin / createdAt
+              / updatedAt
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>경계</th>
+                    <th>불변식</th>
+                    <th>실패 방지</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>단위</td>
+                    <td>저장되는 모든 공간·제품 길이는 mm</td>
+                    <td>픽셀과 월드 단위의 암묵적 혼용을 막음</td>
+                  </tr>
+                  <tr>
+                    <td>좌표</td>
+                    <td>2D의 (x, y)는 3D의 (x, z), 높이는 3D y</td>
+                    <td>두 뷰의 배치 드리프트를 막음</td>
+                  </tr>
+                  <tr>
+                    <td>렌더링</td>
+                    <td>SVG와 R3F는 같은 Zustand 프로젝트 상태를 구독</td>
+                    <td>별도 저장 모델로 갈라지는 것을 막음</td>
+                  </tr>
+                  <tr>
+                    <td>가져오기</td>
+                    <td>Project v1·mm·필수 배열을 검증한 뒤 로드</td>
+                    <td>형식이 다른 JSON의 조용한 적용을 막음</td>
+                  </tr>
+                  <tr>
+                    <td>설치</td>
+                    <td>부착 관계는 <code>supportPlacementId</code>와 capability 계약으로 표현</td>
+                    <td>수전을 임의 가구 위에 얹는 것을 막음</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="doc-section" id="layers">
+            <span class="section-number">02</span>
+            <p class="kicker">Dependency direction</p>
+            <h2>프레임워크는 가장 바깥에 둡니다.</h2>
+            <p class="lead">
+              도메인은 React나 브라우저 API를 모릅니다. 애플리케이션은 포트를 정의하고, 인프라는 그
+              포트를 구현하며, 프레젠테이션은 조립된 런타임만 소비합니다.
+            </p>
+            <div class="layer-stack" aria-label="클린 아키텍처 레이어">
+              <div class="layer">
+                <span class="layer-name">Presentation</span>
+                <p>React UI, Zustand 바인딩, SVG 편집기, R3F 씬, 텍스처·표면 registry</p>
+                <code>src/presentation</code>
+              </div>
+              <div class="layer">
+                <span class="layer-name">Infrastructure</span>
+                <p>
+                  IndexedDB/sessionStorage, HTTP AI·CV, 다운로드, 정적 상품·재질, catalog file
+                  bridge
+                </p>
+                <code>src/infrastructure</code>
+              </div>
+              <div class="layer">
+                <span class="layer-name">Application</span>
+                <p>프로젝트 생명주기, 편집·히스토리·자동저장, 분석·견적, protocol import, 포트</p>
+                <code>src/application</code>
+              </div>
+              <div class="layer">
+                <span class="layer-name">Domain</span>
+                <p>mm 모델, 기하, 충돌·배치, 설치 의존성, 보행·점프, 도면 해석 규칙</p>
+                <code>src/domain</code>
+              </div>
+              <div class="dependency-rule">dependency direction → domain</div>
+            </div>
+            <p class="measure">
+              정적 정책 테스트와 DOM 라이브러리 없는 별도 TypeScript 컴파일이 이 경계를 검사합니다.
+              <code>compositionRoot.ts</code>는 구체 구현을 연결할 수 있는 유일한 조립 지점입니다.
+            </p>
+          </section>
+
+          <section class="doc-section" id="runtime">
+            <span class="section-number">03</span>
+            <p class="kicker">Runtime composition</p>
+            <h2>부트스트랩은 기능을 만들지 않고 연결합니다.</h2>
+            <div class="flow">
+              <div class="flow-step">
+                <span class="flow-index">01</span>
+                <div class="flow-main">
+                  <strong><code>main.tsx</code> bootstrap</strong>
+                  <p>브라우저용 composition을 비동기로 만든 뒤 React root를 렌더합니다.</p>
+                </div>
+                <div class="flow-output">
+                  <b>Output</b>
+                  <p>AppRuntimeProvider</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span class="flow-index">02</span>
+                <div class="flow-main">
+                  <strong>workspace 저장소 결정</strong>
+                  <p>
+                    URL·sessionStorage에서 workspace ID를 정하고 IndexedDB를 열며, 실패하면 세션
+                    저장소로 폴백합니다.
+                  </p>
+                </div>
+                <div class="flow-output">
+                  <b>Port</b>
+                  <p>ProjectRepository</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span class="flow-index">03</span>
+                <div class="flow-main">
+                  <strong>포트와 어댑터 조립</strong>
+                  <p>프로젝트·CV·AI·견적·catalog·texture·mesh resolver를 구체 구현에 연결합니다.</p>
+                </div>
+                <div class="flow-output">
+                  <b>Boundary</b>
+                  <p>compositionRoot.ts</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span class="flow-index">04</span>
+                <div class="flow-main">
+                  <strong>프레젠테이션 소비</strong>
+                  <p>
+                    UI는 <code>useAppRuntime</code>과 <code>useStore</code>로 조립된 기능만
+                    사용합니다.
+                  </p>
+                </div>
+                <div class="flow-output">
+                  <b>Views</b>
+                  <p>SVG / R3F / modals</p>
+                </div>
+              </div>
+            </div>
+            <div class="callout">
+              <h3>테스트 브리지의 경계</h3>
+              <p>
+                <code>window.__hp3d_store</code>는 development와 test mode에서만 노출됩니다.
+                production에서 내부 상태를 전역 API처럼 제공하지 않습니다.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="state">
+            <span class="section-number">04</span>
+            <p class="kicker">State & transactions</p>
+            <h2>편집은 즉시 미리 보고, 확정할 때 한 번 기록합니다.</h2>
+            <div class="branch-map">
+              <div class="branch">
+                <h3>Interaction state</h3>
+                <ul>
+                  <li>선택·이동 중·pending placement</li>
+                  <li>카메라·워크스루·모달 상태</li>
+                  <li>부착 후보와 미리보기</li>
+                </ul>
+              </div>
+              <div class="branch-arrow" aria-hidden="true">→</div>
+              <div class="branch">
+                <h3>Project state</h3>
+                <ul>
+                  <li>plan·placements·customProducts</li>
+                  <li>확정된 support chain</li>
+                  <li>Undo/Redo와 autosave 대상</li>
+                </ul>
+              </div>
+            </div>
+            <p class="measure">
+              객체 드래그 중에는 미리보기 좌표를 보여주고 확정 시 편집 명령으로 커밋합니다. 부모
+              오브젝트 이동은 부착된 자식의 상대 위치를 함께 전파합니다. 추가·삭제·부착·분리 후
+              견적은 현재 placements에서 다시 계산됩니다.
+            </p>
+            <div class="protocol-line" aria-label="객체 설치 의존성 흐름">
+              <span>Product.installation</span><i>→</i><span>capability check</span><i>→</i
+              ><span>support candidate</span><i>→</i><span>Placement.supportPlacementId</span
+              ><i>→</i><span>move propagation</span>
+            </div>
+          </section>
+
+          <section class="doc-section" id="boundaries">
+            <span class="section-number">05</span>
+            <p class="kicker">Operational boundaries</p>
+            <h2>웹 앱, 연구 서비스와 생성 자산의 수명을 분리합니다.</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>경계</th>
+                    <th>Production 기본값</th>
+                    <th>대체·복구 경로</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>프로젝트 저장</td>
+                    <td>URL workspace별 IndexedDB + session mirror</td>
+                    <td>IndexedDB 실패 시 sessionStorage; 장기 보관은 JSON export</td>
+                  </tr>
+                  <tr>
+                    <td>평면도 CV</td>
+                    <td>브라우저 classical CV</td>
+                    <td>로컬 segmentation/CNN은 개발 또는 명시적 연구 모드</td>
+                  </tr>
+                  <tr>
+                    <td>AI 분석</td>
+                    <td>OpenAI-compatible gateway, 사용자 설정</td>
+                    <td>인증·쿼터·rate limit·응답 오류를 유형화해 표시</td>
+                  </tr>
+                  <tr>
+                    <td>3D 생성 메시</td>
+                    <td>승인 자산 없으면 공식 이미지 투영·파라메트릭 형상</td>
+                    <td>TripoSR worker는 오프라인; 해시·권리·사람 검수 후에만 publish</td>
+                  </tr>
+                  <tr>
+                    <td>웹 배포</td>
+                    <td>Vite 정적 빌드 → Vercel <code>dist</code></td>
+                    <td><code>workers/</code>는 Vercel 빌드 경계 밖</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout caution">
+              <h3>저장 ≠ 동기화</h3>
+              <p>
+                IndexedDB는 같은 브라우저에서 탭을 닫아도 프로젝트를 유지하지만 계정 기반 백업이나
+                기기 간 동기화를 제공하지 않습니다. 이 차이를 UI와 문서에서 계속 명시해야 합니다.
+              </p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="assessment">
+            <span class="section-number">06</span>
+            <p class="kicker">Critical assessment</p>
+            <h2>구조는 건강하지만 운영 완결성은 아직 로컬 중심입니다.</h2>
+            <div class="review-list">
+              <div class="review-item">
+                <span class="review-rank">STRENGTH</span>
+                <div>
+                  <h3>도메인 경계가 실제 도구로 보호됨</h3>
+                  <p>
+                    폴더 이름만 클린 아키텍처인 것이 아니라 역참조 정책 테스트와 DOM-free compile이
+                    있어 회귀를 빠르게 감지합니다.
+                  </p>
+                </div>
+              </div>
+              <div class="review-item">
+                <span class="review-rank">RISK 01</span>
+                <div>
+                  <h3>Project v1 validation 깊이가 얕음</h3>
+                  <p>
+                    import는 최상위 필드와 배열 존재를 확인하지만 모든 중첩 좌표·ID·참조 무결성을
+                    완전 검증하지는 않습니다. 외부 문서 호환성이 커질수록 schema 기반 deep
+                    validation이 필요합니다.
+                  </p>
+                </div>
+              </div>
+              <div class="review-item">
+                <span class="review-rank">RISK 02</span>
+                <div>
+                  <h3>프레젠테이션 registry가 런타임 객체로 함께 조립됨</h3>
+                  <p>
+                    scene surface·texture status는 UI 외부 효과이므로 현재 위치가 타당하지만, 기능이
+                    커지면 프레임 수명과 프로젝트 수명의 혼동을 피하도록 dispose 계약이 필요합니다.
+                  </p>
+                </div>
+              </div>
+              <div class="review-item">
+                <span class="review-rank">NEXT</span>
+                <div>
+                  <h3>반복 장애가 확인될 때만 구조를 확장</h3>
+                  <p>
+                    원격 저장소나 이벤트 소싱을 선제 도입하지 않습니다. 사용자 검증에서 실제 데이터
+                    손실·복구 실패가 반복될 때 ProjectRepository 포트 뒤에 원격 어댑터를 추가하는
+                    것이 적절합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>Architecture · code-aligned, not aspirational</span
+        ><span><a href="workflow.html">다음: 워크플로우 →</a></span>
+      </div>
+    </footer>
+    <script src="product-docs.js"></script>
+  </body>
+</html>

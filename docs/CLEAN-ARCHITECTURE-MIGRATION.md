@@ -25,7 +25,7 @@ domain <- application <- infrastructure
 
 - `domain`: 단위가 mm인 모델, 기하·배치·보행·도면 해석 규칙. React, Zustand, Three.js, DOM, 네트워크, 저장소를 참조하지 않는다.
 - `application`: 프로젝트 생명주기와 AI 도면 해석 유스케이스, 외부 의존성 포트. 도메인만 참조한다.
-- `infrastructure`: sessionStorage 프로젝트 저장소, localStorage 설정 저장소, OpenAI 호환 HTTP, CV/Raster2Seq HTTP, 브라우저 다운로드 구현.
+- `infrastructure`: URL 워크스페이스별 IndexedDB 프로젝트 저장소와 sessionStorage 캐시·폴백, localStorage 설정 저장소, OpenAI 호환 HTTP, CV/Raster2Seq HTTP, 브라우저 다운로드 구현.
 - `presentation`: React/R3F/SVG 화면과 Zustand 상태 어댑터. 구체 인프라는 직접 참조하지 않고 조립 루트가 제공한 유스케이스·포트를 사용한다.
 - `compositionRoot.ts`: 실제 어댑터를 생성하고 애플리케이션과 프레젠테이션을 연결하는 유일한 위치다.
 
@@ -42,7 +42,7 @@ domain <- application <- infrastructure
 
 ## 호환성과 비목표
 
-- `Project.version = 1` 문서 형식은 유지한다. 프로젝트는 탭별 sessionStorage에 저장하며 장기 보관은 JSON 내보내기를 사용한다.
+- `Project.version = 1` 문서 형식은 유지한다. 프로젝트는 URL 워크스페이스별 IndexedDB에 저장하고 sessionStorage를 캐시·폴백으로 사용한다. 계정·기기 간 동기화는 제공하지 않으므로 장기·외부 보관은 JSON 내보내기를 사용한다.
 - UI 문구, 사용자 흐름, 2D/3D 렌더 결과, CV 알고리즘은 의도적으로 변경하지 않는다.
 - 대형 React 컴포넌트의 시각적 하위 컴포넌트 분리는 이번 의존성 마이그레이션 이후 별도 단계로 다룬다. 먼저 외부 효과를 경계 밖으로 이동해야 이후 분할이 안전하다.
 
@@ -60,7 +60,7 @@ domain <- application <- infrastructure
 src/
   domain/          # 모델, 기하/CV 계산, 배치·개구부·보행·구조 규칙
   application/     # 프로젝트/편집/히스토리/자동저장/AI·CV/견적 유스케이스와 포트
-  infrastructure/  # HTTP DTO·timeout·mask decode, 브라우저 저장소 decoder, 정적 카탈로그
+  infrastructure/  # HTTP DTO·timeout·mask decode, IndexedDB/session 저장소, 정적 카탈로그
   presentation/    # React, Zustand 바인딩, SVG/R3F 렌더링, presenter
   compositionRoot.ts
   main.tsx
@@ -74,3 +74,5 @@ src/
 - production은 Zustand/Three renderer를 `window`에 노출하지 않는다. 개발 및 `--mode test` 빌드에서만 E2E bridge를 활성화한다.
 - `tsconfig.domain.json`과 `tsconfig.application.json`은 DOM 라이브러리 없이 내부 레이어를 별도 컴파일한다.
 - 모든 production TypeScript 파일이 정확히 한 레이어로 분류되지 않거나 역방향/동적 import를 사용하면 의존성 정책 테스트가 실패한다.
+
+시스템 전체의 최신 시각 문서는 [제품 아키텍처](products/architecture.html), 사용자·데이터·배포 흐름은 [제품 워크플로우](products/workflow.html)를 기준으로 한다. 이 계획 문서는 마이그레이션의 의사결정 이력을 보존한다.

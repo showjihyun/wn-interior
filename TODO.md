@@ -338,6 +338,29 @@
 - [x] XLSX parser 동적 로드로 초기 작업면 번들 분리
 - [x] 기존 Protocol validator·원자적 Import·Undo/Redo·자동저장 경로 재사용
 
+### M36 주방 Object Attach/Detach + 실시간 가격 ✅
+
+- [x] 최종 surface 스냅 좌표 기준 방 경계·충돌·의존성 판정
+- [x] 하부장 이동·회전 시 싱크·수전 attachment tree rigid transform 추종
+- [x] 인스펙터 `분리해서 이동` → 다른 주방 표면 재Attach / Esc 원래 연결 복구
+- [x] 연결 대상·하위 Object·3D 연결 badge와 분리 중 상태 안내
+- [x] Object 추가·삭제 시 가격 탭 라벨과 상세 합계 즉시 갱신
+
+### M37 워크스루 Space 점프 ✅
+
+- [x] 중력·착지·공중 재점프 차단 vertical solver
+- [x] 배치 Object 높이 기반 수평 통과와 상단 착지
+- [x] 가구 밖 이동 시 낙하, 벽·도면 경계 충돌 유지
+- [x] 1·3인칭 카메라와 avatar 수직 위치 동기화
+
+### M38 초기화 안전장치 + 프로젝트 round-trip ✅
+
+- [x] 샘플 초기화 전 `정말 샘플 초기화를 진행하시겠습니까?` 확인 Alert
+- [x] 취소 시 무변경, 확인 시에만 초기화
+- [x] 동일 JSON 연속 불러오기 지원
+- [x] 평면도·마감재·배치 위치/회전/색상/치수·Attach·커스텀 제품 round-trip
+- [x] 미지원 벽지 ID는 기본 벽지로 안전 폴백
+
 ### M24 2D→3D 정확도 2,200건 감사 ✅
 
 - [x] CubiCasa5K 실제 도면 1,000건 층화 표본 추출 + 이미지/SVG CRC 검증

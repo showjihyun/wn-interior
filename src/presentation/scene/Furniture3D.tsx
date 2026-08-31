@@ -35,6 +35,9 @@ function FurnitureItem({
   const select = useStore((s) => s.select)
   const movePlacement = useStore((s) => s.movePlacement)
   const moving = useStore((s) => s.moving)
+  const attachedCount = useStore(
+    (s) => s.placements.filter((candidate) => candidate.supportPlacementId === placement.id).length
+  )
   const beginMove = useStore((s) => s.beginMove)
   const confirmMove = useStore((s) => s.confirmMove)
   const cancelMove = useStore((s) => s.cancelMove)
@@ -71,9 +74,12 @@ function FurnitureItem({
   const downScreen = useRef<{ x: number; y: number } | null>(null)
   const originRef = useRef<{
     x: number
+    y: number
     z: number
     rotY: number
     roomId?: string
+    elevationOverride?: number
+    supportPlacementId?: string
   } | null>(null)
   const beganMove = useRef(false)
 
@@ -90,9 +96,12 @@ function FurnitureItem({
     if (!isMovingThis)
       originRef.current = {
         x: placement.pos.x,
+        y: placement.pos.y,
         z: placement.pos.z,
         rotY: placement.rotY,
         roomId: placement.roomId,
+        elevationOverride: placement.elevationOverride,
+        supportPlacementId: placement.supportPlacementId,
       }
     beganMove.current = isMovingThis
     document.body.style.cursor = 'grabbing'
@@ -181,6 +190,19 @@ function FurnitureItem({
           <planeGeometry args={[eff.w, eff.d]} />
           <meshBasicMaterial color="#ff4d4d" transparent opacity={0.35} side={THREE.DoubleSide} />
         </mesh>
+      )}
+      {isSel && !isMovingThis && (placement.supportPlacementId || attachedCount > 0) && (
+        <Html position={[0, eff.h + 90, 0]} center zIndexRange={[16777269, 100]}>
+          <div className="attachment-badge">
+            <span aria-hidden="true" />
+            {placement.supportPlacementId ? '연결됨' : `연결 ${attachedCount}`}
+          </div>
+        </Html>
+      )}
+      {isMovingThis && product.mount === 'surface' && !placement.supportPlacementId && (
+        <Html position={[0, eff.h + 80, 0]} center zIndexRange={[16777270, 100]}>
+          <div className="attachment-badge seeking">연결할 표면을 찾는 중</div>
+        </Html>
       )}
       {/* 이동 확정 대기 — 객체 우측 상단에 완료 버튼 */}
       {isMovingThis && (

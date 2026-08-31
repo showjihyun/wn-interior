@@ -79,6 +79,41 @@ test('배치 가구와 충돌하면 통과하지 못한다', async ({ page }) =>
   expect(final.z).toBeGreaterThan(sofa.cz + sofa.d / 2 - 10)
 })
 
+test('Space로 점프하고 배치 Object 상단에 착지한다', async ({ page }) => {
+  await page.evaluate(() => {
+    window.__hp3d_store.getState().commit((draft) => {
+      draft.placements = []
+    })
+  })
+  await page.getByRole('button', { name: /워크스루/ }).click()
+  await page.waitForFunction(
+    () =>
+      Number.isFinite((window as any).__hp3d_walk?.x) &&
+      (window as any).__hp3d_walk?.grounded === true
+  )
+  const spawn = await page.evaluate(() => ({ ...(window as any).__hp3d_walk }))
+  const chairTop = await page.evaluate(({ x, z }) => {
+    const state = window.__hp3d_store.getState()
+    state.addPlacement('p-chair', { x, z })
+    return state.productById('p-chair')!.dims.h
+  }, spawn)
+
+  await page.keyboard.down('Space')
+  await page.waitForTimeout(100)
+  await page.keyboard.up('Space')
+  await page.waitForFunction(() => (window as any).__hp3d_walk?.y > 100)
+  expect(await page.evaluate(() => (window as any).__hp3d_walk.grounded)).toBe(false)
+
+  await page.waitForFunction(
+    (top) =>
+      (window as any).__hp3d_walk?.grounded === true &&
+      Math.abs((window as any).__hp3d_walk.y - top) < 2,
+    chairTop,
+    { timeout: 4000 }
+  )
+  expect(await page.evaluate(() => (window as any).__hp3d_walk.y)).toBe(chairTop)
+})
+
 test('3인칭 전환 시 캐릭터가 렌더된다 (픽셀 검사)', async ({ page }) => {
   await page.getByRole('button', { name: /워크스루/ }).click()
   await page.waitForFunction(() => Number.isFinite((window as any).__hp3d_walk?.z))

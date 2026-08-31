@@ -201,16 +201,16 @@ The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-
 
 ## Keyboard and interaction cheatsheet
 
-| Action           | Control                                                   |
-| ---------------- | --------------------------------------------------------- |
-| Move             | Drag; 25mm grid; wall-mounted products magnetize to walls |
-| Rotate           | `R` / `Shift+R`, or inspector controls                    |
-| Delete           | `Delete`                                                  |
-| Undo / Redo      | `Ctrl+Z` / `Ctrl+Y`                                       |
-| 2D / 3D          | `1` / `3`                                                 |
-| Walkthrough      | Walk button, mouse look, `WASD`, `Shift` to run           |
-| Variants         | Save/apply A/B layouts with thumbnails                    |
-| Custom furniture | Register dimensions and an optional `.glb` URL            |
+| Action           | Control                                                    |
+| ---------------- | ---------------------------------------------------------- |
+| Move             | Drag; 25mm grid; wall-mounted products magnetize to walls  |
+| Rotate           | `R` / `Shift+R`, or inspector controls                     |
+| Delete           | `Delete`                                                   |
+| Undo / Redo      | `Ctrl+Z` / `Ctrl+Y`                                        |
+| 2D / 3D          | `1` / `3`                                                  |
+| Walkthrough      | Walk button, mouse look, `WASD`, `Space` jump, `Shift` run |
+| Variants         | Save/apply A/B layouts with thumbnails                     |
+| Custom furniture | Register dimensions and an optional `.glb` URL             |
 
 ---
 
@@ -375,16 +375,16 @@ CUDA를 우선 사용하고 CPU로 폴백합니다. production에서는 `VITE_EN
 
 ## 주요 조작
 
-| 동작                | 조작                                               |
-| ------------------- | -------------------------------------------------- |
-| 이동                | 드래그, 25mm 그리드, 벽부착 제품 벽 자석           |
-| 회전                | `R` / `Shift+R` 또는 인스펙터                      |
-| 삭제                | `Delete`                                           |
-| 실행 취소/다시 실행 | `Ctrl+Z` / `Ctrl+Y`                                |
-| 2D / 3D             | `1` / `3`                                          |
-| 워크스루            | 워크스루 버튼, 마우스 시선, `WASD`, `Shift` 달리기 |
-| 배치안              | 썸네일과 함께 A/B안 저장·적용                      |
-| 사용자 가구         | 실측 치수와 선택적 `.glb` URL 등록                 |
+| 동작                | 조작                                                                       |
+| ------------------- | -------------------------------------------------------------------------- |
+| 이동                | 드래그, 25mm 그리드, 벽부착 제품 벽 자석                                   |
+| 회전                | `R` / `Shift+R` 또는 인스펙터                                              |
+| 삭제                | `Delete`                                                                   |
+| 실행 취소/다시 실행 | `Ctrl+Z` / `Ctrl+Y`                                                        |
+| 2D / 3D             | `1` / `3`                                                                  |
+| 워크스루            | 워크스루 버튼, 마우스 시선, `WASD`, `Space` 점프·가구 착지, `Shift` 달리기 |
+| 배치안              | 썸네일과 함께 A/B안 저장·적용                                              |
+| 사용자 가구         | 실측 치수와 선택적 `.glb` URL 등록                                         |
 
 ## 라이선스
 

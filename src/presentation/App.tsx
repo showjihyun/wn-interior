@@ -86,6 +86,8 @@ export function App() {
       >
         {pendingProduct ? (
           <>◎ {pendingProduct.name} 배치 중 · 원하는 위치를 클릭하세요 · Esc 취소</>
+        ) : mode === '3d' && viewPreset === 'walk' ? (
+          <>워크스루 · WASD 이동 · Space 점프/가구 위 착지 · Shift 달리기 · 드래그 시선</>
         ) : (
           <>
             단위 mm · 자동저장됨 · 좌클릭 배치/선택 · 드래그 이동 → ✓ 이동완료로 확정 · R 회전 ·

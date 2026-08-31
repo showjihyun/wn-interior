@@ -18,7 +18,8 @@ export function resolveSurfacePlacement(
   placements: Placement[],
   x: number,
   z: number,
-  productOf: (id: string) => Product | undefined
+  productOf: (id: string) => Product | undefined,
+  excludePlacementId?: string | null
 ): SurfacePlacement | null {
   if (!requiresSurfaceHost(product)) return null
   const supportedBy = product.installation?.surface?.supportedBy ?? []
@@ -26,6 +27,7 @@ export function resolveSurfacePlacement(
 
   const hosts = placements
     .map((placement) => {
+      if (placement.id === excludePlacementId) return null
       const host = productOf(placement.productId)
       if (
         !host ||

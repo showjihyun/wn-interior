@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createApplicationComposition } from '../../compositionRoot'
 import { CATALOG } from '../../infrastructure/reference-data/data/catalog'
 import { roomAt } from '../../domain/engine/geom'
+import { buildCostReport } from '../../domain/costs'
 
 const { runtime } = createApplicationComposition()
 const useStore = runtime.store
@@ -107,6 +108,75 @@ describe('스토어 — 배치/Undo/Redo', () => {
     expect(S().placements.some((placement) => placement.id === cabinetId)).toBe(true)
   })
 
+  it('하부장을 이동하면 attach된 싱크와 수전이 함께 이동한다', () => {
+    const cabinetId = S().addPlacement('ik-metod-sinarp-sink-cabinet', {
+      x: 9000,
+      z: 5000,
+    })!
+    const sinkId = S().addPlacement('ik-kilsviken-sink-72', { x: 9000, z: 5000 })!
+    const faucetId = S().addPlacement('ik-aelmaren-kitchen-faucet', {
+      x: 9000,
+      z: 5000,
+    })!
+    const before = new Map(
+      S()
+        .placements.filter((placement) => [cabinetId, sinkId, faucetId].includes(placement.id))
+        .map((placement) => [placement.id, { ...placement.pos }])
+    )
+
+    S().movePlacement(cabinetId, 9400, 5200)
+
+    for (const id of [cabinetId, sinkId, faucetId]) {
+      const previous = before.get(id)!
+      const current = S().placements.find((placement) => placement.id === id)!
+      expect(current.pos.x).toBe(previous.x + 400)
+      expect(current.pos.z).toBe(previous.z + 200)
+    }
+  })
+
+  it('Detach는 임시 이동으로 시작하고 Esc 복구 또는 다른 주방에 재Attach한다', () => {
+    const firstCabinetId = S().addPlacement('ik-metod-sinarp-sink-cabinet', {
+      x: 9000,
+      z: 5000,
+    })!
+    S().addPlacement('ik-kilsviken-sink-72', { x: 9000, z: 5000 })
+    const secondCabinetId = S().addPlacement('ik-metod-sinarp-sink-cabinet', {
+      x: 8000,
+      z: 5000,
+    })!
+    S().addPlacement('ik-kilsviken-sink-72', { x: 8000, z: 5000 })
+    const faucetId = S().addPlacement('ik-aelmaren-kitchen-faucet', {
+      x: 9000,
+      z: 5000,
+    })!
+
+    S().detachPlacement(faucetId)
+    expect(S().moving?.id).toBe(faucetId)
+    expect(
+      S().placements.find((placement) => placement.id === faucetId)?.supportPlacementId
+    ).toBeUndefined()
+    S().cancelMove()
+    expect(S().placements.find((placement) => placement.id === faucetId)?.supportPlacementId).toBe(
+      firstCabinetId
+    )
+
+    S().detachPlacement(faucetId)
+    S().confirmMove()
+    expect(S().moving).toBeNull()
+    expect(S().placements.find((placement) => placement.id === faucetId)?.supportPlacementId).toBe(
+      firstCabinetId
+    )
+
+    S().detachPlacement(faucetId)
+    S().movePlacement(faucetId, 8000, 5000)
+    S().confirmMove()
+
+    expect(S().moving).toBeNull()
+    expect(S().placements.find((placement) => placement.id === faucetId)?.supportPlacementId).toBe(
+      secondCabinetId
+    )
+  })
+
   it('undo는 마지막 커밋을 되돌린다', () => {
     const before = S().placements.length
     S().addPlacement('p-chair', { x: 6000, z: 2000 })
@@ -123,6 +193,16 @@ describe('스토어 — 배치/Undo/Redo', () => {
     expect(S().placements.some((p) => p.id === id)).toBe(false)
     S().undo()
     expect(S().placements.some((p) => p.id === id)).toBe(true)
+  })
+
+  it('가격 합계는 배치 추가와 삭제 직후 최신 placements로 다시 계산된다', () => {
+    const id = S().addPlacement('lg-cordzero-r5', { x: 9000, z: 5000 })!
+
+    expect(buildCostReport(S().placements, S().productById).pricedTotal).toBe(900_000)
+
+    S().removePlacement(id)
+
+    expect(buildCostReport(S().placements, S().productById).pricedTotal).toBe(0)
   })
 
   it('드래그 이동(move)은 히스토리를 만들지 않고, updatePlacement 커밋 1회만 기록된다', () => {

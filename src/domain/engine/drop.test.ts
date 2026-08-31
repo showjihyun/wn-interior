@@ -126,4 +126,58 @@ describe('canDropAt (이동 확정 검사)', () => {
 
     expect(result).toEqual({ ok: false, reason: 'collision' })
   })
+
+  it('표면 클릭점이 방 밖이어도 최종 스냅 위치가 방 안이면 배치를 허용한다', () => {
+    const plan = {
+      unit: 'mm' as const,
+      wallHeight: 2400,
+      walls: [],
+      openings: [],
+      rooms: [
+        {
+          id: 'kitchen',
+          name: '주방',
+          polygon: [
+            { x: 0, y: 0 },
+            { x: 2000, y: 0 },
+            { x: 2000, y: 2000 },
+            { x: 0, y: 2000 },
+          ],
+        },
+      ],
+    }
+    const cabinet: Product = {
+      id: 'cabinet',
+      name: '싱크대 하부장',
+      category: 'kitchen',
+      dims: { w: 800, d: 600, h: 800 },
+      mount: 'floor',
+      shape: 'sinkLower',
+      installation: { provides: ['kitchen.base-cabinet'] },
+    }
+    const faucet: Product = {
+      id: 'faucet',
+      name: '주방수전',
+      category: 'kitchen',
+      dims: { w: 200, d: 300, h: 350 },
+      mount: 'surface',
+      shape: 'faucet',
+      installation: {
+        provides: ['kitchen.faucet'],
+        surface: { supportedBy: ['kitchen.base-cabinet'], anchor: 'rear' },
+      },
+    }
+    const host: Placement = {
+      id: 'host',
+      productId: cabinet.id,
+      pos: { x: 1000, y: 0, z: 250 },
+      rotY: 0,
+    }
+
+    const result = canDropAt(plan, faucet, [host], null, 1000, -25, 0, (id) =>
+      id === cabinet.id ? cabinet : faucet
+    )
+
+    expect(result).toEqual({ ok: true })
+  })
 })

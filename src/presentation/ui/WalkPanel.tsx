@@ -49,7 +49,7 @@ export function WalkPanel() {
           3인칭
         </button>
       </div>
-      <div className="wp-hint">WASD 이동 · 드래그 시선 · Shift 달리기</div>
+      <div className="wp-hint">WASD 이동 · Space 점프/가구 착지 · Shift 달리기</div>
     </div>
   )
 }

@@ -23,7 +23,9 @@ export function Walls3D({ plan }: { plan: FloorPlan }) {
         const cy = (w.a.y + w.b.y) / 2
         const ops = plan.openings.filter((o) => o.wallId === w.id)
         const matId = resolveWallMaterialId(plan, cx, cy, ang) ?? DEFAULT_WALL
-        const mat = finishMaterials.find((material) => material.id === matId)!
+        const mat =
+          finishMaterials.find((material) => material.id === matId) ??
+          finishMaterials.find((material) => material.id === DEFAULT_WALL)!
         const baseTex = getTexture(mat)
         baseTex.userData.tileMm = mat.tileMm
         const slices = buildWallSlices(L, plan.wallHeight, ops)

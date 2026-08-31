@@ -6,7 +6,13 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useThree, useFrame } from '@react-three/fiber'
 import { useStore } from '../AppRuntimeContext'
-import { resolveWalkMove, type Obstacle, type WalkBounds } from '../../domain/engine/walk'
+import {
+  resolveWalkMove,
+  resolveWalkVertical,
+  type Obstacle,
+  type WalkBounds,
+  type WalkVerticalState,
+} from '../../domain/engine/walk'
 import { resolveDims } from '../../domain/engine/dims'
 import { footprintAABB } from '../../domain/engine/geom'
 import type { FloorPlan } from '../../domain/model'
@@ -31,6 +37,8 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
   const yaw = useRef(0)
   const pitch = useRef(-0.05)
   const pos = useRef<{ x: number; z: number }>({ x: 0, z: 0 })
+  const vertical = useRef<WalkVerticalState>({ y: 0, velocityY: 0, grounded: true })
+  const jumpWasDown = useRef(false)
   const initialized = useRef(false)
 
   // 가구 장애물 (floor 제품, 유효 치수)
@@ -41,7 +49,10 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
       if (!prod || prod.mount === 'wall-mount' || prod.mount === 'ceiling') continue
       const eff = resolveDims(prod, pl)
       if (eff.h <= 50) continue // 러그 등 통과 가능
-      out.push(footprintAABB(eff.w, eff.d, pl.pos.x, pl.pos.z, pl.rotY))
+      out.push({
+        ...footprintAABB(eff.w, eff.d, pl.pos.x, pl.pos.z, pl.rotY),
+        topY: (pl.elevationOverride ?? pl.pos.y ?? 0) + eff.h,
+      })
     }
     return out
   }, [placements, productOf])
@@ -68,9 +79,12 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
     pos.current = { x: cx, z: cz + Math.min(3200, span * 0.3) }
     yaw.current = 0
     pitch.current = -0.05
+    vertical.current = { y: 0, velocityY: 0, grounded: true }
+    jumpWasDown.current = false
     initialized.current = true
 
     const kd = (e: KeyboardEvent) => {
+      if (e.code === 'Space') e.preventDefault()
       keys.current[e.code] = true
     }
     const ku = (e: KeyboardEvent) => {
@@ -142,6 +156,17 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
       dz -= r.z
     }
     const radius = characterRadius(cfgRef.current.weightKg)
+    const jumpRequested = !!k.Space && !jumpWasDown.current
+    jumpWasDown.current = !!k.Space
+    const verticalBefore = vertical.current
+    let verticalNext = resolveWalkVertical(
+      verticalBefore,
+      obstaclesRef.current,
+      pos.current.x,
+      pos.current.z,
+      Math.min(dtRaw, 0.05),
+      jumpRequested
+    )
     if (dx !== 0 || dz !== 0) {
       const moved = resolveWalkMove(
         wallsRef.current,
@@ -150,17 +175,27 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
         dx * speed,
         dz * speed,
         radius,
-        boundsRef.current
+        boundsRef.current,
+        verticalNext.y
       )
       pos.current = moved
+      verticalNext = resolveWalkVertical(
+        verticalBefore,
+        obstaclesRef.current,
+        moved.x,
+        moved.z,
+        Math.min(dtRaw, 0.05),
+        jumpRequested
+      )
     }
+    vertical.current = verticalNext
     const eyeH = cfgRef.current.heightCm * 10 * WALK_EYE_RATIO
     if (viewRef.current === 'fp') {
-      camera.position.set(pos.current.x, eyeH, pos.current.z)
+      camera.position.set(pos.current.x, eyeH + vertical.current.y, pos.current.z)
       camera.rotation.set(pitch.current, yaw.current, 0)
     } else {
       const dist = 2400
-      const camH = eyeH + 900
+      const camH = eyeH + 900 + vertical.current.y
       const fx = Math.sin(yaw.current)
       const fz = Math.cos(yaw.current)
       camera.position.set(pos.current.x - fx * dist, camH, pos.current.z - fz * dist)
@@ -173,6 +208,9 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
         yaw: yaw.current,
         radius,
         eyeH,
+        y: vertical.current.y,
+        velocityY: vertical.current.velocityY,
+        grounded: vertical.current.grounded,
       }
     }
   })
@@ -180,6 +218,7 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
   return (
     <CharacterAvatar
       pos={pos}
+      vertical={vertical}
       yaw={yaw}
       visible={walkView === 'tp'}
       heightMm={walkConfig.heightCm * 10}
@@ -190,12 +229,14 @@ export function WalkControls({ plan }: { plan: FloorPlan }) {
 
 function CharacterAvatar({
   pos,
+  vertical,
   yaw,
   visible,
   heightMm,
   radiusMm,
 }: {
   pos: React.RefObject<{ x: number; z: number }>
+  vertical: React.RefObject<WalkVerticalState>
   yaw: React.RefObject<number>
   visible: boolean
   heightMm: number
@@ -204,7 +245,7 @@ function CharacterAvatar({
   const g = useRef<THREE.Group>(null)
   useFrame(() => {
     if (!g.current) return
-    g.current.position.set(pos.current?.x ?? 0, 0, pos.current?.z ?? 0)
+    g.current.position.set(pos.current?.x ?? 0, vertical.current?.y ?? 0, pos.current?.z ?? 0)
     g.current.rotation.y = yaw.current ?? 0
   })
   const bodyR = Math.max(90, radiusMm * 0.55)

@@ -29,6 +29,7 @@ import {
   type CatalogProtocolIssue,
 } from '../../application/catalogProtocol'
 import { findBrokenInstallationDependents } from '../../domain/installationDependencies'
+import { transformAttachmentTree } from '../../domain/installationAttachments'
 import type {
   AiSettingsRepository,
   Clock,
@@ -43,6 +44,7 @@ import {
   restorePlacementMove,
   type EditorSnapshot,
   type PlacementMoveOrigin,
+  type PlacementMoveTransaction,
 } from '../../application/placementMoveHistory'
 import {
   executeProjectEdit,
@@ -74,7 +76,7 @@ export interface AppState {
   pendingProductId: string | null
   viewPreset: 'iso' | 'top' | 'walk'
   variants: PlacementVariant[]
-  moving: { id: string; origin: PlacementMoveOrigin } | null
+  moving: PlacementMoveTransaction | null
   toast: { id: number; msg: string; kind: 'error' | 'warn' | 'info' } | null
   /** 씬 조명 강도 배율 (0.2~2.0, 기본 1) */
   lightIntensity: number
@@ -114,6 +116,7 @@ export interface AppState {
   updatePlacement: (id: string, patch: Partial<Placement>) => void
   movePlacement: (id: string, x: number, z: number, roomId?: string) => void
   relocatePlacement: (id: string, x: number, z: number) => boolean
+  detachPlacement: (id: string) => void
   removePlacement: (id: string) => void
   duplicatePlacement: (id: string) => void
 
@@ -313,23 +316,62 @@ export function createAppStore({
 
       removeVariant: (id) => set((s) => ({ variants: removePlacementVariant(s.variants, id) })),
 
-      beginMove: (id, origin) => set({ moving: { id, origin } }),
+      beginMove: (id, origin) =>
+        set((state) => ({
+          moving: {
+            id,
+            origin,
+            originPlacements: state.placements.map((placement) => ({
+              ...placement,
+              pos: { ...placement.pos },
+              dimsOverride: placement.dimsOverride ? { ...placement.dimsOverride } : undefined,
+            })),
+          },
+        })),
 
       confirmMove: () => {
         const s = get()
         const mv = s.moving
         if (!mv) return
-        const pl = s.placements.find((p) => p.id === mv.id)
-        const prod = pl ? s.productById(pl.productId) : undefined
-        if (!pl || !prod) {
+        const currentPlacement = s.placements.find((p) => p.id === mv.id)
+        const prod = currentPlacement ? s.productById(currentPlacement.productId) : undefined
+        if (!currentPlacement || !prod) {
           set({ moving: null })
           return
         }
+        const surface = resolveSurfacePlacement(
+          prod,
+          s.placements,
+          currentPlacement.pos.x,
+          currentPlacement.pos.z,
+          s.productById,
+          currentPlacement.id
+        )
+        const placements = surface
+          ? transformAttachmentTree(s.placements, currentPlacement.id, {
+              x: surface.x,
+              z: surface.z,
+              rotY: surface.rotY,
+              roomId: roomAt(s.plan, surface.x, surface.z)?.id,
+            }).map((candidate) =>
+              candidate.id === currentPlacement.id
+                ? {
+                    ...candidate,
+                    pos: { x: surface.x, y: surface.elevation, z: surface.z },
+                    rotY: surface.rotY,
+                    roomId: roomAt(s.plan, surface.x, surface.z)?.id,
+                    elevationOverride: surface.elevation,
+                    supportPlacementId: surface.supportPlacementId,
+                  }
+                : candidate
+            )
+          : s.placements
+        const pl = placements.find((placement) => placement.id === currentPlacement.id)!
         const effProduct = { ...prod, dims: resolveDims(prod, pl) }
         const r = canDropAt(
           s.plan,
           effProduct,
-          s.placements,
+          placements,
           mv.id,
           pl.pos.x,
           pl.pos.z,
@@ -337,17 +379,21 @@ export function createAppStore({
           s.productById
         )
         if (r.ok) {
-          const history = commitPlacementMove(s, mv)
+          const candidateState = { ...s, placements }
+          const history = commitPlacementMove(candidateState, mv)
           if (!history) {
-            set({ moving: null })
+            set({ placements, moving: null })
             return
           }
-          const next = { ...s, ...history, moving: null }
+          const next = { ...s, placements, ...history, moving: null }
           set(next)
           persist(next)
+          if (surface && mv.origin.supportPlacementId !== surface.supportPlacementId) {
+            get().showToast('새 주방 표면에 연결했어요', 'info')
+          }
         } else {
           set({ placements: restorePlacementMove(s.placements, mv), moving: null })
-          get().showToast('공간이 부족해 배치할 수 없어요')
+          get().showToast(placementFailureMessage(prod, r))
         }
       },
 
@@ -412,17 +458,72 @@ export function createAppStore({
         return id
       },
 
-      updatePlacement: (id, patch) => commitEdit({ type: 'update-placement', id, patch }),
+      updatePlacement: (id, patch) => {
+        const state = get()
+        const placement = state.placements.find((candidate) => candidate.id === id)
+        if (!placement || (!patch.pos && patch.rotY === undefined)) {
+          commitEdit({ type: 'update-placement', id, patch })
+          return
+        }
+        const nextPos = patch.pos ?? placement.pos
+        const transformed = transformAttachmentTree(state.placements, id, {
+          x: nextPos.x,
+          z: nextPos.z,
+          rotY: patch.rotY ?? placement.rotY,
+          roomId: patch.roomId ?? placement.roomId,
+        }).map((candidate) =>
+          candidate.id === id
+            ? {
+                ...candidate,
+                ...patch,
+                pos: patch.pos ? { ...patch.pos } : candidate.pos,
+              }
+            : candidate
+        )
+        commitEdit({ type: 'replace-placements', placements: transformed })
+      },
 
       movePlacement: (id, x, z, roomId) =>
-        set((s) => ({
-          ...s,
-          placements: s.placements.map((p) =>
-            p.id === id
-              ? { ...p, pos: { ...p.pos, x: Math.round(x), z: Math.round(z) }, roomId }
-              : p
-          ),
-        })),
+        set((state) => {
+          const placement = state.placements.find((candidate) => candidate.id === id)
+          const product = placement ? state.productById(placement.productId) : undefined
+          if (!placement || !product) return state
+          const surface = resolveSurfacePlacement(
+            product,
+            state.placements,
+            x,
+            z,
+            state.productById,
+            id
+          )
+          const target = surface ?? {
+            x: Math.round(x),
+            z: Math.round(z),
+            rotY: placement.rotY,
+            elevation: placement.pos.y,
+            supportPlacementId: requiresSurfaceHost(product)
+              ? undefined
+              : placement.supportPlacementId,
+          }
+          const targetRoomId = roomAt(state.plan, target.x, target.z)?.id ?? roomId
+          const placements = transformAttachmentTree(state.placements, id, {
+            x: target.x,
+            z: target.z,
+            rotY: target.rotY,
+            roomId: targetRoomId,
+          }).map((candidate) =>
+            candidate.id === id
+              ? {
+                  ...candidate,
+                  pos: { ...candidate.pos, x: target.x, y: target.elevation, z: target.z },
+                  roomId: targetRoomId,
+                  elevationOverride: surface?.elevation ?? candidate.elevationOverride,
+                  supportPlacementId: target.supportPlacementId,
+                }
+              : candidate
+          )
+          return { ...state, placements }
+        }),
 
       relocatePlacement: (id, x, z) => {
         const state = get()
@@ -430,33 +531,77 @@ export function createAppStore({
         const product = placement ? state.productById(placement.productId) : undefined
         if (!placement || !product) return false
         const effective = { ...product, dims: resolveDims(product, placement) }
+        const surface = resolveSurfacePlacement(
+          product,
+          state.placements,
+          x,
+          z,
+          state.productById,
+          id
+        )
+        const target = surface ?? {
+          x,
+          z,
+          rotY: placement.rotY,
+          elevation: placement.pos.y,
+          supportPlacementId: requiresSurfaceHost(product)
+            ? undefined
+            : placement.supportPlacementId,
+        }
         const result = canDropAt(
           state.plan,
           effective,
           state.placements,
           id,
-          x,
-          z,
-          placement.rotY,
+          target.x,
+          target.z,
+          target.rotY,
           state.productById
         )
         if (!result.ok) {
-          state.showToast(
-            result.reason === 'out-of-room'
-              ? '방 안에만 배치할 수 있어요'
-              : '공간이 부족해 배치할 수 없어요'
-          )
+          state.showToast(placementFailureMessage(product, result))
           return false
         }
-        commitEdit({
-          type: 'update-placement',
-          id,
-          patch: {
-            pos: { ...placement.pos, x: Math.round(x), z: Math.round(z) },
-            roomId: roomAt(state.plan, x, z)?.id,
-          },
-        })
+        const targetRoomId = roomAt(state.plan, target.x, target.z)?.id
+        const transformed = transformAttachmentTree(state.placements, id, {
+          x: target.x,
+          z: target.z,
+          rotY: target.rotY,
+          roomId: targetRoomId,
+        }).map((candidate) =>
+          candidate.id === id
+            ? {
+                ...candidate,
+                pos: { ...candidate.pos, x: target.x, y: target.elevation, z: target.z },
+                roomId: targetRoomId,
+                elevationOverride: surface?.elevation ?? candidate.elevationOverride,
+                supportPlacementId: target.supportPlacementId,
+              }
+            : candidate
+        )
+        commitEdit({ type: 'replace-placements', placements: transformed })
         return true
+      },
+
+      detachPlacement: (id) => {
+        const state = get()
+        const placement = state.placements.find((candidate) => candidate.id === id)
+        if (!placement?.supportPlacementId || state.moving) return
+        state.beginMove(id, {
+          x: placement.pos.x,
+          y: placement.pos.y,
+          z: placement.pos.z,
+          rotY: placement.rotY,
+          roomId: placement.roomId,
+          elevationOverride: placement.elevationOverride,
+          supportPlacementId: placement.supportPlacementId,
+        })
+        set((current) => ({
+          placements: current.placements.map((candidate) =>
+            candidate.id === id ? { ...candidate, supportPlacementId: undefined } : candidate
+          ),
+        }))
+        state.showToast('분리됨 · 다른 주방 표면에 놓거나 Esc로 복구하세요', 'info')
       },
 
       removePlacement: (id) => {

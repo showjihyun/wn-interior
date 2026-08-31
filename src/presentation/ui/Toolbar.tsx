@@ -6,6 +6,7 @@ import { exportProjectDocument, importProjectDocument } from '../../application/
 import { PlanVisionModal as CvModal } from './PlanVisionModal'
 import { ProjectsModal } from './ProjectsModal'
 import { floorPlanReviewBlocks3d } from '../../domain/floorPlanReview'
+import { requestSampleReset } from '../sampleResetConfirmation'
 
 function analysisErrorMessage(error: FloorPlanAnalysisError): string {
   const messages: Record<FloorPlanAnalysisError['code'], string> = {
@@ -69,15 +70,15 @@ export function Toolbar() {
     )
   }
 
-  function importJson(f: File) {
-    f.text().then((txt) => {
-      try {
-        s.loadProject(importProjectDocument(txt))
-        store.getState().showToast('프로젝트를 불러왔습니다', 'info')
-      } catch {
-        store.getState().showToast('JSON 파싱 실패 — 올바른 프로젝트 파일이 아닙니다', 'error')
-      }
-    })
+  async function importJson(f: File) {
+    try {
+      s.loadProject(importProjectDocument(await f.text()))
+      store.getState().showToast('프로젝트를 불러왔습니다', 'info')
+    } catch {
+      store.getState().showToast('JSON 파싱 실패 — 올바른 프로젝트 파일이 아닙니다', 'error')
+    } finally {
+      if (fileRef.current) fileRef.current.value = ''
+    }
   }
 
   return (
@@ -123,7 +124,7 @@ export function Toolbar() {
           <Btn
             active={s.viewPreset === 'walk'}
             onClick={() => s.setViewPreset('walk')}
-            title="1인칭: 드래그 시선 · WASD 이동 · Shift 달리기"
+            title="1인칭: 드래그 시선 · WASD 이동 · Space 점프 · Shift 달리기"
           >
             🚶 워크스루
           </Btn>
@@ -151,6 +152,7 @@ export function Toolbar() {
         ref={fileRef}
         type="file"
         accept=".json"
+        aria-label="프로젝트 JSON 불러오기"
         hidden
         onChange={(e) => e.target.files?.[0] && importJson(e.target.files[0])}
       />
@@ -176,7 +178,11 @@ export function Toolbar() {
       <Btn onClick={() => setAiOpen(true)} title="도면 이미지를 AI로 해석">
         ✨ AI 도면 해석
       </Btn>
-      <Btn onClick={s.resetToSample}>샘플 초기화</Btn>
+      <Btn
+        onClick={() => requestSampleReset((message) => window.confirm(message), s.resetToSample)}
+      >
+        샘플 초기화
+      </Btn>
       <Btn onClick={() => setSetOpen(true)}>⚙️</Btn>
 
       {aiOpen && <AiModal onClose={() => setAiOpen(false)} />}

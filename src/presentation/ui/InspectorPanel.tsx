@@ -20,11 +20,17 @@ export function InspectorPanel() {
       : undefined
   )
   const plan = useStore((s) => s.plan)
+  const placements = useStore((s) => s.placements)
+  const productOf = useStore((s) => s.productById)
+  const moving = useStore((s) => s.moving)
   const placementCount = useStore((s) => s.placements.length)
   const updatePlacement = useStore((s) => s.updatePlacement)
   const relocatePlacement = useStore((s) => s.relocatePlacement)
   const removePlacement = useStore((s) => s.removePlacement)
   const duplicatePlacement = useStore((s) => s.duplicatePlacement)
+  const detachPlacement = useStore((s) => s.detachPlacement)
+  const cancelMove = useStore((s) => s.cancelMove)
+  const select = useStore((s) => s.select)
 
   if (!placement || !product) {
     const totalM2 = plan.rooms.reduce((a, r) => a + polygonArea(r.polygon), 0) / 1_000_000
@@ -61,6 +67,15 @@ export function InspectorPanel() {
   const eff = resolveDims(product, placement)
   const activeDimensionVariant = findActiveDimensionVariant(product, eff)
   const pid = placement.id
+  const supportPlacement = placement.supportPlacementId
+    ? placements.find((candidate) => candidate.id === placement.supportPlacementId)
+    : undefined
+  const supportProduct = supportPlacement ? productOf(supportPlacement.productId) : undefined
+  const attachedChildren = placements.filter(
+    (candidate) => candidate.supportPlacementId === placement.id
+  )
+  const isDetachedMove =
+    moving?.id === placement.id && product.mount === 'surface' && !placement.supportPlacementId
 
   function setDim(axis: 'w' | 'd' | 'h', v: number) {
     if (!Number.isFinite(v) || v <= 0) return
@@ -72,6 +87,51 @@ export function InspectorPanel() {
     <div className="inspector">
       <h4>{product.name}</h4>
       {product.note && <p className="hint">{product.note}</p>}
+      {(supportPlacement || attachedChildren.length > 0 || isDetachedMove) && (
+        <section className={`attachment-panel${isDetachedMove ? ' seeking' : ''}`}>
+          <div className="attachment-state">
+            <span className="attachment-dot" aria-hidden="true" />
+            <strong>{isDetachedMove ? '연결할 표면 찾는 중' : '설치 연결'}</strong>
+          </div>
+          {supportPlacement && (
+            <button
+              type="button"
+              className="attachment-target"
+              onClick={() => select(supportPlacement.id)}
+            >
+              <span>부착 대상</span>
+              <b>{supportProduct?.name ?? '연결된 Object'}</b>
+            </button>
+          )}
+          {attachedChildren.length > 0 && (
+            <div className="attachment-children">
+              <span>함께 이동</span>
+              {attachedChildren.map((child) => (
+                <button type="button" key={child.id} onClick={() => select(child.id)}>
+                  {productOf(child.productId)?.name ?? '연결된 Object'}
+                </button>
+              ))}
+            </div>
+          )}
+          {supportPlacement && !moving && (
+            <button
+              type="button"
+              className="attachment-detach"
+              onClick={() => detachPlacement(placement.id)}
+            >
+              분리해서 이동
+            </button>
+          )}
+          {isDetachedMove && (
+            <>
+              <p>다른 싱크대 표면으로 옮기면 자동으로 다시 연결됩니다.</p>
+              <button type="button" className="attachment-cancel" onClick={cancelMove}>
+                Esc · 원래 연결로 복구
+              </button>
+            </>
+          )}
+        </section>
+      )}
       <table className="dims">
         <tbody>
           <tr>

@@ -447,6 +447,101 @@ test('내보내기 버튼이 프로젝트 JSON 다운로드를 트리거한다',
   expect(d.suggestedFilename()).toMatch(/\.json$/)
 })
 
+test('내보낸 JSON을 다시 불러오면 평면도와 Attach된 Object를 정확히 복원한다', async ({ page }) => {
+  const before = await page.evaluate(() => {
+    const state = window.__hp3d_store.getState()
+    state.commit((draft) => {
+      draft.placements = []
+      draft.plan.walls[0].thickness = 180
+      draft.plan.rooms[0].name = '내보내기 검증 주방'
+      draft.plan.rooms[0].floorMaterialId = 'f-wood-natural'
+      draft.plan.rooms[0].wallMaterialId = 'w-silk-white'
+    })
+    const cabinetId = state.addPlacement('ik-metod-sinarp-sink-cabinet', {
+      x: 9000,
+      z: 5000,
+    })!
+    state.addPlacement('ik-kilsviken-sink-72', { x: 9000, z: 5000 })
+    const faucetId = state.addPlacement('ik-aelmaren-kitchen-faucet', { x: 9000, z: 5000 })!
+    state.updatePlacement(faucetId, {
+      rotY: 30,
+      dimsOverride: { w: 240, d: 280, h: 370 },
+    })
+    const customId = state.addCustomProduct({
+      name: '왕복 검증 수납장',
+      category: 'custom',
+      dims: { w: 400, d: 400, h: 600 },
+      mount: 'floor',
+      shape: 'box',
+      colorways: ['#336699'],
+    })
+    state.addPlacement(customId, { x: 7000, z: 2000 })
+    const current = window.__hp3d_store.getState()
+    const faucet = current.placements.find((placement) => placement.id === faucetId)!
+    if (faucet.supportPlacementId !== cabinetId) throw new Error('fixture-attachment-missing')
+    return {
+      plan: current.plan,
+      placements: current.placements,
+      customProducts: current.customProducts,
+    }
+  })
+
+  await page.waitForTimeout(900)
+  const downloadEvent = page.waitForEvent('download')
+  await page
+    .locator('.toolbar')
+    .getByRole('button', { name: /내보내기/ })
+    .click({ force: true })
+  const download = await downloadEvent
+  const path = await download.path()
+  expect(path).toBeTruthy()
+
+  await page.evaluate(() => {
+    window.__hp3d_store.getState().commit((draft) => {
+      draft.plan.walls = []
+      draft.plan.openings = []
+      draft.plan.rooms = []
+      draft.placements = []
+      draft.customProducts = []
+    })
+  })
+  await page.getByLabel('프로젝트 JSON 불러오기').setInputFiles(path!)
+  await expect(page.getByText('프로젝트를 불러왔습니다')).toBeVisible()
+
+  const after = await page.evaluate(() => {
+    const current = window.__hp3d_store.getState()
+    return {
+      plan: current.plan,
+      placements: current.placements,
+      customProducts: current.customProducts,
+    }
+  })
+  expect(after).toEqual(before)
+})
+
+test('샘플 초기화는 확인 Alert에서 취소하면 유지하고 확인해야 실행한다', async ({ page }) => {
+  await page.evaluate(() => {
+    window.__hp3d_store.getState().commit((draft) => {
+      draft.placements = []
+    })
+  })
+  expect(await S(page, '.placements.length')).toBe(0)
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toBe('정말 샘플 초기화를 진행하시겠습니까?')
+    await dialog.dismiss()
+  })
+  await page.getByRole('button', { name: '샘플 초기화' }).click()
+  expect(await S(page, '.placements.length')).toBe(0)
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toBe('정말 샘플 초기화를 진행하시겠습니까?')
+    await dialog.accept()
+  })
+  await page.getByRole('button', { name: '샘플 초기화' }).click()
+  expect(await S(page, '.placements.length')).toBeGreaterThan(0)
+})
+
 test('시점 프리셋: 탑뷰 ↔ 워크스루 ↔ 아이소 전환', async ({ page }) => {
   await page.getByRole('button', { name: '탑뷰' }).click()
   expect(await S(page, '.viewPreset')).toBe('top')
@@ -561,7 +656,7 @@ test('방 밖으로 이동 확정 시 Toast가 뜨고 원위치로 복귀된다'
   })
   const origin = await S(page, '.moving.origin') // 원위치 = 드래그 시작 시점 위치
   await page.locator('.drop-confirm .dc-ok').click()
-  await expect(page.locator('.toast')).toContainText('공간이 부족')
+  await expect(page.locator('.toast')).toContainText('방 안에만 배치')
   const pos = await S(page, '.placements.at(-1).pos')
   expect(pos.x).toBe(origin.x) // 원위치 복귀
   expect(pos.z).toBe(origin.z)

@@ -13,6 +13,53 @@ export interface Obstacle {
   maxX: number
   minZ: number
   maxZ: number
+  topY?: number
+}
+
+export interface WalkVerticalState {
+  y: number
+  velocityY: number
+  grounded: boolean
+}
+
+export const WALK_JUMP_VELOCITY = 4200
+export const WALK_GRAVITY = 9000
+
+export function resolveWalkVertical(
+  state: WalkVerticalState,
+  obstacles: Obstacle[],
+  x: number,
+  z: number,
+  dt: number,
+  jumpRequested: boolean
+): WalkVerticalState {
+  const supportHeights = [
+    0,
+    ...obstacles.flatMap((obstacle) =>
+      obstacle.topY !== undefined &&
+      x >= obstacle.minX &&
+      x <= obstacle.maxX &&
+      z >= obstacle.minZ &&
+      z <= obstacle.maxZ
+        ? [obstacle.topY]
+        : []
+    ),
+  ].sort((left, right) => right - left)
+  const currentSupport = supportHeights.find((height) => Math.abs(height - state.y) <= 2)
+
+  if (state.grounded && !jumpRequested && currentSupport !== undefined) {
+    return { y: currentSupport, velocityY: 0, grounded: true }
+  }
+
+  const initialVelocity = state.grounded && jumpRequested ? WALK_JUMP_VELOCITY : state.velocityY
+  const velocityY = initialVelocity - WALK_GRAVITY * dt
+  const y = state.y + initialVelocity * dt - 0.5 * WALK_GRAVITY * dt * dt
+
+  if (velocityY <= 0) {
+    const landing = supportHeights.find((height) => state.y >= height && y <= height)
+    if (landing !== undefined) return { y: landing, velocityY: 0, grounded: true }
+  }
+  return { y, velocityY, grounded: false }
 }
 
 export interface WalkBounds {
@@ -23,8 +70,15 @@ export interface WalkBounds {
 }
 
 /** 캐릭터(원, 반경 r)가 장애물 AABB와 겹치는가 */
-export function blockedByObstacles(obs: Obstacle[], x: number, z: number, r: number): boolean {
+export function blockedByObstacles(
+  obs: Obstacle[],
+  x: number,
+  z: number,
+  r: number,
+  _feetY = 0
+): boolean {
   for (const o of obs) {
+    if (o.topY !== undefined && _feetY >= o.topY - 10) continue
     const cx = Math.max(o.minX, Math.min(x, o.maxX))
     const cz = Math.max(o.minZ, Math.min(z, o.maxZ))
     const dx = x - cx
@@ -56,20 +110,21 @@ export function resolveWalkMove(
   dx: number,
   dz: number,
   radius: number,
-  bounds: WalkBounds
+  bounds: WalkBounds,
+  feetY = 0
 ): { x: number; z: number } {
   let { x, z } = from
   const nx = x + dx
   if (
     !hitWall(walls, nx, z, radius) &&
-    !blockedByObstacles(obstacles, nx, z, radius) &&
+    !blockedByObstacles(obstacles, nx, z, radius, feetY) &&
     inBounds(bounds, nx, z, radius)
   )
     x = nx
   const nz = z + dz
   if (
     !hitWall(walls, x, nz, radius) &&
-    !blockedByObstacles(obstacles, x, nz, radius) &&
+    !blockedByObstacles(obstacles, x, nz, radius, feetY) &&
     inBounds(bounds, x, nz, radius)
   )
     z = nz

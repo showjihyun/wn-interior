@@ -52,12 +52,15 @@ export function canDropAt(
   rotY: number,
   productOf: (id: string) => Product | undefined
 ): DropResult {
-  const room = roomAt(plan, x, z)
-  if (!room) return { ok: false, reason: 'out-of-room' }
-  const surface = resolveSurfacePlacement(product, placements, x, z, productOf)
+  const surface = resolveSurfacePlacement(product, placements, x, z, productOf, selfId)
   if (requiresSurfaceHost(product) && !surface) {
     return { ok: false, reason: 'surface-required' }
   }
+  const targetX = surface?.x ?? x
+  const targetZ = surface?.z ?? z
+  const targetRotY = surface?.rotY ?? rotY
+  const room = roomAt(plan, targetX, targetZ)
+  if (!room) return { ok: false, reason: 'out-of-room' }
   const dependencies = validateInstallationDependencies(
     product,
     placements,
@@ -75,7 +78,7 @@ export function canDropAt(
   const selfGeometry = resolveAuthoritativePlacementGeometry(product)
   if (
     product.mount === 'floor' &&
-    footprintCorners(selfGeometry.dims.w, selfGeometry.dims.d, x, z, rotY).some(
+    footprintCorners(selfGeometry.dims.w, selfGeometry.dims.d, targetX, targetZ, targetRotY).some(
       (corner) => !pointInPolygon(corner.x, corner.z, room.polygon)
     )
   ) {
@@ -83,7 +86,13 @@ export function canDropAt(
   }
   if (selfGeometry.blocksFloor) {
     // 러그처럼 얇은 바닥재성 제품은 겹침 허용 (높이 50mm 이하)
-    const selfBox = footprintAABB(selfGeometry.dims.w, selfGeometry.dims.d, x, z, rotY)
+    const selfBox = footprintAABB(
+      selfGeometry.dims.w,
+      selfGeometry.dims.d,
+      targetX,
+      targetZ,
+      targetRotY
+    )
     for (const other of placements) {
       if (other.id === selfId) continue
       const op = productOf(other.productId)

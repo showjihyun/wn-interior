@@ -21,6 +21,10 @@ const CATEGORIES: Record<CategoryId, { label: string; icon: string }> = {
 }
 const fmt = (v: number) => (v >= 1000 ? `${(v / 10).toFixed(0)}cm` : `${v}mm`)
 const won = (v: number) => v.toLocaleString('ko-KR') + '원'
+const compactWon = (value: number) =>
+  value >= 10_000
+    ? `${(value / 10_000).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}만`
+    : won(value)
 const CATALOG_FILE_ERRORS: Record<string, string> = {
   'spreadsheet-brand-unsupported': '한샘·리바트 전용 템플릿인지 확인해 주세요.',
   'spreadsheet-brand-mixed': '브랜드별로 파일을 나눠 가져와 주세요.',
@@ -537,6 +541,9 @@ function CostTab() {
 
 export function LeftPanel() {
   const [tab, setTab] = useState<'cat' | 'mat' | 'cost'>('cat')
+  const placements = useStore((state) => state.placements)
+  const productOf = useStore((state) => state.productById)
+  const liveCost = buildCostReport(placements, productOf).pricedTotal
   return (
     <div className="left">
       <div className="tabs">
@@ -546,8 +553,13 @@ export function LeftPanel() {
         <button className={tab === 'mat' ? 'on' : ''} onClick={() => setTab('mat')}>
           🎨 마감재
         </button>
-        <button className={tab === 'cost' ? 'on' : ''} onClick={() => setTab('cost')}>
-          💰 가격
+        <button
+          className={tab === 'cost' ? 'on' : ''}
+          onClick={() => setTab('cost')}
+          aria-label={`가격, 현재 합계 ${won(liveCost)}`}
+        >
+          <span>💰 가격</span>
+          <small data-testid="live-cost-total">{compactWon(liveCost)}</small>
         </button>
       </div>
       {tab === 'cat' ? <CatalogTab /> : tab === 'mat' ? <MaterialTab /> : <CostTab />}

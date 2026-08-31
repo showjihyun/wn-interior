@@ -123,6 +123,22 @@ describe('스토어 — 배치안(variants)', () => {
     S().removeVariant(S().variants[0].id)
     expect(S().variants.length).toBe(n - 1)
   })
+
+  it('배치 순서와 이름만 다른 동일 상태는 중복 저장하지 않고 기존 안을 알려준다', () => {
+    S().saveVariant('A안')
+    useStore.setState({ placements: [...S().placements].reverse() })
+
+    const duplicate = S().saveVariant('B안') as any
+
+    expect(duplicate).toEqual({ saved: false, duplicateName: 'A안' })
+    expect(S().variants).toHaveLength(1)
+
+    const first = S().placements[0]
+    S().updatePlacement(first.id, { rotY: first.rotY + 15 })
+    const changed = S().saveVariant('B안') as any
+    expect(changed).toEqual({ saved: true })
+    expect(S().variants).toHaveLength(2)
+  })
 })
 
 describe('스토어 — 커스텀 제품', () => {

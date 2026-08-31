@@ -96,6 +96,15 @@ body,
   font-weight: 700;
   cursor: pointer;
 }
+.variant-warning {
+  margin: -2px 0 10px;
+  border: 1px solid #8a6d30;
+  border-radius: 6px;
+  background: #30291a;
+  color: #ffd572;
+  padding: 7px 9px;
+  font-size: 11.5px;
+}
 
 /* ── 레이아웃 ── */
 .main {

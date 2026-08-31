@@ -38,10 +38,12 @@ import {
   type ProjectEdit,
 } from '../../application/projectEditing'
 import {
+  findDuplicatePlacementVariant,
   placementsFromVariant,
   removePlacementVariant,
   savePlacementVariant,
   type PlacementVariant,
+  type SavePlacementVariantResult,
 } from '../../application/placementVariants'
 
 export interface AppState {
@@ -81,7 +83,7 @@ export interface AppState {
 
   setPending: (id: string | null) => void
   setViewPreset: (v: 'iso' | 'top' | 'walk') => void
-  saveVariant: (name: string, thumb?: string) => void
+  saveVariant: (name: string, thumb?: string) => SavePlacementVariantResult
   applyVariant: (id: string) => void
   removeVariant: (id: string) => void
   beginMove: (id: string, origin: PlacementMoveOrigin) => void
@@ -255,16 +257,21 @@ export function createAppStore({
         set((s) => ({ pendingProductId: id, selectedId: id === null ? s.selectedId : null })),
       setViewPreset: (v) => set({ viewPreset: v }),
 
-      saveVariant: (name, thumb) =>
-        set((s) => ({
+      saveVariant: (name, thumb) => {
+        const state = get()
+        const duplicate = findDuplicatePlacementVariant(state.variants, state.placements)
+        if (duplicate) return { saved: false, duplicateName: duplicate.name }
+        set({
           variants: savePlacementVariant({
-            variants: s.variants,
+            variants: state.variants,
             id: uid(),
             name,
             thumb,
-            placements: s.placements,
+            placements: state.placements,
           }),
-        })),
+        })
+        return { saved: true }
+      },
 
       applyVariant: (id) =>
         (() => {

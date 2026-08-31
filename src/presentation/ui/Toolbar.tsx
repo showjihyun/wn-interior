@@ -197,9 +197,17 @@ function VariantsModal({ onClose }: { onClose: () => void }) {
   const removeVariant = useStore((s) => s.removeVariant)
   const placementsCount = useStore((s) => s.placements.length)
   const [name, setName] = useState('')
+  const [warning, setWarning] = useState<string | null>(null)
 
   function save() {
-    saveVariant(name.trim(), sceneSurface.captureThumb())
+    const result = saveVariant(name.trim(), sceneSurface.captureThumb())
+    if (!result.saved) {
+      setWarning(
+        `현재 배치는 '${result.duplicateName}'과 차이가 없습니다. 가구를 이동한 뒤 저장하세요.`
+      )
+      return
+    }
+    setWarning(null)
     setName('')
   }
 
@@ -215,13 +223,21 @@ function VariantsModal({ onClose }: { onClose: () => void }) {
           <input
             placeholder="배치안 이름 (예: A안 — 소파 남벽)"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value)
+              setWarning(null)
+            }}
             style={{ flex: 1 }}
           />
           <button className="primary" onClick={save}>
             현재 상태 저장
           </button>
         </div>
+        {warning && (
+          <p className="variant-warning" role="status">
+            {warning}
+          </p>
+        )}
         {variants.length === 0 && <p className="hint">저장된 배치안이 없습니다.</p>}
         <div
           style={{

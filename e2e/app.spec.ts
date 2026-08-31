@@ -208,6 +208,35 @@ test('배치안 저장 → 적용 흐름이 동작하고 Undo 가능하다', asy
   expect(await S(page, '.placements.length')).toBe(base + 1)
 })
 
+test('동일한 배치는 다른 이름의 A/B안으로 중복 저장하지 않는다', async ({ page }) => {
+  await page.evaluate(() => {
+    window.__hp3d_store.setState({ placements: [], variants: [] })
+    window.__hp3d_store.getState().addPlacement('p-sofa3', { x: 9000, z: 5000 })
+  })
+  await page.getByRole('button', { name: /배치안 비교/ }).click()
+  const modal = page.locator('.modal')
+  const name = modal.getByPlaceholder(/배치안 이름/)
+  const save = modal.getByRole('button', { name: '현재 상태 저장' })
+
+  await name.fill('A안')
+  await save.click()
+  await expect(modal.locator('.variant-card')).toHaveCount(1)
+
+  await name.fill('B안')
+  await save.click()
+  await expect(modal.getByRole('status')).toContainText(/A안.*차이가 없습니다/)
+  await expect(modal.locator('.variant-card')).toHaveCount(1)
+
+  await page.evaluate(() => {
+    const state = window.__hp3d_store.getState()
+    const placement = state.placements[0]
+    state.updatePlacement(placement.id, { rotY: placement.rotY + 15 })
+  })
+  await save.click()
+  await expect(modal.locator('.variant-card')).toHaveCount(2)
+  await expect(modal.getByRole('status')).toHaveCount(0)
+})
+
 test('자동저장: 새로고침 후에도 배치가 유지된다', async ({ page }) => {
   await page.evaluate(() =>
     window.__hp3d_store.getState().addPlacement('p-fridge', { x: 10000, z: 1000 })

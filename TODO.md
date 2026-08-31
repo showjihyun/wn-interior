@@ -329,6 +329,15 @@
 - [x] 계산 cache 없는 XLSX 수식 거절과 Windows UTF-8 subprocess 경계
 - [x] 한샘·리바트 CSV/XLSX Protocol 결과 동등성 conformance
 
+### M35 브라우저 CSV/XLSX 카탈로그 Import ✅
+
+- [x] 좌측 카탈로그 JSON·CSV·TSV·XLSX 공통 파일 선택
+- [x] 한샘·리바트 브랜드 preset 자동 결정과 혼합 브랜드 거절
+- [x] 배포 화면에서 XLSX/CSV 템플릿 직접 다운로드
+- [x] 10MB·필수 헤더·확장자·XLSX 수식 안전 경계
+- [x] XLSX parser 동적 로드로 초기 작업면 번들 분리
+- [x] 기존 Protocol validator·원자적 Import·Undo/Redo·자동저장 경로 재사용
+
 ### M24 2D→3D 정확도 2,200건 감사 ✅
 
 - [x] CubiCasa5K 실제 도면 1,000건 층화 표본 추출 + 이미지/SVG CRC 검증

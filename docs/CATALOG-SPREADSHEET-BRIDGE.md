@@ -2,10 +2,10 @@
 
 ## 제공 파일
 
-`schemas/templates/`에 브랜드별로 세 종류의 입력 자산을 둔다.
+다운로드 가능한 CSV/XLSX는 `public/catalog-templates/`, 변환 config와 web override는 `schemas/templates/`에 둔다.
 
-- `hanssem-catalog-template.csv`, `hanssem-catalog-template.xlsx`
-- `livart-catalog-template.csv`, `livart-catalog-template.xlsx`
+- `public/catalog-templates/hanssem-catalog-template.csv`, `hanssem-catalog-template.xlsx`
+- `public/catalog-templates/livart-catalog-template.csv`, `livart-catalog-template.xlsx`
 - `hanssem-sheet.config.json`, `livart-sheet.config.json`: 브랜드·provider·기본 단위 프리셋
 - `hanssem-web-override.template.json`, `livart-web-override.template.json`: 저장한 상품 HTML/JSON-LD를 변환할 때 쓰는 사이트 전용 보정 템플릿
 
@@ -39,9 +39,23 @@ surface_anchor=rear
 
 ## CSV/XLSX 변환
 
+### 브라우저에서 바로 가져오기
+
+좌측 제품 카탈로그의 `상품 카탈로그 파일`에서 `.json`, `.csv`, `.tsv`, `.xlsx`를 직접 선택할 수 있다. 한샘·리바트 XLSX/CSV 템플릿도 같은 영역에서 다운로드한다. 브라우저 Import는 다음 경계를 적용한다.
+
+- 파일 크기 최대 10MB
+- XLSX는 이름이 `products`인 시트를 사용
+- 한 파일에는 한샘 또는 리바트 한 브랜드만 허용
+- XLSX 수식은 계산 결과의 신뢰성을 보장할 수 없어 모두 거절. 값으로 붙여넣은 뒤 저장해야 함
+- 변환 후에도 기존 Protocol validator를 통과한 경우에만 전체 상품을 한 번에 적용
+
+XLSX parser는 파일을 선택했을 때만 동적 로드되어 일반 2D/3D 초기 화면 번들에 포함되지 않는다.
+
+### CLI 변환
+
 ```powershell
 npm run catalog:convert-sheet -- `
-  --input schemas/templates/hanssem-catalog-template.xlsx `
+  --input public/catalog-templates/hanssem-catalog-template.xlsx `
   --config schemas/templates/hanssem-sheet.config.json `
   --output output/hanssem.catalog.json
 ```
@@ -49,6 +63,8 @@ npm run catalog:convert-sheet -- `
 CSV와 TSV도 같은 명령을 사용한다. XLSX는 기본적으로 `products` 시트를 읽으며 `--sheet 다른시트`로 바꿀 수 있다.
 
 XLSX 수식 셀은 저장된 계산 결과(cache)가 있을 때만 읽는다. 캐시가 없으면 `formula-cache-missing:<sheet>!<cell>`로 중단한다. 따라서 수식이 있는 파일은 Excel/LibreOffice에서 재계산 후 저장하거나, 안정적인 import를 위해 값으로 붙여넣는다.
+
+CLI는 캐시된 수식 결과를 허용하지만 브라우저 Import는 더 보수적으로 모든 수식을 거절한다.
 
 ## 웹 override 사용
 

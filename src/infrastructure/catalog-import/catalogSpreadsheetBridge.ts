@@ -13,6 +13,10 @@ export function parseCatalogCsv(
   config: CatalogSheetConfig,
   delimiter = ','
 ): Record<string, unknown> {
+  return catalogRowsToProtocol(parseCatalogCsvRows(csv, delimiter), config)
+}
+
+export function parseCatalogCsvRows(csv: string, delimiter = ','): Array<Record<string, unknown>> {
   const table: string[][] = []
   let row: string[] = []
   let cell = ''
@@ -47,7 +51,7 @@ export function parseCatalogCsv(
   const rows = table.map((values) =>
     Object.fromEntries(headers.map((header, index) => [header, values[index]?.trim() ?? '']))
   )
-  return catalogRowsToProtocol(rows, config)
+  return rows
 }
 
 export function catalogRowsToProtocol(

@@ -41,6 +41,7 @@ import {
   migrateProjectRepository,
 } from './infrastructure/persistence/IndexedDbProjectRepository'
 import { resolveBrowserWorkspaceId } from './infrastructure/persistence/BrowserSessionWorkspace'
+import { catalogFileToProtocol } from './infrastructure/catalog-import/browserCatalogFile'
 
 const cvServerUrl =
   (import.meta.env.VITE_CV_SERVER_URL as string | undefined)?.replace(/\/+$/, '') ??
@@ -104,6 +105,7 @@ export function createApplicationComposition(
     ),
     textFileExporter: new BrowserTextFileExporter(),
     productCatalog,
+    catalogFileToProtocol,
     materialCatalog,
     generateQuote: createGenerateQuote({
       clock,

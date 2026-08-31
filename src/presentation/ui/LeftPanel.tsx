@@ -21,6 +21,17 @@ const CATEGORIES: Record<CategoryId, { label: string; icon: string }> = {
 }
 const fmt = (v: number) => (v >= 1000 ? `${(v / 10).toFixed(0)}cm` : `${v}mm`)
 const won = (v: number) => v.toLocaleString('ko-KR') + '원'
+const CATALOG_FILE_ERRORS: Record<string, string> = {
+  'spreadsheet-brand-unsupported': '한샘·리바트 전용 템플릿인지 확인해 주세요.',
+  'spreadsheet-brand-mixed': '브랜드별로 파일을 나눠 가져와 주세요.',
+  'spreadsheet-extension-unsupported': 'JSON, CSV, TSV, XLSX 파일만 지원합니다.',
+  'spreadsheet-file-too-large': '파일은 10MB 이하여야 합니다.',
+  'spreadsheet-empty': '상품 행이 없습니다.',
+  'spreadsheet-columns-invalid': '표준 템플릿의 external_id와 brand 컬럼이 필요합니다.',
+  'spreadsheet-formula-unsupported': '수식을 값으로 붙여넣은 뒤 다시 저장해 주세요.',
+  'spreadsheet-xlsx-invalid': 'XLSX의 products 시트와 파일 형식을 확인해 주세요.',
+  'spreadsheet-read-failed': '파일을 읽지 못했습니다.',
+}
 const LOCAL_REVIEW_ISSUE_LABELS: Record<string, string> = {
   'product-mismatch': '상품 불일치',
   'axis-stretch-too-large': '축 보정비 과다',
@@ -182,7 +193,7 @@ function ProductCard({
 }
 
 function CatalogTab() {
-  const { productCatalog } = useAppRuntime()
+  const { productCatalog, catalogFileToProtocol } = useAppRuntime()
   const customProducts = useStore((s) => s.customProducts)
   const products = [...productCatalog.list(), ...customProducts]
   const brands = [
@@ -194,6 +205,7 @@ function CatalogTab() {
   const importProductCatalog = useStore((s) => s.importProductCatalog)
   const importRef = useRef<HTMLInputElement>(null)
   const [importReport, setImportReport] = useState('')
+  const [isImporting, setIsImporting] = useState(false)
   const selectedId = useStore((s) => s.selectedId)
   const pendingProductId = useStore((s) => s.pendingProductId)
   const placements = useStore((s) => s.placements)
@@ -209,27 +221,63 @@ function CatalogTab() {
   return (
     <>
       <div className="catalog-import">
-        <button type="button" onClick={() => importRef.current?.click()}>
-          ⬇ 상품 카탈로그 JSON
+        <button type="button" disabled={isImporting} onClick={() => importRef.current?.click()}>
+          {isImporting ? '파일 확인 중…' : '⬇ 상품 카탈로그 파일'}
         </button>
         <input
           ref={importRef}
           type="file"
-          accept="application/json,.json"
-          aria-label="상품 카탈로그 JSON 가져오기"
+          accept="application/json,text/csv,.json,.csv,.tsv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          aria-label="상품 카탈로그 JSON CSV XLSX 가져오기"
           style={{ display: 'none' }}
           onChange={async (event) => {
             const file = event.target.files?.[0]
             if (!file) return
-            const result = importProductCatalog(await file.text())
-            setImportReport(
-              result.ok
-                ? `신규 ${result.imported}개 · 갱신 ${result.updated}개 · 경고 ${result.issues.length}개`
-                : `거절 · ${result.issues[0]?.path ?? '$'} · ${result.issues[0]?.message ?? '알 수 없는 오류'}`
-            )
-            event.target.value = ''
+            setIsImporting(true)
+            setImportReport(`${file.name} 확인 중…`)
+            try {
+              const document = file.name.toLowerCase().endsWith('.json')
+                ? await file.text()
+                : JSON.stringify(await catalogFileToProtocol(file))
+              const result = importProductCatalog(document)
+              setImportReport(
+                result.ok
+                  ? `${file.name} · 신규 ${result.imported}개 · 갱신 ${result.updated}개 · 경고 ${result.issues.length}개`
+                  : `거절 · ${result.issues[0]?.path ?? '$'} · ${result.issues[0]?.message ?? '알 수 없는 오류'}`
+              )
+            } catch (error) {
+              const code =
+                error &&
+                typeof error === 'object' &&
+                'code' in error &&
+                typeof error.code === 'string'
+                  ? error.code
+                  : 'spreadsheet-read-failed'
+              setImportReport(
+                `거절 · ${CATALOG_FILE_ERRORS[code] ?? CATALOG_FILE_ERRORS['spreadsheet-read-failed']}`
+              )
+            } finally {
+              setIsImporting(false)
+              event.target.value = ''
+            }
           }}
         />
+        <div className="catalog-template-links" aria-label="카탈로그 템플릿 다운로드">
+          <span>템플릿</span>
+          <a href="/catalog-templates/hanssem-catalog-template.xlsx" download>
+            한샘 XLSX
+          </a>
+          <a href="/catalog-templates/hanssem-catalog-template.csv" download>
+            CSV
+          </a>
+          <i aria-hidden="true" />
+          <a href="/catalog-templates/livart-catalog-template.xlsx" download>
+            리바트 XLSX
+          </a>
+          <a href="/catalog-templates/livart-catalog-template.csv" download>
+            CSV
+          </a>
+        </div>
         {importReport && (
           <span role="status" aria-label="카탈로그 Import 결과">
             {importReport}

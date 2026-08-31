@@ -16,6 +16,7 @@ export interface AppRuntime {
   planVision: CreateFloorPlanPreview
   textFileExporter: TextFileExporter
   productCatalog: ProductCatalog
+  catalogFileToProtocol(file: File): Promise<Record<string, unknown>>
   materialCatalog: MaterialCatalog
   generateQuote: GenerateQuote
   finishMaterials: readonly FinishMaterialView[]

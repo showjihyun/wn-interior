@@ -16,14 +16,14 @@ for (const brand of brands) {
     readFileSync(resolve(root, `schemas/templates/${brand}-sheet.config.json`), 'utf8')
   ) as CatalogSheetConfig
   const csvFeed = parseCatalogCsv(
-    readFileSync(resolve(root, `schemas/templates/${brand}-catalog-template.csv`), 'utf8'),
+    readFileSync(resolve(root, `public/catalog-templates/${brand}-catalog-template.csv`), 'utf8'),
     config
   )
   const workbook = spawnSync(
     'python',
     [
       resolve(root, 'scripts/read_catalog_workbook.py'),
-      resolve(root, `schemas/templates/${brand}-catalog-template.xlsx`),
+      resolve(root, `public/catalog-templates/${brand}-catalog-template.xlsx`),
       '--sheet',
       'products',
     ],

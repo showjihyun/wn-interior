@@ -1,5 +1,7 @@
 ﻿import { test, expect, type Page } from '@playwright/test'
 
+import { resolve } from 'node:path'
+
 const S = async (page: Page, expr: string) =>
   page.evaluate(`(window.__hp3d_store.getState())${expr}`)
 
@@ -297,7 +299,7 @@ test('국내 카탈로그 protocol JSON을 원자적으로 Import해 필터에 �
       },
     ],
   }
-  const input = page.getByLabel('상품 카탈로그 JSON 가져오기')
+  const input = page.getByLabel('상품 카탈로그 JSON CSV XLSX 가져오기')
   await input.setInputFiles({
     name: 'livart-catalog.json',
     mimeType: 'application/json',
@@ -319,6 +321,12 @@ test('국내 카탈로그 protocol JSON을 원자적으로 Import해 필터에 �
   })
   await expect(page.getByRole('status', { name: '카탈로그 Import 결과' })).toContainText('거절')
   await expect(card).toHaveCount(1)
+
+  await input.setInputFiles(resolve('public/catalog-templates/livart-catalog-template.xlsx'))
+  await expect(page.getByRole('status', { name: '카탈로그 Import 결과' })).toContainText('신규 1개')
+  await expect(page.locator('.pcard', { hasText: '입력 예시 - 리바트 4인 소파' })).toContainText(
+    'W300cm'
+  )
 })
 
 test('마감재 변경이 방 데이터에 반영된다', async ({ page }) => {

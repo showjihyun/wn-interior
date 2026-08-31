@@ -13,7 +13,8 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE_DIR = ROOT / "schemas" / "templates"
+SCHEMA_TEMPLATE_DIR = ROOT / "schemas" / "templates"
+PUBLIC_TEMPLATE_DIR = ROOT / "public" / "catalog-templates"
 
 COLUMNS = [
     ("external_id", "필수", "판매처에서 유지되는 상품 ID", "EXAMPLE-001"),
@@ -237,13 +238,13 @@ def create_workbook(slug: str, spec: dict) -> Path:
     workbook.properties.creator = "HomePlan 3D"
     workbook.properties.title = f"{spec['brand']} HomePlan 카탈로그 템플릿"
     workbook.properties.description = "HomePlan Catalog Protocol 1.0 CSV/XLSX bridge"
-    path = TEMPLATE_DIR / f"{slug}-catalog-template.xlsx"
+    path = PUBLIC_TEMPLATE_DIR / f"{slug}-catalog-template.xlsx"
     workbook.save(path)
     return path
 
 
 def create_csv(slug: str, spec: dict) -> Path:
-    path = TEMPLATE_DIR / f"{slug}-catalog-template.csv"
+    path = PUBLIC_TEMPLATE_DIR / f"{slug}-catalog-template.csv"
     headers = [column[0] for column in COLUMNS]
     sample = complete_sample(spec)
     with path.open("w", newline="", encoding="utf-8-sig") as stream:
@@ -254,7 +255,7 @@ def create_csv(slug: str, spec: dict) -> Path:
 
 
 def create_config(slug: str, spec: dict) -> Path:
-    path = TEMPLATE_DIR / f"{slug}-sheet.config.json"
+    path = SCHEMA_TEMPLATE_DIR / f"{slug}-sheet.config.json"
     config = {
         "catalog": {
             "id": spec["catalog_id"],
@@ -269,7 +270,8 @@ def create_config(slug: str, spec: dict) -> Path:
 
 
 def main() -> int:
-    TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+    SCHEMA_TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+    PUBLIC_TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
     created = []
     for slug, spec in BRANDS.items():
         created.extend(

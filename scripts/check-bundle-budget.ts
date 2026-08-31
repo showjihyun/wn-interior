@@ -35,6 +35,11 @@ if (bundledReviewAsset) {
 }
 const entry = sizes.find((chunk) => chunk.file === entryMatch[1])
 if (!entry) throw new Error('bundle-entry-file-not-found')
+const catalogXlsx = sizes.find((chunk) => /^catalog-xlsx-[^.]+\.js$/.test(chunk.file))
+if (!catalogXlsx) throw new Error('catalog-xlsx-lazy-chunk-not-found')
+if (html.includes(`modulepreload`) && html.includes(catalogXlsx.file)) {
+  throw new Error(`catalog XLSX parser must not be preloaded: ${catalogXlsx.file}`)
+}
 const largest = [...sizes].sort((left, right) => right.bytes - left.bytes)[0]
 if (entry.bytes > 400_000) {
   throw new Error(`초기 JS entry 예산 초과: ${entry.file} ${entry.bytes}B > 400000B`)

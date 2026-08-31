@@ -30,6 +30,9 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined
+            if (/node_modules[\\/](?:read-excel-file|fflate|saxen|worker-f)[\\/]/.test(id)) {
+              return 'catalog-xlsx'
+            }
             if (id.includes('/three/') || id.includes('\\three\\')) return 'vendor-three'
             if (
               id.includes('@react-three') ||

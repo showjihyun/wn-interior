@@ -333,11 +333,11 @@ npm run verify:full
 
 ## Domestic catalog bridge
 
-한샘·리바트 상품 목록은 브랜드별 CSV/XLSX 템플릿으로 작성한 뒤 HomePlan Catalog Protocol 1.0 JSON으로 변환할 수 있습니다. 웹 상품 HTML용 override 템플릿도 함께 제공합니다.
+한샘·리바트 상품 목록은 브랜드별 CSV/XLSX 템플릿으로 작성한 뒤 좌측 카탈로그에서 바로 가져오거나 HomePlan Catalog Protocol 1.0 JSON으로 변환할 수 있습니다. 웹 상품 HTML용 override 템플릿도 함께 제공합니다.
 
 ```powershell
 npm run catalog:convert-sheet -- `
-  --input schemas/templates/hanssem-catalog-template.xlsx `
+  --input public/catalog-templates/hanssem-catalog-template.xlsx `
   --config schemas/templates/hanssem-sheet.config.json `
   --output output/hanssem.catalog.json
 ```

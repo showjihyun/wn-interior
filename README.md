@@ -9,7 +9,7 @@
 ![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111827)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-R3F-111111?logo=threedotjs&logoColor=white)
-![Tests](https://img.shields.io/badge/Vitest-153_tests-6E9F18?logo=vitest&logoColor=white)
+![Tests](https://img.shields.io/badge/Vitest-280_tests-6E9F18?logo=vitest&logoColor=white)
 ![License guard](https://img.shields.io/badge/non--commercial_models-production_off-59D499)
 [![Verify](https://github.com/showjihyun/wn-interior/actions/workflows/verify.yml/badge.svg)](https://github.com/showjihyun/wn-interior/actions/workflows/verify.yml)
 
@@ -34,6 +34,15 @@ What you are seeing: the browser CV path ingests a real Korean 33-pyeong plan, d
 - **Scale cannot fail silently:** enter a known width or explicitly accept estimated scale before Apply is enabled.
 - **Correction-first UX:** walls, rooms, openings, and dimensions remain editable after conversion.
 - **Real interior behaviour:** 25mm grid snap, wall magnetism, collision rejection, installation height, Undo/Redo, and A/B variants.
+- **Real retail snapshot:** twelve IKEA Korea products include official article numbers, measured dimensions, price basis, source images and image-projected 3D materials.
+- **Silhouette-preserving photo projection:** low-alpha white haze is excluded from crop bounds and every front/top/curtain cutout keeps its source aspect ratio inside the official measured envelope.
+- **Product-aware fallback shapes:** real products keep official dimensions while product-specific geometry avoids misleading generic stand-ins, including the two-cushion low-arm KIVIK, FADO, BILLY, NORDEN, PAX/FORSAND, a mattress-free MALM frame and a lower-shelf LACK table.
+- **Named footprint states:** transformable products can expose official dimension variants; NORDEN switches between 26/89/152cm and the same override drives visuals, collision, selection, Undo/Redo and persistence.
+- **Trust-separated hybrid visuals:** only hash-pinned, rights-reviewed and human-approved generated GLBs can replace the image projection; placement and collision always keep using official millimetre dimensions.
+- **Offline mesh quarantine:** a local-only worker adapter stages outputs outside `public/`, inspects real GLB vertices/triangles, and publishes only from independent rights and review records.
+- **Local review before publication:** an explicitly selected quarantine record can be rendered in the development room with a `로컬 생성 3D · 검수 중` badge while production builds remain on the official-photo fallback.
+- **Reproducible local model service:** the pinned TripoSR Docker worker runs on `127.0.0.1:8980` with CUDA, a 20MB upload limit and one GPU job at a time.
+- **Evidence-gated view selection:** high-resolution regeneration evaluates only same-variant whole-product views; detail crops cannot win on numerical mesh scores alone.
 - **Walk the plan:** first-person and third-person navigation with wall and furniture collision.
 - **Honest model boundary:** CubiCasa-derived research models are disabled in production unless research mode is explicitly enabled.
 
@@ -95,14 +104,12 @@ RGBA image
 
 ```text
 src/
-├─ types.ts             FloorPlan, Product, Placement and Project contracts
-├─ engine/              CV, scale review, geometry, collision, walk and textures
-├─ store/store.ts       Shared state, Undo/Redo, variants and project lifecycle
-├─ storage/             Swappable persistence adapter
-├─ editor2d/            SVG plan editor and draft-review guidance
-├─ scene/               Three.js/R3F structure, furniture and walkthrough
-├─ ui/                  Import workflow, catalog, inspector and project controls
-└─ data/                Sample plan, materials and sourced product catalog
+├─ domain/              Millimetre models and geometry/placement/walk rules
+├─ application/         Editing, history, project, CV, quote and autosave use cases
+├─ infrastructure/      HTTP/localStorage adapters and sourced retail snapshots
+├─ presentation/        React/Zustand bindings, SVG/R3F views and texture engine
+├─ compositionRoot.ts   Concrete dependency wiring
+└─ main.tsx             Runtime bootstrap
 
 e2e/                    Real-browser product journeys and CV fixtures
 docs/evidence/          Accuracy, model and license audits
@@ -139,11 +146,15 @@ Open `http://localhost:5173`.
 ```bash
 npm test               # Vitest unit/contract tests
 npm run test:contracts # assertion/.only/false-RED guard
+npm run test:retail-assets # retail image file/SHA-256 contract
+npm run typecheck:architecture # DOM-free domain/application compile
 npm run test:coverage  # tests + global and high-risk coverage floors
 npm run test:e2e       # Playwright against the development app
 npm run test:preview   # production build + preview smoke tests
 npm run verify         # contracts + lint + format + coverage + build
 npm run verify:full    # everything above + E2E + production preview
+npm run mesh:experiment:kivik -- --fetch # local-only KIVIK source/model feasibility A/B
+npm run mesh:experiment:kivik:regenerate # hash-verified eligible-view regeneration + quarantine report
 ```
 
 ### Rebuild the README GIF
@@ -232,6 +243,11 @@ The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-
 - **축척 안전장치:** 실측값을 입력하거나 추정 축척 사용을 명시적으로 확인해야 적용됩니다.
 - **보정 우선 UX:** 변환 후에도 벽·방·문·창문·치수를 직접 편집할 수 있습니다.
 - **실제 배치 규칙:** 25mm 그리드, 벽 자석, 충돌 거부, 설치 높이, Undo/Redo와 배치안 비교를 지원합니다.
+- **실판매 상품:** IKEA Korea 12종의 공식 제품번호·실측·가격 기준·출처 이미지를 보존하고 실제 이미지 텍스처를 3D 형상에 투영합니다.
+- **신뢰 경계가 분리된 하이브리드 시각화:** 해시·사용 권리·사람 검수를 통과한 생성 GLB만 이미지 투영을 대체하며, 배치와 충돌은 항상 공식 mm 치수를 사용합니다.
+- **오프라인 메시 검역:** 로컬 전용 worker 결과를 `public/` 밖에 저장하고 실제 GLB 정점·삼각형을 검사한 뒤, 독립된 권리·사람 검수 기록이 있을 때만 게시합니다.
+- **재현 가능한 로컬 모델 서비스:** 고정 버전 TripoSR Docker worker를 CUDA로 `127.0.0.1:8980`에 실행하며 업로드 20MB와 GPU 동시 작업 1개로 제한합니다.
+- **증거 기반 시점 선택:** 동일 변형의 전체 제품이 보이는 시점만 고해상도 재생성 후보가 될 수 있으며, 부분 확대 이미지는 수치가 좋아도 선택하지 않습니다.
 - **공간 체험:** 벽·가구 충돌이 적용되는 1인칭/3인칭 워크스루를 제공합니다.
 - **정직한 라이선스 경계:** CubiCasa 계열 연구 모델은 명시적 연구 모드가 아니면 production에서 꺼집니다.
 
@@ -274,14 +290,12 @@ The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-
 
 ```text
 src/
-├─ types.ts             FloorPlan/Product/Placement/Project 계약
-├─ engine/              CV, 축척 검토, 지오메트리, 충돌, 워크스루, 텍스처
-├─ store/store.ts       공유 상태, Undo/Redo, 배치안, 프로젝트 생명주기
-├─ storage/             교체 가능한 저장 어댑터
-├─ editor2d/            SVG 편집기와 변환 초안 검수 안내
-├─ scene/               Three.js/R3F 구조·가구·워크스루
-├─ ui/                  업로드 흐름, 카탈로그, 인스펙터, 프로젝트 UI
-└─ data/                샘플 도면, 마감재, 출처가 있는 제품 카탈로그
+├─ domain/              mm 모델과 지오메트리·배치·보행 규칙
+├─ application/         편집·히스토리·프로젝트·CV·견적·자동저장 유스케이스
+├─ infrastructure/      HTTP/localStorage 어댑터와 실상품 스냅샷
+├─ presentation/        React/Zustand 바인딩, SVG/R3F 화면과 텍스처 엔진
+├─ compositionRoot.ts   구체 의존성 조립
+└─ main.tsx             런타임 부트스트랩
 ```
 
 ## 개발 워크플로우
@@ -358,3 +372,7 @@ CUDA를 우선 사용하고 CPU로 폴백합니다. production에서는 `VITE_EN
 | 워크스루            | 워크스루 버튼, 마우스 시선, `WASD`, `Shift` 달리기 |
 | 배치안              | 썸네일과 함께 A/B안 저장·적용                      |
 | 사용자 가구         | 실측 치수와 선택적 `.glb` URL 등록                 |
+
+## 라이선스
+
+HomePlan 3D 원본 소스코드는 [MIT License](LICENSE)로 공개됩니다. IKEA 상품 사진, 상표, 제품 디자인과 그 파생 GLB에는 MIT가 적용되지 않습니다. 로컬 IKEA 스냅샷과 생성 메시의 배포 경계는 [Third-party product assets](THIRD_PARTY_ASSETS.md)를 따릅니다. 이 프로젝트는 IKEA와 제휴·후원·승인 관계가 아닙니다.

@@ -1,0 +1,29 @@
+services:
+  triposr-worker:
+    image: interior3d-triposr-worker:107cefdc244c
+    build:
+      context: .
+      args:
+        TRIPOSR_COMMIT: 107cefdc244c39106fa830359024f6a2f1c78871
+    gpus: all
+    ports:
+      - '127.0.0.1:8980:8980'
+    environment:
+      TRIPOSR_CHUNK_SIZE: '4096'
+      TRIPOSR_MC_RESOLUTION: '192'
+      TRIPOSR_MAX_IMAGE_BYTES: '20971520'
+    volumes:
+      - ../../.runtime/triposr/huggingface:/models/huggingface
+      - ../../.runtime/triposr/rembg:/models/rembg
+    shm_size: '2gb'
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json,urllib.request; d=json.load(urllib.request.urlopen('http://127.0.0.1:8980/health')); raise SystemExit(0 if d.get('ready') else 1)"
+      interval: 20s
+      timeout: 5s
+      retries: 30
+      start_period: 60s

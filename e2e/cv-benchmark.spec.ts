@@ -9,8 +9,8 @@ import {
   detectPlanRegions,
   inkRatio,
   rescalePlanToWidth,
-} from '../src/engine/planVision'
-import type { Gray } from '../src/engine/planVision'
+} from '../src/domain/engine/planVision'
+import type { Gray } from '../src/domain/engine/planVision'
 
 const FIXTURES = 'e2e/fixtures'
 const BASELINE = JSON.parse(

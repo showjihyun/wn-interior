@@ -3,7 +3,7 @@
 //   PowerShell: $env:OPENROUTER_API_KEY="sk-or-v1-..." ; npx playwright test e2e/ai.spec.ts
 // 키 미지정 시 이 파일은 skip 됩니다.
 import { test, expect } from '@playwright/test'
-import { DEFAULT_AI_MODEL } from '../src/ai/client'
+import { DEFAULT_AI_MODEL } from '../src/application/aiSettings'
 
 const API_KEY = process.env.OPENROUTER_API_KEY ?? ''
 test.describe.configure({ mode: 'serial' })

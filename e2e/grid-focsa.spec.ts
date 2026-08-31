@@ -6,8 +6,8 @@ import {
   autoBinarizeFloorPlan,
   removeSmallComponents,
   morphClose,
-} from '../src/engine/planVision'
-import type { Gray } from '../src/engine/planVision'
+} from '../src/domain/engine/planVision'
+import type { Gray } from '../src/domain/engine/planVision'
 
 interface GridResult {
   summary: string

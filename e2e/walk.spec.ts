@@ -20,14 +20,14 @@ test('워크스루 진입 → 설정 패널 표시 → 신장/몸무게 반영',
   expect(await S(page, '.walkConfig.heightCm')).toBe(180)
   await page.locator('.walk-panel label').nth(1).locator('input').fill('90')
   expect(await S(page, '.walkConfig.weightKg')).toBe(90)
-  await page.waitForTimeout(300) // useFrame 반영 대기
+  await page.waitForFunction(() => (window as any).__hp3d_walk?.radius === 146)
   // 반경 자동 산정: 110 + (90-60)*1.2 = 146
   expect(await page.evaluate(() => (window as any).__hp3d_walk.radius)).toBe(146)
 })
 
 test('WASD 이동이 실제 좌표를 바꾼다', async ({ page }) => {
   await page.getByRole('button', { name: /워크스루/ }).click()
-  await page.waitForTimeout(600)
+  await page.waitForFunction(() => Number.isFinite((window as any).__hp3d_walk?.z))
   const before = await page.evaluate(() => ({ ...(window as any).__hp3d_walk }))
   await page.keyboard.down('KeyW')
   await page.waitForTimeout(700)
@@ -48,13 +48,22 @@ test('배치 가구와 충돌하면 통과하지 못한다', async ({ page }) =>
     void walk
   })
   await page.getByRole('button', { name: /워크스루/ }).click()
-  await page.waitForTimeout(600)
+  await page.waitForFunction(
+    () =>
+      Number.isFinite((window as any).__hp3d_walk?.x) &&
+      Number.isFinite((window as any).__hp3d_walk?.z)
+  )
   // 스폰 좌표 확인 후 정면 북쪽 1.5m 지점에 소파 배치
   const spawn = await page.evaluate(() => ({ ...(window as any).__hp3d_walk }))
   await page.evaluate(({ x, z }) => {
     window.__hp3d_store.getState().addPlacement('p-sofa3', { x, z: z - 1500 })
   }, spawn)
-  await page.waitForTimeout(300)
+  await page.waitForFunction(() => {
+    const placement = window.__hp3d_store
+      .getState()
+      .placements.find((candidate) => candidate.productId === 'p-sofa3')
+    return Number.isFinite(placement?.pos.x) && Number.isFinite(placement?.pos.z)
+  })
 
   await page.keyboard.down('KeyW')
   await page.waitForTimeout(1500)
@@ -72,7 +81,7 @@ test('배치 가구와 충돌하면 통과하지 못한다', async ({ page }) =>
 
 test('3인칭 전환 시 캐릭터가 렌더된다 (픽셀 검사)', async ({ page }) => {
   await page.getByRole('button', { name: /워크스루/ }).click()
-  await page.waitForTimeout(600)
+  await page.waitForFunction(() => Number.isFinite((window as any).__hp3d_walk?.z))
   await page.locator('.walk-panel .wp-views').getByRole('button', { name: '3인칭' }).click()
   expect(await S(page, '.walkView')).toBe('tp')
   await page.waitForTimeout(500)

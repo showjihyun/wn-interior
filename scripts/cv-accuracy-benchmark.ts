@@ -13,7 +13,7 @@ import {
   vectorizeOpeningMask,
   type Gray,
   type RawPlan,
-} from '../src/engine/planVision'
+} from '../src/domain/engine/planVision'
 
 const DATASET_ROOT = path.resolve(process.argv[2] ?? '../.datasets/cubicasa5k')
 const EVIDENCE_DIR = path.resolve('docs/evidence')
@@ -787,7 +787,7 @@ async function main() {
     .slice(0, 10)
   const evidence = {
     generatedAt: new Date().toISOString(),
-    engine: 'src/engine/planVision.ts',
+    engine: 'src/domain/engine/planVision.ts',
     methodologyVersion: 1,
     parameters: {
       dataSplit: DATA_SPLIT,

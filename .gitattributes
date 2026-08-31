@@ -1,0 +1,4 @@
+public/catalog/ikea/** export-ignore
+public/catalog/generated/** export-ignore
+artifacts/generated-mesh/** export-ignore
+.runtime/** export-ignore

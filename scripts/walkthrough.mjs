@@ -62,9 +62,7 @@ console.log('▶ 벽걸이 TV 배치 + 설치 높이 조절')
 await page.locator('.tabs').getByRole('button', { name: /배치/ }).click() // 카탈로그 탭 복귀
 // 결정론성: 기존 가구 비움 (클릭이 반드시 바닥/고스트에 닿도록)
 await page.evaluate(() => {
-  window.__hp3d_store.getState().commit((d) => {
-    d.placements = []
-  })
+  window.__hp3d_store.setState({ placements: [] })
 })
 await page.getByRole('button', { name: /가전/ }).click()
 await page.getByText('75인치 TV 벽걸이').first().click()

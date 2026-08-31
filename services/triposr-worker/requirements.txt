@@ -1,0 +1,17 @@
+omegaconf==2.3.0
+numpy==1.26.4
+Pillow==10.1.0
+einops==0.7.0
+git+https://github.com/tatsy/torchmcubes.git@3381600ddc3d2e4d74222f8495866be5fafbace4
+transformers==4.35.0
+trimesh==4.0.5
+rembg==2.0.57
+onnxruntime==1.17.3
+opencv-python-headless==4.11.0.86
+huggingface-hub==0.17.3
+imageio[ffmpeg]==2.37.0
+xatlas==0.0.9
+moderngl==5.10.0
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20

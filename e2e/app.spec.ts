@@ -7,6 +7,14 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear())
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__hp3d_store)
+  await expect(page.locator('.viewport canvas')).toBeVisible()
+  await page.waitForFunction(() => !!(window as any).__hp3d_scene)
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  )
 })
 
 test('앱이 로드되고 샘플 아파트 3D 캔버스가 렌더된다', async ({ page }) => {
@@ -519,12 +527,30 @@ test('M12: IKEA KIVIK 소파를 배치하고 시몬스 퀸 침대 실측을 확�
   })
   await page.getByRole('button', { name: /거실/ }).click()
   await page.locator('.brandbar').getByRole('button', { name: 'IKEA' }).click()
-  await page.getByText('KIVIK 쉬비크 3인용 소파').first().click()
+  await page
+    .getByText(/KIVIK 쉬비크 3인용소파/)
+    .first()
+    .click()
   const canvas = page.locator('.viewport canvas')
+  await expect(canvas).toBeVisible()
+  await page.waitForFunction(
+    () =>
+      !!(window as any).__hp3d_scene &&
+      window.__hp3d_store.getState().pendingProductId === 'ik-kivik-3seat'
+  )
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  )
   const box = (await canvas.boundingBox())!
   await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.45)
   await page.waitForTimeout(250)
   await page.mouse.click(box.x + box.width * 0.6, box.y + box.height * 0.45)
+  await expect
+    .poll(() => page.evaluate(() => window.__hp3d_store.getState().placements.length))
+    .toBeGreaterThan(0)
   const placed = await page.evaluate(() => window.__hp3d_store.getState().placements.at(-1))
   expect(placed.productId).toBe('ik-kivik-3seat')
 

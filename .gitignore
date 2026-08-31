@@ -7,6 +7,10 @@ output/playwright/
 playwright-report/
 blob-report/
 .playwright-cli/
+artifacts/generated-mesh/quarantine/
+.runtime/
+public/catalog/ikea/*.jpg
+public/catalog/generated/*.glb
 __pycache__/
 *.py[cod]
 dev-server.log

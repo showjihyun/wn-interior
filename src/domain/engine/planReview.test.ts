@@ -140,6 +140,103 @@ describe('변환 결과 사전 검토', () => {
     })
     expect(buildPlanReviewIssues(plan(), scale)).toEqual([])
   })
+
+  it('방 경계가 벽 외곽을 거의 설명하지 못하고 벽선이 과밀하면 적용을 차단한다', () => {
+    const scale = assessScale({
+      detectedWidthMm: 10000,
+      knownWidthMm: 10000,
+      acceptEstimatedScale: false,
+    })
+    const lowQuality = plan({
+      walls: Array.from({ length: 24 }, (_, index) => {
+        const offset = index * 400
+        return index % 2 === 0
+          ? {
+              a: { x: 0, y: offset },
+              b: { x: 10000, y: offset },
+              thickness: 120,
+            }
+          : {
+              a: { x: offset, y: 0 },
+              b: { x: offset, y: 8000 },
+              thickness: 120,
+            }
+      }),
+      rooms: [
+        {
+          name: '잘못 검출된 방1',
+          polygon: [
+            { x: 500, y: 500 },
+            { x: 3000, y: 500 },
+            { x: 3000, y: 2500 },
+            { x: 500, y: 2500 },
+          ],
+          areaM2: 5,
+        },
+        {
+          name: '잘못 검출된 방2',
+          polygon: [
+            { x: 6500, y: 5000 },
+            { x: 9000, y: 5000 },
+            { x: 9000, y: 7000 },
+            { x: 6500, y: 7000 },
+          ],
+          areaM2: 5,
+        },
+      ],
+    })
+
+    const issue = buildPlanReviewIssues(lowQuality, scale).find(
+      (candidate) => candidate.id === 'low-room-coverage'
+    )
+
+    expect(issue).toMatchObject({ severity: 'blocker' })
+  })
+
+  it('정상적인 저밀도 2방 도면은 방 개수가 적다는 이유만으로 차단하지 않는다', () => {
+    const scale = assessScale({
+      detectedWidthMm: 10000,
+      knownWidthMm: 10000,
+      acceptEstimatedScale: false,
+    })
+    const compact = plan({
+      walls: [
+        { a: { x: 0, y: 0 }, b: { x: 10000, y: 0 }, thickness: 120 },
+        { a: { x: 10000, y: 0 }, b: { x: 10000, y: 8000 }, thickness: 120 },
+        { a: { x: 10000, y: 8000 }, b: { x: 0, y: 8000 }, thickness: 120 },
+        { a: { x: 0, y: 8000 }, b: { x: 0, y: 0 }, thickness: 120 },
+        { a: { x: 5000, y: 0 }, b: { x: 5000, y: 8000 }, thickness: 120 },
+      ],
+      rooms: [
+        {
+          name: '방1',
+          polygon: [
+            { x: 500, y: 500 },
+            { x: 4500, y: 500 },
+            { x: 4500, y: 2500 },
+            { x: 500, y: 2500 },
+          ],
+          areaM2: 8,
+        },
+        {
+          name: '방2',
+          polygon: [
+            { x: 5500, y: 500 },
+            { x: 9500, y: 500 },
+            { x: 9500, y: 2500 },
+            { x: 5500, y: 2500 },
+          ],
+          areaM2: 8,
+        },
+      ],
+    })
+
+    expect(
+      buildPlanReviewIssues(compact, scale).some(
+        (candidate) => candidate.id === 'low-room-coverage'
+      )
+    ).toBe(false)
+  })
 })
 
 describe('축척 보정 후 문·창문 보존', () => {

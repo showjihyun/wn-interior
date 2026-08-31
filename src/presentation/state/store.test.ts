@@ -217,4 +217,43 @@ describe('스토어 — 애플리케이션 경계 위임', () => {
 
     expect(S().ai.model).toBe('test/model')
   })
+
+  it('추정 축척 검수가 끝나지 않으면 어떤 진입점에서도 3D 모드로 바꾸지 않는다', () => {
+    useStore.setState({
+      mode: '2d',
+      floorPlanReview: {
+        sourceImageDataUrl: 'data:image/jpeg;base64,review',
+        sourceWidth: 800,
+        sourceHeight: 560,
+        mmPerPx: 20,
+        scaleMode: 'estimated',
+        requiredFor3d: true,
+        status: 'pending',
+      },
+      toast: null,
+    } as any)
+
+    S().setMode('3d')
+
+    expect(S().mode).toBe('2d')
+    expect(S().toast?.msg).toContain('2D 검수')
+  })
+
+  it('CV 프로젝트를 불러오면 원본 비교와 검수 상태를 보존한다', () => {
+    useStore.setState({ floorPlanReview: undefined } as any)
+    const review = {
+      sourceImageDataUrl: 'data:image/jpeg;base64,review',
+      sourceWidth: 800,
+      sourceHeight: 560,
+      mmPerPx: 20,
+      scaleMode: 'estimated',
+      requiredFor3d: true,
+      status: 'pending',
+    }
+    const project = { ...S().exportProject(), origin: 'cv', floorPlanReview: review }
+
+    S().loadProject(project as any)
+
+    expect((S() as any).floorPlanReview).toEqual(review)
+  })
 })

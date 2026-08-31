@@ -2,7 +2,16 @@
 // 프레젠테이션 상태 어댑터 — application 명령/히스토리/프로젝트 유스케이스를 Zustand에 바인딩
 // ─────────────────────────────────────────────────────────────
 import { create, type StoreApi, type UseBoundStore } from 'zustand'
-import type { FloorPlan, Opening, Placement, Product, Project, Pt, Wall } from '../../domain/model'
+import type {
+  FloorPlan,
+  FloorPlanReview,
+  Opening,
+  Placement,
+  Product,
+  Project,
+  Pt,
+  Wall,
+} from '../../domain/model'
 import type { AiSettings } from '../../application/aiSettings'
 import { canDropAt } from '../../domain/engine/drop'
 import { resolveDims } from '../../domain/engine/dims'
@@ -41,6 +50,7 @@ export interface AppState {
   plan: FloorPlan
   placements: Placement[]
   customProducts: Product[]
+  floorPlanReview?: FloorPlanReview
   selectedId: string | null
   mode: '3d' | '2d'
   past: EditorSnapshot[]
@@ -83,6 +93,7 @@ export interface AppState {
   redo: () => void
   select: (id: string | null) => void
   setMode: (m: '3d' | '2d') => void
+  completeFloorPlanReview: () => void
 
   addPlacement: (productId: string, pos: { x: number; z: number }, rotY?: number) => string | null
   updatePlacement: (id: string, patch: Partial<Placement>) => void
@@ -144,6 +155,7 @@ export function createAppStore({
       plan: state.plan,
       placements: state.placements,
       customProducts: state.customProducts,
+      floorPlanReview: state.floorPlanReview,
     })
   }
   const uid = () => ids.next()
@@ -167,8 +179,12 @@ export function createAppStore({
       plan: init.plan,
       placements: init.placements,
       customProducts: init.customProducts,
+      floorPlanReview: init.floorPlanReview,
       selectedId: null,
-      mode: '3d',
+      mode:
+        init.floorPlanReview?.requiredFor3d && init.floorPlanReview.status !== 'completed'
+          ? '2d'
+          : '3d',
       past: [],
       future: [],
       pendingProductId: null,
@@ -212,7 +228,29 @@ export function createAppStore({
         }),
 
       select: (id) => set({ selectedId: id }),
-      setMode: (m) => set({ mode: m }),
+      setMode: (m) => {
+        const state = get()
+        if (
+          m === '3d' &&
+          state.floorPlanReview?.requiredFor3d &&
+          state.floorPlanReview.status !== 'completed'
+        ) {
+          state.showToast('추정 축척은 2D 검수를 완료한 뒤 3D로 이동할 수 있어요')
+          return
+        }
+        set({ mode: m })
+      },
+      completeFloorPlanReview: () => {
+        const review = get().floorPlanReview
+        if (!review || review.status === 'completed') return
+        const floorPlanReview: FloorPlanReview = {
+          ...review,
+          status: 'completed',
+          completedAt: clock.now(),
+        }
+        set({ floorPlanReview })
+        persist(get())
+      },
       setPending: (id) =>
         set((s) => ({ pendingProductId: id, selectedId: id === null ? s.selectedId : null })),
       setViewPreset: (v) => set({ viewPreset: v }),
@@ -429,10 +467,15 @@ export function createAppStore({
           plan: proj.plan,
           placements: proj.placements,
           customProducts: proj.customProducts ?? [],
+          floorPlanReview: proj.floorPlanReview,
           past: [],
           future: [],
           selectedId: null,
           moving: null,
+          mode:
+            proj.floorPlanReview?.requiredFor3d && proj.floorPlanReview.status !== 'completed'
+              ? '2d'
+              : get().mode,
         })
       },
 
@@ -446,6 +489,7 @@ export function createAppStore({
           plan: s.plan,
           placements: s.placements,
           customProducts: s.customProducts,
+          floorPlanReview: s.floorPlanReview,
           createdAt: now,
           updatedAt: now,
         }
@@ -459,6 +503,7 @@ export function createAppStore({
           plan: starter.plan,
           placements: starter.placements,
           customProducts: starter.customProducts,
+          floorPlanReview: undefined,
           past: [],
           future: [],
           selectedId: null,
@@ -482,6 +527,7 @@ export function createAppStore({
           projectOrigin: proj.origin,
           plan: proj.plan,
           placements: [],
+          floorPlanReview: undefined,
           selectedId: null,
           moving: null,
           mode: '2d', // 빈 도면은 2D 그리기부터 시작
@@ -505,10 +551,15 @@ export function createAppStore({
           plan: p.plan,
           placements: p.placements,
           customProducts: p.customProducts ?? [],
+          floorPlanReview: p.floorPlanReview,
           selectedId: null,
           moving: null,
           past: [],
           future: [],
+          mode:
+            p.floorPlanReview?.requiredFor3d && p.floorPlanReview.status !== 'completed'
+              ? '2d'
+              : get().mode,
         })
         get().showToast(`'${p.name}' 열림`, 'info')
       },

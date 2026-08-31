@@ -116,6 +116,52 @@ test('평면도 업로드는 축척 확인 후 2D 보정 또는 3D 보기를 선
   expect(await page.evaluate(() => window.__hp3d_store.getState().mode)).toBe('3d')
 })
 
+test('추정 축척은 원본과 4개 항목을 2D에서 검수한 뒤에만 3D를 연다', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal.locator('input[type=file]').setInputFiles({
+    name: 'estimated-plan.png',
+    mimeType: 'image/png',
+    buffer: await makePlanPng(page),
+  })
+  await expect(modal.locator('.status')).toContainText(/벽 \d+개 · 방 \d+개/, {
+    timeout: 10_000,
+  })
+  await modal.getByLabel(/실측값 없이 추정 축척/).check()
+  await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
+
+  const direct3d = modal.getByRole('button', { name: /바로 3D 보기/ })
+  await expect(direct3d).toBeDisabled()
+  await modal.getByRole('button', { name: /2D에서.*검수/ }).click()
+
+  const source = page.getByTestId('floorplan-review-source')
+  await expect(source).toBeVisible()
+  await expect(page.getByRole('button', { name: '3D 배치' })).toBeDisabled()
+  await page.keyboard.press('3')
+  await expect(page.locator('.toast')).toContainText('2D 검수')
+  expect(await page.evaluate(() => window.__hp3d_store.getState().mode)).toBe('2d')
+
+  const review = page.getByRole('complementary', { name: '변환 초안 검수', exact: true })
+  const complete = review.getByRole('button', { name: /검수 완료하고 3D 보기/ })
+  await expect(complete).toBeDisabled()
+  const checks = review.getByRole('checkbox')
+  await expect(checks).toHaveCount(4)
+  for (let index = 0; index < 4; index++) await checks.nth(index).check()
+  await expect(complete).toBeEnabled()
+  await complete.click()
+
+  await expect(page.locator('.viewport canvas')).toBeVisible()
+  expect(await page.evaluate(() => window.__hp3d_store.getState().mode)).toBe('3d')
+
+  await page.waitForTimeout(900)
+  await page.reload()
+  await page.waitForFunction(() => !!(window as any).__hp3d_store)
+  expect(await page.evaluate(() => window.__hp3d_store.getState().floorPlanReview?.status)).toBe(
+    'completed'
+  )
+})
+
 test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D 평면도로 변환한다', async ({ page }) => {
   await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
   const modal = page.locator('.modal')
@@ -198,6 +244,30 @@ test('어두운 배경 색상 도면은 밝은 벽선만 분리해 방을 복구
     timeout: 10_000,
   })
   await expect(modal.locator('.status')).toContainText(/문 [1-9]\d*개/)
+})
+
+test('해칭으로 벽선이 과밀하고 방 커버리지가 낮은 2방 결과는 적용을 막는다', async ({ page }) => {
+  await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
+  const modal = page.locator('.modal')
+  await modal
+    .locator('input[type=file]')
+    .setInputFiles('e2e/fixtures/real-wikimedia-space-apartment.png')
+  await expect(modal.locator('.status')).toContainText(/방 0개/, { timeout: 10_000 })
+
+  await modal.getByText('고급 검출 설정').click()
+  await modal.getByLabel('자동 임계값(Otsu)').uncheck()
+  await modal.getByRole('slider', { name: /이진화 임계값/ }).fill('180')
+  await modal.getByRole('slider', { name: /최소 벽 두께/ }).fill('6')
+  await modal.getByLabel('도면 전체 가로 실측').fill('10000')
+
+  await expect(modal.locator('.status')).toContainText(/벽 50개 · 방 2개/, {
+    timeout: 10_000,
+  })
+  const reviewResult = modal.locator('.pv-review-result')
+  expect(Number(await reviewResult.getAttribute('data-room-coverage'))).toBeLessThan(0.3)
+  expect(Number(await reviewResult.getAttribute('data-wall-density'))).toBeGreaterThan(9)
+  await expect(reviewResult).toContainText(/방 경계.*벽선.*과밀/)
+  await expect(modal.getByRole('button', { name: /변환 결과 적용/ })).toBeDisabled()
 })
 
 test('복수 평면 입력은 적용을 막고 단일 도면 재업로드 시 차단을 해제한다', async ({ page }) => {

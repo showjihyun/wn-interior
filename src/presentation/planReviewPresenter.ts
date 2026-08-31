@@ -13,7 +13,10 @@ export function scaleAssessmentMessage(scale: ScaleAssessment): string {
 }
 
 export function planReviewIssueMessage(issue: PlanReviewIssue): string {
-  const messages: Record<Exclude<PlanReviewIssue['id'], 'large-scale-correction'>, string> = {
+  const messages: Record<
+    Exclude<PlanReviewIssue['id'], 'large-scale-correction' | 'low-room-coverage'>,
+    string
+  > = {
     'no-walls': '벽을 검출하지 못했습니다.',
     'no-rooms': '방을 검출하지 못했습니다.',
     'few-rooms': '방이 1개만 검출됐습니다. 원본 도면과 방 경계를 비교하세요.',
@@ -21,7 +24,11 @@ export function planReviewIssueMessage(issue: PlanReviewIssue): string {
     'scale-blocked': '축척 확인이 필요합니다.',
     'estimated-scale': '추정 축척을 사용합니다. 2D에서 반드시 검수하세요.',
   }
-  return issue.id === 'large-scale-correction'
-    ? `축척을 ${(issue.value ?? 1).toFixed(2)}배 보정합니다. 입력한 실측값을 다시 확인하세요.`
-    : messages[issue.id]
+  if (issue.id === 'large-scale-correction') {
+    return `축척을 ${(issue.value ?? 1).toFixed(2)}배 보정합니다. 입력한 실측값을 다시 확인하세요.`
+  }
+  if (issue.id === 'low-room-coverage') {
+    return `방 경계가 벽 외곽의 ${Math.round((issue.value ?? 0) * 100)}%만 설명하고 벽선이 과밀합니다. 해칭·가구선을 벽으로 잘못 인식했을 수 있어 적용할 수 없습니다.`
+  }
+  return messages[issue.id]
 }

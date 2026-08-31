@@ -28,9 +28,51 @@ export interface PlanReviewIssue {
     | 'no-openings'
     | 'scale-blocked'
     | 'estimated-scale'
+    | 'low-room-coverage'
     | 'large-scale-correction'
   severity: 'blocker' | 'warning'
   value?: number
+}
+
+export interface PlanGeometryQuality {
+  roomCoverageRatio: number
+  wallDensity: number
+  lowConfidence: boolean
+}
+
+function polygonArea(points: RawPlan['rooms'][number]['polygon']): number {
+  let area = 0
+  for (let index = 0, previous = points.length - 1; index < points.length; previous = index++) {
+    area += points[previous].x * points[index].y - points[index].x * points[previous].y
+  }
+  return Math.abs(area / 2)
+}
+
+export function assessPlanGeometryQuality(
+  plan: Pick<RawPlan, 'walls' | 'rooms'>
+): PlanGeometryQuality {
+  const points = plan.walls.flatMap((wall) => [wall.a, wall.b])
+  if (points.length < 2 || plan.rooms.length === 0) {
+    return { roomCoverageRatio: 0, wallDensity: 0, lowConfidence: false }
+  }
+  const xs = points.map((point) => point.x)
+  const ys = points.map((point) => point.y)
+  const boundsArea = (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys))
+  if (!Number.isFinite(boundsArea) || boundsArea <= 0) {
+    return { roomCoverageRatio: 0, wallDensity: 0, lowConfidence: false }
+  }
+  const roomArea = plan.rooms.reduce((sum, room) => sum + polygonArea(room.polygon), 0)
+  const wallLength = plan.walls.reduce(
+    (sum, wall) => sum + Math.hypot(wall.b.x - wall.a.x, wall.b.y - wall.a.y),
+    0
+  )
+  const roomCoverageRatio = Math.max(0, Math.min(1, roomArea / boundsArea))
+  const wallDensity = wallLength / Math.sqrt(boundsArea)
+  return {
+    roomCoverageRatio,
+    wallDensity,
+    lowConfidence: roomCoverageRatio < 0.3 && wallDensity > 9,
+  }
 }
 
 export function sanitizeOpeningCandidates(openings: RawPlan['openings']): RawPlan['openings'] {
@@ -125,6 +167,14 @@ export function buildPlanReviewIssues(
     issues.push({
       id: 'no-openings',
       severity: 'warning',
+    })
+  }
+  const quality = assessPlanGeometryQuality(plan)
+  if (quality.lowConfidence) {
+    issues.push({
+      id: 'low-room-coverage',
+      severity: 'blocker',
+      value: quality.roomCoverageRatio,
     })
   }
   if (scale.mode === 'blocked') {

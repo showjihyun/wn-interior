@@ -1,4 +1,4 @@
-import type { FloorPlan, Placement, Product, Project } from '../domain/model'
+import type { FloorPlan, FloorPlanReview, Placement, Product, Project } from '../domain/model'
 import type {
   Clock,
   IdGenerator,
@@ -15,6 +15,7 @@ export interface ProjectSnapshot {
   plan: FloorPlan
   placements: Placement[]
   customProducts: Product[]
+  floorPlanReview?: FloorPlanReview
 }
 
 export interface ProjectService {
@@ -95,6 +96,7 @@ export function createProjectService({
       plan: clonePlan(template.plan),
       placements: starterPlacements(template.placements, ids),
       customProducts: template.customProducts.map(cloneProduct),
+      floorPlanReview: undefined,
     }
   }
   const save = (snapshot: ProjectSnapshot) => {
@@ -108,6 +110,7 @@ export function createProjectService({
       plan: snapshot.plan,
       placements: snapshot.placements,
       customProducts: snapshot.customProducts,
+      floorPlanReview: snapshot.floorPlanReview ? { ...snapshot.floorPlanReview } : undefined,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     })

@@ -77,14 +77,14 @@ flowchart LR
 
 ### Data invariants
 
-| Boundary        | Invariant                                                                               |
-| --------------- | --------------------------------------------------------------------------------------- |
-| Geometry        | All persisted lengths use millimetres.                                                  |
-| 2D / 3D         | Both views read and mutate the same project state.                                      |
-| Import          | Invalid walls, rooms, and openings are rejected or normalized before store load.        |
-| Scale           | Apply is blocked until measured scale or explicit estimated-scale consent exists.       |
-| Persistence     | Project IDs isolate imports; each tab session autosaves separately and survives reload. |
-| Research models | Non-commercial checkpoints are development/research-only and production-off by default. |
+| Boundary        | Invariant                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| Geometry        | All persisted lengths use millimetres.                                                    |
+| 2D / 3D         | Both views read and mutate the same project state.                                        |
+| Import          | Invalid geometry and low-coverage, over-dense wall results are blocked before store load. |
+| Scale           | Estimated scale remains in 2D until source overlay and four review items are confirmed.   |
+| Persistence     | Project IDs isolate imports; each tab session autosaves separately and survives reload.   |
+| Research models | Non-commercial checkpoints are development/research-only and production-off by default.   |
 
 ### Import pipeline
 

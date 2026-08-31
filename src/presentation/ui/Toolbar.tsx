@@ -25,6 +25,7 @@ function Btn({
   danger,
   primary,
   title,
+  disabled,
 }: {
   onClick?: () => void
   children: React.ReactNode
@@ -32,12 +33,14 @@ function Btn({
   danger?: boolean
   primary?: boolean
   title?: string
+  disabled?: boolean
 }) {
   return (
     <button
       className={`tbtn${active ? ' active' : ''}${danger ? ' danger' : ''}${primary ? ' tbtn-core' : ''}`}
       onClick={onClick}
       title={title}
+      disabled={disabled}
     >
       {children}
     </button>
@@ -54,6 +57,8 @@ export function Toolbar() {
   const [varOpen, setVarOpen] = useState(false)
   const [cvOpen, setCvOpen] = useState(false)
   const [projOpen, setProjOpen] = useState(false)
+  const reviewBlocks3d =
+    s.floorPlanReview?.requiredFor3d && s.floorPlanReview.status !== 'completed'
 
   function exportJson() {
     const proj = s.exportProject()
@@ -82,7 +87,12 @@ export function Toolbar() {
       </div>
 
       <div className="seg">
-        <Btn active={s.mode === '3d'} onClick={() => s.setMode('3d')}>
+        <Btn
+          active={s.mode === '3d'}
+          onClick={() => s.setMode('3d')}
+          disabled={reviewBlocks3d}
+          title={reviewBlocks3d ? '2D에서 원본·실측 검수를 완료해야 합니다.' : undefined}
+        >
           3D 배치
         </Btn>
         <Btn active={s.mode === '2d'} onClick={() => s.setMode('2d')}>

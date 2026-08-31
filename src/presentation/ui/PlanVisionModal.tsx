@@ -15,7 +15,11 @@ import {
   type RawPlan,
   type PlanRegion,
 } from '../../domain/engine/planVision'
-import { assessScale, buildPlanReviewIssues } from '../../domain/engine/planReview'
+import {
+  assessPlanGeometryQuality,
+  assessScale,
+  buildPlanReviewIssues,
+} from '../../domain/engine/planReview'
 import { applyFloorPlanDraft, FloorPlanDraftError } from '../../application/applyFloorPlanDraft'
 import { useAppRuntime, useStoreApi } from '../AppRuntimeContext'
 import { planReviewIssueMessage, scaleAssessmentMessage } from '../planReviewPresenter'
@@ -26,6 +30,7 @@ interface AppliedSummary {
   rooms: number
   openings: number
   elapsedSeconds: number
+  requires2dReview: boolean
 }
 
 export function PlanVisionModal({ onClose }: { onClose: () => void }) {
@@ -70,6 +75,10 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
   const reviewIssues = useMemo(
     () => (previewPlan ? buildPlanReviewIssues(previewPlan, scaleAssessment) : []),
     [previewPlan, scaleAssessment]
+  )
+  const geometryQuality = useMemo(
+    () => (previewPlan ? assessPlanGeometryQuality(previewPlan) : null),
+    [previewPlan]
   )
   const blockerCount = reviewIssues.filter((issue) => issue.severity === 'blocker').length
 
@@ -138,6 +147,17 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(im, 0, 0, canvas.width, canvas.height)
     return canvas.toDataURL('image/png')
+  }, [])
+
+  const reviewImageDataUrl = useCallback((im: HTMLImageElement): string => {
+    const canvas = document.createElement('canvas')
+    canvas.width = im.width
+    canvas.height = im.height
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(im, 0, 0, canvas.width, canvas.height)
+    return canvas.toDataURL('image/jpeg', 0.82)
   }, [])
 
   const visionOptions = useCallback(
@@ -315,6 +335,15 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
         plan,
         placements: [],
         customProducts: st.customProducts,
+        floorPlanReview: {
+          sourceImageDataUrl: reviewImageDataUrl(img),
+          sourceWidth: img.width,
+          sourceHeight: img.height,
+          mmPerPx: previewPlanRef.current.mmPerPx,
+          scaleMode: scaleAssessment.mode === 'estimated' ? 'estimated' : 'calibrated',
+          requiredFor3d: scaleAssessment.mode === 'estimated',
+          status: 'pending',
+        },
         createdAt: '',
         updatedAt: '',
       })
@@ -327,6 +356,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
           1,
           Math.round((performance.now() - conversionStartedAtRef.current) / 1000)
         ),
+        requires2dReview: scaleAssessment.mode === 'estimated',
       })
       setStatus('변환 적용 완료')
     } catch (e) {
@@ -361,9 +391,25 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
           </p>
           <div className="pv-complete-actions">
             <button className="primary" onClick={() => finish('2d')}>
-              2D에서 보정 <small>권장</small>
+              {appliedSummary.requires2dReview ? (
+                <>2D에서 원본 검수 필수</>
+              ) : (
+                <>
+                  2D에서 보정 <small>권장</small>
+                </>
+              )}
             </button>
-            <button onClick={() => finish('3d')}>바로 3D 보기</button>
+            <button
+              onClick={() => finish('3d')}
+              disabled={appliedSummary.requires2dReview}
+              title={
+                appliedSummary.requires2dReview
+                  ? '추정 축척은 2D에서 원본·실측 검수를 완료해야 합니다.'
+                  : undefined
+              }
+            >
+              바로 3D 보기
+            </button>
           </div>
         </div>
       </div>
@@ -598,7 +644,12 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
               </div>
 
               {previewReady && (
-                <div className="pv-review-result" aria-live="polite">
+                <div
+                  className="pv-review-result"
+                  aria-live="polite"
+                  data-room-coverage={geometryQuality?.roomCoverageRatio.toFixed(3)}
+                  data-wall-density={geometryQuality?.wallDensity.toFixed(2)}
+                >
                   {reviewIssues.length === 0 ? (
                     <p className="pv-review-clear">
                       기본 검사를 통과했습니다. 원본과 세부 위치를 비교하세요.

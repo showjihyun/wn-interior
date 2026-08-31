@@ -10,6 +10,14 @@ import { createOpeningOnNearestWall } from '../../domain/openingPolicy'
 import { getPlanBounds } from '../../domain/planBounds'
 
 type Tool = 'select' | 'wall' | 'door' | 'window' | 'entry'
+type ReviewCheck = 'walls' | 'rooms' | 'openings' | 'scale'
+
+const reviewItems: Array<{ id: ReviewCheck; label: string }> = [
+  { id: 'walls', label: '벽 연결' },
+  { id: 'rooms', label: '방 경계' },
+  { id: 'openings', label: '문·창문' },
+  { id: 'scale', label: '실측 치수' },
+]
 
 interface TraceImg {
   url: string
@@ -24,6 +32,9 @@ export function Editor2D() {
   const svgRef = useRef<SVGSVGElement>(null)
   const plan = useStore((s) => s.plan)
   const projectOrigin = useStore((s) => s.projectOrigin)
+  const floorPlanReview = useStore((s) => s.floorPlanReview)
+  const completeFloorPlanReview = useStore((s) => s.completeFloorPlanReview)
+  const setMode = useStore((s) => s.setMode)
   const placements = useStore((s) => s.placements)
   const productOf = useStore((s) => s.productById)
   const selectedId = useStore((s) => s.selectedId)
@@ -52,6 +63,14 @@ export function Editor2D() {
   )
   const [calib, setCalib] = useState<{ pts: Pt[] }>({ pts: [] })
   const [showDraftGuide, setShowDraftGuide] = useState(true)
+  const [showReviewSource, setShowReviewSource] = useState(true)
+  const [reviewChecks, setReviewChecks] = useState<Record<ReviewCheck, boolean>>({
+    walls: false,
+    rooms: false,
+    openings: false,
+    scale: false,
+  })
+  const reviewComplete = reviewItems.every((item) => reviewChecks[item.id])
   const draggingPl = useRef<string | null>(null)
   const dragVertex = useRef<{ wallId: string; end: 'a' | 'b' } | null>(null)
 
@@ -240,22 +259,67 @@ export function Editor2D() {
             <span>가구를 배치하기 전에 원본 도면과 아래 항목을 비교하세요.</span>
           </div>
           <ol>
-            <li>
-              <span>1</span>벽 연결
-            </li>
-            <li>
-              <span>2</span>방 경계
-            </li>
-            <li>
-              <span>3</span>문·창문
-            </li>
-            <li>
-              <span>4</span>실측 치수
-            </li>
+            {reviewItems.map((item, index) => (
+              <li key={item.id}>
+                {floorPlanReview?.status === 'pending' ? (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={reviewChecks[item.id]}
+                      onChange={(event) =>
+                        setReviewChecks((current) => ({
+                          ...current,
+                          [item.id]: event.target.checked,
+                        }))
+                      }
+                    />
+                    {item.label}
+                  </label>
+                ) : (
+                  <>
+                    <span>{index + 1}</span>
+                    {item.label}
+                  </>
+                )}
+              </li>
+            ))}
           </ol>
-          <button aria-label="변환 초안 검수 닫기" onClick={() => setShowDraftGuide(false)}>
-            ×
-          </button>
+          <div className="ed2d-review-actions">
+            {floorPlanReview?.sourceImageDataUrl && (
+              <button
+                type="button"
+                aria-pressed={showReviewSource}
+                onClick={() => setShowReviewSource((visible) => !visible)}
+              >
+                원본 비교 {showReviewSource ? '끄기' : '켜기'}
+              </button>
+            )}
+            {floorPlanReview?.status === 'pending' && (
+              <button
+                type="button"
+                className="primary"
+                disabled={!reviewComplete}
+                onClick={() => {
+                  completeFloorPlanReview()
+                  setMode('3d')
+                }}
+              >
+                검수 완료하고 3D 보기
+              </button>
+            )}
+            {floorPlanReview?.status === 'completed' && (
+              <span className="ed2d-review-done">✓ 검수 완료</span>
+            )}
+            {(!floorPlanReview?.requiredFor3d || floorPlanReview.status === 'completed') && (
+              <button
+                className="ed2d-review-close"
+                aria-label="변환 초안 검수 닫기"
+                onClick={() => setShowDraftGuide(false)}
+              >
+                ×
+              </button>
+            )}
+          </div>
         </aside>
       )}
 
@@ -308,6 +372,20 @@ export function Editor2D() {
             </text>
           </g>
         ))}
+
+        {floorPlanReview?.sourceImageDataUrl && showReviewSource && (
+          <image
+            data-testid="floorplan-review-source"
+            href={floorPlanReview.sourceImageDataUrl}
+            x={0}
+            y={0}
+            width={floorPlanReview.sourceWidth * floorPlanReview.mmPerPx}
+            height={floorPlanReview.sourceHeight * floorPlanReview.mmPerPx}
+            opacity={0.42}
+            preserveAspectRatio="none"
+            pointerEvents="none"
+          />
+        )}
 
         {/* 벽 */}
         {plan.walls.map((w) => {

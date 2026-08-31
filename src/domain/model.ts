@@ -46,6 +46,17 @@ export interface FloorPlan {
   rooms: Room[]
 }
 
+export interface FloorPlanReview {
+  sourceImageDataUrl: string
+  sourceWidth: number
+  sourceHeight: number
+  mmPerPx: number
+  scaleMode: 'calibrated' | 'estimated'
+  requiredFor3d: boolean
+  status: 'pending' | 'completed'
+  completedAt?: string
+}
+
 export type Mount = 'floor' | 'wall-mount' | 'ceiling' | 'wall'
 
 export interface RetailProductInfo {
@@ -178,6 +189,7 @@ export interface Project {
   plan: FloorPlan
   placements: Placement[]
   customProducts: Product[]
+  floorPlanReview?: FloorPlanReview
   createdAt: string
   updatedAt: string
 }

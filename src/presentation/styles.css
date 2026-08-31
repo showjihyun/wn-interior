@@ -49,6 +49,12 @@ body,
 .tbtn:hover {
   background: #30363e;
 }
+.tbtn:disabled,
+.tbtn:disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.48;
+  background: #262b31;
+}
 .tbtn.active {
   background: #2f4156;
   border-color: #4a90c2;
@@ -504,9 +510,9 @@ body,
   font-size: 12.5px;
 }
 .ed2d-review-guide {
-  display: grid;
-  grid-template-columns: minmax(190px, 1fr) auto auto;
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
   padding: 9px 12px;
   border-bottom: 1px solid #d8c58b;
@@ -518,6 +524,9 @@ body,
   flex-direction: column;
   gap: 2px;
 }
+.ed2d-review-guide > div:first-child {
+  flex: 1 1 180px;
+}
 .ed2d-review-guide b {
   color: #362f1f;
   font-size: 12.5px;
@@ -528,6 +537,8 @@ body,
 }
 .ed2d-review-guide ol {
   display: flex;
+  flex: 1 1 300px;
+  flex-wrap: wrap;
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -541,6 +552,15 @@ body,
   font-size: 11.5px;
   font-weight: 700;
 }
+.ed2d-review-guide li label {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  cursor: pointer;
+}
+.ed2d-review-guide li input {
+  accent-color: #9c7200;
+}
 .ed2d-review-guide li span {
   display: grid;
   width: 18px;
@@ -551,12 +571,45 @@ body,
   color: #8a6a08;
   font-size: 9px;
 }
-.ed2d-review-guide > button {
+.ed2d-review-actions {
+  flex: 1 1 100%;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.ed2d-review-actions button {
+  border: 1px solid #c9b66f;
+  border-radius: 6px;
+  background: #fffdf5;
+  color: #5f522f;
+  padding: 6px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.ed2d-review-actions button.primary {
+  background: #9c7200;
+  border-color: #9c7200;
+  color: #fff;
+}
+.ed2d-review-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.ed2d-review-done {
+  color: #377d4d;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ed2d-review-actions .ed2d-review-close {
   border: 0;
   background: transparent;
   color: #766b50;
   cursor: pointer;
   font-size: 20px;
+  padding: 0 3px;
 }
 .ed2d-svg {
   flex: 1;

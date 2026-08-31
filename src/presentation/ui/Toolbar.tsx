@@ -5,6 +5,7 @@ import { FloorPlanAnalysisError } from '../../application/analyzeFloorPlan'
 import { exportProjectDocument, importProjectDocument } from '../../application/projectDocument'
 import { PlanVisionModal as CvModal } from './PlanVisionModal'
 import { ProjectsModal } from './ProjectsModal'
+import { floorPlanReviewBlocks3d } from '../../domain/floorPlanReview'
 
 function analysisErrorMessage(error: FloorPlanAnalysisError): string {
   const messages: Record<FloorPlanAnalysisError['code'], string> = {
@@ -57,8 +58,7 @@ export function Toolbar() {
   const [varOpen, setVarOpen] = useState(false)
   const [cvOpen, setCvOpen] = useState(false)
   const [projOpen, setProjOpen] = useState(false)
-  const reviewBlocks3d =
-    s.floorPlanReview?.requiredFor3d && s.floorPlanReview.status !== 'completed'
+  const reviewBlocks3d = floorPlanReviewBlocks3d(s.projectOrigin, s.floorPlanReview)
 
   function exportJson() {
     const proj = s.exportProject()

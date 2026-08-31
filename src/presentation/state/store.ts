@@ -5,6 +5,7 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand'
 import type {
   FloorPlan,
   FloorPlanReview,
+  FloorPlanReviewEvidenceInput,
   Opening,
   Placement,
   Product,
@@ -12,6 +13,10 @@ import type {
   Pt,
   Wall,
 } from '../../domain/model'
+import {
+  floorPlanReviewBlocks3d,
+  validateFloorPlanReviewEvidence,
+} from '../../domain/floorPlanReview'
 import type { AiSettings } from '../../application/aiSettings'
 import { canDropAt } from '../../domain/engine/drop'
 import { resolveDims } from '../../domain/engine/dims'
@@ -95,7 +100,7 @@ export interface AppState {
   redo: () => void
   select: (id: string | null) => void
   setMode: (m: '3d' | '2d') => void
-  completeFloorPlanReview: () => void
+  completeFloorPlanReview: (evidence?: FloorPlanReviewEvidenceInput) => boolean
 
   addPlacement: (productId: string, pos: { x: number; z: number }, rotY?: number) => string | null
   updatePlacement: (id: string, patch: Partial<Placement>) => void
@@ -183,10 +188,7 @@ export function createAppStore({
       customProducts: init.customProducts,
       floorPlanReview: init.floorPlanReview,
       selectedId: null,
-      mode:
-        init.floorPlanReview?.requiredFor3d && init.floorPlanReview.status !== 'completed'
-          ? '2d'
-          : '3d',
+      mode: floorPlanReviewBlocks3d(init.origin, init.floorPlanReview) ? '2d' : '3d',
       past: [],
       future: [],
       pendingProductId: null,
@@ -232,26 +234,42 @@ export function createAppStore({
       select: (id) => set({ selectedId: id }),
       setMode: (m) => {
         const state = get()
-        if (
-          m === '3d' &&
-          state.floorPlanReview?.requiredFor3d &&
-          state.floorPlanReview.status !== 'completed'
-        ) {
-          state.showToast('추정 축척은 2D 검수를 완료한 뒤 3D로 이동할 수 있어요')
+        if (m === '3d' && floorPlanReviewBlocks3d(state.projectOrigin, state.floorPlanReview)) {
+          state.showToast('원본과 대표 요소의 2D 검수 근거를 저장한 뒤 3D로 이동할 수 있어요')
           return
         }
         set({ mode: m })
       },
-      completeFloorPlanReview: () => {
+      completeFloorPlanReview: (evidence) => {
         const review = get().floorPlanReview
-        if (!review || review.status === 'completed') return
+        if (!review) return false
+        const validation = validateFloorPlanReviewEvidence(get().plan, review, evidence)
+        if (!validation.ok) {
+          const messages = {
+            'evidence-required': '대표 요소와 검수 근거를 입력하세요',
+            'target-not-found': '검수할 대표 요소를 다시 선택하세요',
+            'note-too-short': '검수 근거를 5자 이상 입력하세요',
+            'plan-change-required': '수정 완료는 실제 도면 변경이 있어야 선택할 수 있습니다',
+          }
+          get().showToast(messages[validation.reason])
+          return false
+        }
+        const recordedAt = clock.now()
         const floorPlanReview: FloorPlanReview = {
           ...review,
           status: 'completed',
-          completedAt: clock.now(),
+          evidence: {
+            ...evidence!,
+            targetLabel: validation.targetLabel,
+            note: validation.note,
+            planFingerprint: validation.planFingerprint,
+            recordedAt,
+          },
+          completedAt: recordedAt,
         }
         set({ floorPlanReview })
         persist(get())
+        return true
       },
       setPending: (id) =>
         set((s) => ({ pendingProductId: id, selectedId: id === null ? s.selectedId : null })),
@@ -479,10 +497,7 @@ export function createAppStore({
           future: [],
           selectedId: null,
           moving: null,
-          mode:
-            proj.floorPlanReview?.requiredFor3d && proj.floorPlanReview.status !== 'completed'
-              ? '2d'
-              : get().mode,
+          mode: floorPlanReviewBlocks3d(proj.origin, proj.floorPlanReview) ? '2d' : get().mode,
         })
       },
 
@@ -563,10 +578,7 @@ export function createAppStore({
           moving: null,
           past: [],
           future: [],
-          mode:
-            p.floorPlanReview?.requiredFor3d && p.floorPlanReview.status !== 'completed'
-              ? '2d'
-              : get().mode,
+          mode: floorPlanReviewBlocks3d(p.origin, p.floorPlanReview) ? '2d' : get().mode,
         })
         get().showToast(`'${p.name}' 열림`, 'info')
       },

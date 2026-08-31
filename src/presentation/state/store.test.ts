@@ -272,4 +272,92 @@ describe('스토어 — 애플리케이션 경계 위임', () => {
 
     expect((S() as any).floorPlanReview).toEqual(review)
   })
+
+  it('대표 요소와 판정 근거가 없으면 CV 검수를 완료하지 않는다', () => {
+    S().resetToSample()
+    useStore.setState({
+      mode: '2d',
+      projectOrigin: 'cv',
+      floorPlanReview: {
+        sourceImageDataUrl: 'data:image/jpeg;base64,review',
+        sourceWidth: 800,
+        sourceHeight: 560,
+        mmPerPx: 20,
+        scaleMode: 'calibrated',
+        requiredFor3d: true,
+        status: 'pending',
+      },
+      toast: null,
+    } as any)
+
+    ;(S().completeFloorPlanReview as any)()
+
+    expect(S().floorPlanReview?.status).toBe('pending')
+    expect(S().toast?.msg).toContain('검수 근거')
+  })
+
+  it('실제 변경이 없으면 수정 완료 판정을 거부한다', () => {
+    S().resetToSample()
+    useStore.setState({
+      mode: '2d',
+      projectOrigin: 'cv',
+      floorPlanReview: {
+        sourceImageDataUrl: 'data:image/jpeg;base64,review',
+        sourceWidth: 800,
+        sourceHeight: 560,
+        mmPerPx: 20,
+        scaleMode: 'calibrated',
+        requiredFor3d: true,
+        status: 'pending',
+      },
+      toast: null,
+    } as any)
+
+    ;(S().completeFloorPlanReview as any)({
+      targetKind: 'wall',
+      targetId: S().plan.walls[0].id,
+      targetLabel: '대표 벽 1',
+      decision: 'modified',
+      note: '원본과 일치하도록 수정했습니다.',
+    })
+
+    expect(S().floorPlanReview?.status).toBe('pending')
+    expect(S().toast?.msg).toContain('실제 도면 변경')
+  })
+
+  it('대표 요소의 수정 불필요 근거를 검수 완료 기록에 저장한다', () => {
+    S().resetToSample()
+    useStore.setState({
+      mode: '2d',
+      projectOrigin: 'cv',
+      floorPlanReview: {
+        sourceImageDataUrl: 'data:image/jpeg;base64,review',
+        sourceWidth: 800,
+        sourceHeight: 560,
+        mmPerPx: 20,
+        scaleMode: 'calibrated',
+        requiredFor3d: true,
+        status: 'pending',
+      },
+      toast: null,
+    } as any)
+
+    ;(S().completeFloorPlanReview as any)({
+      targetKind: 'wall',
+      targetId: S().plan.walls[0].id,
+      targetLabel: '대표 벽 1',
+      decision: 'no-change',
+      note: '원본의 외벽 연결과 길이가 일치합니다.',
+    })
+
+    expect(S().floorPlanReview).toMatchObject({
+      status: 'completed',
+      evidence: {
+        targetKind: 'wall',
+        targetId: S().plan.walls[0].id,
+        decision: 'no-change',
+        note: '원본의 외벽 연결과 길이가 일치합니다.',
+      },
+    })
+  })
 })

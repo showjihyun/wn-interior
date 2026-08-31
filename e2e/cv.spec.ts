@@ -84,7 +84,7 @@ async function makeSemanticMask(
   }, kind)
 }
 
-test('평면도 업로드는 축척 확인 후 2D 보정 또는 3D 보기를 선택하게 한다', async ({ page }) => {
+test('평면도 업로드는 축척 확인 후 근거 있는 2D 검수를 거쳐 3D를 연다', async ({ page }) => {
   const uploadCta = page.getByRole('button', { name: /평면도 업로드.*3D/ })
   await expect(uploadCta).toBeVisible()
   await uploadCta.click()
@@ -110,13 +110,19 @@ test('평면도 업로드는 축척 확인 후 2D 보정 또는 3D 보기를 선
   await applyButton.click()
 
   await expect(modal.getByRole('heading', { name: /변환 적용 완료/ })).toBeVisible()
-  await expect(modal.getByRole('button', { name: /2D에서 보정/ })).toBeVisible()
-  await modal.getByRole('button', { name: /바로 3D 보기/ }).click()
+  await expect(modal.getByRole('button', { name: /2D에서.*(보정|검수)/ })).toBeVisible()
+  await expect(modal.getByRole('button', { name: /바로 3D 보기/ })).toBeDisabled()
+  await modal.getByRole('button', { name: /2D에서.*(보정|검수)/ }).click()
+  const review = page.getByRole('complementary', { name: '변환 초안 검수', exact: true })
+  await review.getByLabel('대표 검수 요소').selectOption({ index: 1 })
+  await review.getByLabel('수정 불필요').check()
+  await review.getByLabel('검수 근거').fill('대표 외벽의 연결과 길이가 원본과 일치합니다.')
+  await review.getByRole('button', { name: /검수 근거 저장하고 3D 보기/ }).click()
   await expect(page.locator('.viewport canvas')).toBeVisible()
   expect(await page.evaluate(() => window.__hp3d_store.getState().mode)).toBe('3d')
 })
 
-test('추정 축척은 원본과 4개 항목을 2D에서 검수한 뒤에만 3D를 연다', async ({ page }) => {
+test('CV 초안은 대표 요소의 판정 근거를 저장한 뒤에만 3D를 연다', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 })
   await page.getByRole('button', { name: /평면도 업로드.*3D/ }).click()
   const modal = page.locator('.modal')
@@ -143,11 +149,19 @@ test('추정 축척은 원본과 4개 항목을 2D에서 검수한 뒤에만 3D�
   expect(await page.evaluate(() => window.__hp3d_store.getState().mode)).toBe('2d')
 
   const review = page.getByRole('complementary', { name: '변환 초안 검수', exact: true })
-  const complete = review.getByRole('button', { name: /검수 완료하고 3D 보기/ })
+  const complete = review.getByRole('button', { name: /검수 근거 저장하고 3D 보기/ })
   await expect(complete).toBeDisabled()
-  const checks = review.getByRole('checkbox')
-  await expect(checks).toHaveCount(4)
-  for (let index = 0; index < 4; index++) await checks.nth(index).check()
+  await expect(review.getByRole('checkbox')).toHaveCount(0)
+
+  await review.getByLabel('대표 검수 요소').selectOption({ index: 1 })
+  await expect(page.locator('[data-review-highlight="true"]')).toBeVisible()
+  await review.getByLabel('수정 완료').check()
+  await review.getByLabel('검수 근거').fill('원본과 일치하도록 벽을 수정했습니다.')
+  await expect(complete).toBeDisabled()
+  await expect(review).toContainText('실제 도면 변경이 있어야 선택할 수 있습니다')
+
+  await review.getByLabel('수정 불필요').check()
+  await review.getByLabel('검수 근거').fill('대표 외벽의 연결과 길이가 원본과 일치합니다.')
   await expect(complete).toBeEnabled()
   await complete.click()
 
@@ -157,9 +171,15 @@ test('추정 축척은 원본과 4개 항목을 2D에서 검수한 뒤에만 3D�
   await page.waitForTimeout(900)
   await page.reload()
   await page.waitForFunction(() => !!(window as any).__hp3d_store)
-  expect(await page.evaluate(() => window.__hp3d_store.getState().floorPlanReview?.status)).toBe(
-    'completed'
-  )
+  const persistedReview = await page.evaluate(() => window.__hp3d_store.getState().floorPlanReview)
+  expect(persistedReview).toMatchObject({
+    status: 'completed',
+    evidence: {
+      targetKind: 'wall',
+      decision: 'no-change',
+      note: '대표 외벽의 연결과 길이가 원본과 일치합니다.',
+    },
+  })
 })
 
 test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D 평면도로 변환한다', async ({ page }) => {
@@ -197,7 +217,7 @@ test('CV 엔진이 도면 이미지에서 벽·방·문을 자동 검출해 3D �
 
   // 변환 적용 → 2D 편집기 + 벽/방 생성
   await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
-  await modal.getByRole('button', { name: /2D에서 보정/ }).click()
+  await modal.getByRole('button', { name: /2D에서.*(보정|검수)/ }).click()
   await expect(page.locator('.ed2d-svg')).toBeVisible({ timeout: 10_000 })
   const reviewGuide = page.getByRole('complementary', { name: '변환 초안 검수', exact: true })
   await expect(reviewGuide).toBeVisible()
@@ -257,7 +277,7 @@ test('실도면의 큰 축척 보정 뒤에도 검출한 문을 적용 결과에
   await expect(modal.locator('.status')).toContainText(/문 [1-9]\d*개/, { timeout: 10_000 })
   await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
   await expect(modal.getByText(/문·창문 [1-9]\d*개/)).toBeVisible()
-  await modal.getByRole('button', { name: /2D에서 보정/ }).click()
+  await modal.getByRole('button', { name: /2D에서.*(보정|검수)/ }).click()
   expect(
     await page.evaluate(() => window.__hp3d_store.getState().plan.openings.length)
   ).toBeGreaterThan(0)
@@ -357,7 +377,7 @@ test('로컬 CNN door/window 채널을 직접 Opening으로 변환한다', async
   await expect(modal.getByLabel(/로컬 CNN 벽 분할/)).toBeChecked()
   await modal.getByLabel('도면 전체 가로 실측').fill('12000')
   await modal.getByRole('button', { name: /변환 결과 적용/ }).click()
-  await modal.getByRole('button', { name: /2D에서 보정/ }).click()
+  await modal.getByRole('button', { name: /2D에서.*(보정|검수)/ }).click()
   await expect(page.locator('.ed2d-svg')).toBeVisible({ timeout: 10_000 })
   const openingTypes = await page.evaluate(() =>
     window.__hp3d_store.getState().plan.openings.map((opening: any) => opening.type)

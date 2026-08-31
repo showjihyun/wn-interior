@@ -54,7 +54,30 @@ export interface FloorPlanReview {
   scaleMode: 'calibrated' | 'estimated'
   requiredFor3d: boolean
   status: 'pending' | 'completed'
+  baselinePlanFingerprint?: string
+  baselineTargetFingerprints?: Record<string, string>
+  evidence?: FloorPlanReviewEvidence
   completedAt?: string
+}
+
+export type FloorPlanReviewTargetKind = 'wall' | 'room' | 'opening' | 'scale'
+export type FloorPlanReviewDecision = 'modified' | 'no-change'
+
+export interface FloorPlanReviewEvidence {
+  targetKind: FloorPlanReviewTargetKind
+  targetId?: string
+  targetLabel: string
+  decision: FloorPlanReviewDecision
+  note: string
+  planFingerprint: string
+  recordedAt: string
+}
+
+export interface FloorPlanReviewEvidenceInput {
+  targetKind: FloorPlanReviewTargetKind
+  targetId?: string
+  decision: FloorPlanReviewDecision
+  note: string
 }
 
 export type Mount = 'floor' | 'wall-mount' | 'ceiling' | 'wall'

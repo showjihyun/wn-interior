@@ -70,6 +70,17 @@ const cloneProduct = (product: Product): Product => ({
   })),
 })
 
+const cloneFloorPlanReview = (review?: FloorPlanReview): FloorPlanReview | undefined =>
+  review
+    ? {
+        ...review,
+        baselineTargetFingerprints: review.baselineTargetFingerprints
+          ? { ...review.baselineTargetFingerprints }
+          : undefined,
+        evidence: review.evidence ? { ...review.evidence } : undefined,
+      }
+    : undefined
+
 function starterPlacements(
   placements: Array<Omit<Placement, 'id'>>,
   ids: IdGenerator
@@ -110,7 +121,7 @@ export function createProjectService({
       plan: snapshot.plan,
       placements: snapshot.placements,
       customProducts: snapshot.customProducts,
-      floorPlanReview: snapshot.floorPlanReview ? { ...snapshot.floorPlanReview } : undefined,
+      floorPlanReview: cloneFloorPlanReview(snapshot.floorPlanReview),
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     })

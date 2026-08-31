@@ -3,22 +3,19 @@
 // 도구: 선택/이동 · 벽 그리기(연속) · 문/창문 배치 · 이미지 트레이싱(스케일 보정)
 // ─────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react'
-import type { Pt } from '../../domain/model'
+import type { FloorPlanReviewDecision, FloorPlanReviewTargetKind, Pt } from '../../domain/model'
 import { useStore } from '../AppRuntimeContext'
 import { wallLength, projectOnSegment, snapGrid } from '../../domain/engine/geom'
 import { createOpeningOnNearestWall } from '../../domain/openingPolicy'
 import { getPlanBounds } from '../../domain/planBounds'
+import {
+  floorPlanReviewTargetLabel,
+  hasFloorPlanReviewTargetChanged,
+  isFloorPlanReviewComplete,
+  MIN_FLOOR_PLAN_REVIEW_NOTE_LENGTH,
+} from '../../domain/floorPlanReview'
 
 type Tool = 'select' | 'wall' | 'door' | 'window' | 'entry'
-type ReviewCheck = 'walls' | 'rooms' | 'openings' | 'scale'
-
-const reviewItems: Array<{ id: ReviewCheck; label: string }> = [
-  { id: 'walls', label: '벽 연결' },
-  { id: 'rooms', label: '방 경계' },
-  { id: 'openings', label: '문·창문' },
-  { id: 'scale', label: '실측 치수' },
-]
-
 interface TraceImg {
   url: string
   ox: number // 플랜좌표 상 이미지 좌상단
@@ -64,13 +61,9 @@ export function Editor2D() {
   const [calib, setCalib] = useState<{ pts: Pt[] }>({ pts: [] })
   const [showDraftGuide, setShowDraftGuide] = useState(true)
   const [showReviewSource, setShowReviewSource] = useState(true)
-  const [reviewChecks, setReviewChecks] = useState<Record<ReviewCheck, boolean>>({
-    walls: false,
-    rooms: false,
-    openings: false,
-    scale: false,
-  })
-  const reviewComplete = reviewItems.every((item) => reviewChecks[item.id])
+  const [reviewTarget, setReviewTarget] = useState('')
+  const [reviewDecision, setReviewDecision] = useState<FloorPlanReviewDecision | ''>('')
+  const [reviewNote, setReviewNote] = useState('')
   const draggingPl = useRef<string | null>(null)
   const dragVertex = useRef<{ wallId: string; end: 'a' | 'b' } | null>(null)
 
@@ -81,6 +74,52 @@ export function Editor2D() {
   const maxX = bounds?.maxX ?? 10000
   const maxY = bounds?.maxY ?? 8000
   const M = 1500
+  const reviewTargets: Array<{
+    value: string
+    kind: FloorPlanReviewTargetKind
+    id?: string
+    label: string
+  }> = [
+    ...plan.walls.map((wall) => ({
+      value: `wall:${wall.id}`,
+      kind: 'wall' as const,
+      id: wall.id,
+      label: floorPlanReviewTargetLabel(plan, 'wall', wall.id)!,
+    })),
+    ...plan.rooms.map((room) => ({
+      value: `room:${room.id}`,
+      kind: 'room' as const,
+      id: room.id,
+      label: floorPlanReviewTargetLabel(plan, 'room', room.id)!,
+    })),
+    ...plan.openings.map((opening) => ({
+      value: `opening:${opening.id}`,
+      kind: 'opening' as const,
+      id: opening.id,
+      label: floorPlanReviewTargetLabel(plan, 'opening', opening.id)!,
+    })),
+    {
+      value: 'scale',
+      kind: 'scale',
+      label: floorPlanReviewTargetLabel(plan, 'scale') ?? '실측 치수',
+    },
+  ]
+  const selectedReviewTarget = reviewTargets.find((target) => target.value === reviewTarget)
+  const reviewCompleted = isFloorPlanReviewComplete(floorPlanReview)
+  const selectedTargetChanged =
+    !!floorPlanReview &&
+    !!selectedReviewTarget &&
+    hasFloorPlanReviewTargetChanged(
+      plan,
+      floorPlanReview,
+      selectedReviewTarget.kind,
+      selectedReviewTarget.id
+    )
+  const reviewCanComplete =
+    !!selectedReviewTarget &&
+    !!reviewDecision &&
+    reviewNote.trim().length >= MIN_FLOOR_PLAN_REVIEW_NOTE_LENGTH &&
+    (reviewDecision !== 'modified' || selectedTargetChanged)
 
   function toPlan(e: React.PointerEvent | React.MouseEvent): Pt {
     const svg = svgRef.current!
@@ -256,34 +295,77 @@ export function Editor2D() {
         <aside className="ed2d-review-guide" aria-label="변환 초안 검수">
           <div>
             <b>변환 초안 검수</b>
-            <span>가구를 배치하기 전에 원본 도면과 아래 항목을 비교하세요.</span>
+            <span>
+              원본에서 벽 연결·방 경계·문·창문·실측 치수를 훑어보고 대표 요소 하나의 판정 근거를
+              남기세요.
+            </span>
           </div>
-          <ol>
-            {reviewItems.map((item, index) => (
-              <li key={item.id}>
-                {floorPlanReview?.status === 'pending' ? (
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={reviewChecks[item.id]}
-                      onChange={(event) =>
-                        setReviewChecks((current) => ({
-                          ...current,
-                          [item.id]: event.target.checked,
-                        }))
-                      }
-                    />
-                    {item.label}
-                  </label>
-                ) : (
-                  <>
-                    <span>{index + 1}</span>
-                    {item.label}
-                  </>
-                )}
-              </li>
-            ))}
-          </ol>
+          {!reviewCompleted ? (
+            <div className="ed2d-review-evidence">
+              <label>
+                대표 검수 요소
+                <select
+                  aria-label="대표 검수 요소"
+                  value={reviewTarget}
+                  onChange={(event) => setReviewTarget(event.target.value)}
+                >
+                  <option value="">벽·방·문·치수에서 하나 선택</option>
+                  {reviewTargets.map((target) => (
+                    <option key={target.value} value={target.value}>
+                      {target.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <fieldset>
+                <legend>검수 판정</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="floor-plan-review-decision"
+                    aria-label="수정 완료"
+                    checked={reviewDecision === 'modified'}
+                    onChange={() => setReviewDecision('modified')}
+                  />
+                  수정 완료
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="floor-plan-review-decision"
+                    aria-label="수정 불필요"
+                    checked={reviewDecision === 'no-change'}
+                    onChange={() => setReviewDecision('no-change')}
+                  />
+                  수정 불필요
+                </label>
+              </fieldset>
+              <label className="ed2d-review-note">
+                검수 근거
+                <textarea
+                  aria-label="검수 근거"
+                  value={reviewNote}
+                  onChange={(event) => setReviewNote(event.target.value)}
+                  placeholder="예: 대표 외벽의 연결과 길이가 원본과 일치합니다."
+                  rows={2}
+                />
+              </label>
+              {reviewDecision === 'modified' && !selectedTargetChanged && (
+                <span className="ed2d-review-warning">
+                  실제 도면 변경이 있어야 선택할 수 있습니다.
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="ed2d-review-summary">
+              <b>{floorPlanReview?.evidence?.targetLabel}</b>
+              <span>
+                {floorPlanReview?.evidence?.decision === 'modified' ? '수정 완료' : '수정 불필요'}
+                {' · '}
+                {floorPlanReview?.evidence?.note}
+              </span>
+            </div>
+          )}
           <div className="ed2d-review-actions">
             {floorPlanReview?.sourceImageDataUrl && (
               <button
@@ -294,23 +376,27 @@ export function Editor2D() {
                 원본 비교 {showReviewSource ? '끄기' : '켜기'}
               </button>
             )}
-            {floorPlanReview?.status === 'pending' && (
+            {!reviewCompleted && (
               <button
                 type="button"
                 className="primary"
-                disabled={!reviewComplete}
+                disabled={!reviewCanComplete}
                 onClick={() => {
-                  completeFloorPlanReview()
-                  setMode('3d')
+                  if (!selectedReviewTarget || !reviewDecision) return
+                  const completed = completeFloorPlanReview({
+                    targetKind: selectedReviewTarget.kind,
+                    targetId: selectedReviewTarget.id,
+                    decision: reviewDecision,
+                    note: reviewNote,
+                  })
+                  if (completed) setMode('3d')
                 }}
               >
-                검수 완료하고 3D 보기
+                검수 근거 저장하고 3D 보기
               </button>
             )}
-            {floorPlanReview?.status === 'completed' && (
-              <span className="ed2d-review-done">✓ 검수 완료</span>
-            )}
-            {(!floorPlanReview?.requiredFor3d || floorPlanReview.status === 'completed') && (
+            {reviewCompleted && <span className="ed2d-review-done">✓ 검수 완료</span>}
+            {reviewCompleted && (
               <button
                 className="ed2d-review-close"
                 aria-label="변환 초안 검수 닫기"
@@ -354,28 +440,33 @@ export function Editor2D() {
         )}
 
         {/* 방 폴리곤 */}
-        {plan.rooms.map((r) => (
-          <g key={r.id}>
-            <polygon
-              points={r.polygon.map((p) => `${p.x},${p.y}`).join(' ')}
-              fill="#f4f6f8"
-              stroke="#dfe4ea"
-              strokeWidth={20}
-            />
-            <text
-              x={r.polygon.reduce((a, p) => a + p.x, 0) / r.polygon.length}
-              y={r.polygon.reduce((a, p) => a + p.y, 0) / r.polygon.length}
-              textAnchor="middle"
-              className="room-label"
-            >
-              {r.name}
-            </text>
-          </g>
-        ))}
+        {plan.rooms.map((r) => {
+          const isReviewTarget =
+            selectedReviewTarget?.kind === 'room' && selectedReviewTarget.id === r.id
+          return (
+            <g key={r.id} data-review-highlight={isReviewTarget ? 'true' : undefined}>
+              <polygon
+                points={r.polygon.map((p) => `${p.x},${p.y}`).join(' ')}
+                fill="#f4f6f8"
+                stroke={isReviewTarget ? '#e58a00' : '#dfe4ea'}
+                strokeWidth={isReviewTarget ? 70 : 20}
+              />
+              <text
+                x={r.polygon.reduce((a, p) => a + p.x, 0) / r.polygon.length}
+                y={r.polygon.reduce((a, p) => a + p.y, 0) / r.polygon.length}
+                textAnchor="middle"
+                className="room-label"
+              >
+                {r.name}
+              </text>
+            </g>
+          )
+        })}
 
         {floorPlanReview?.sourceImageDataUrl && showReviewSource && (
           <image
             data-testid="floorplan-review-source"
+            data-review-highlight={selectedReviewTarget?.kind === 'scale' ? 'true' : undefined}
             href={floorPlanReview.sourceImageDataUrl}
             x={0}
             y={0}
@@ -390,15 +481,17 @@ export function Editor2D() {
         {/* 벽 */}
         {plan.walls.map((w) => {
           const L = wallLength(w)
+          const isReviewTarget =
+            selectedReviewTarget?.kind === 'wall' && selectedReviewTarget.id === w.id
           return (
-            <g key={w.id}>
+            <g key={w.id} data-review-highlight={isReviewTarget ? 'true' : undefined}>
               <line
                 x1={w.a.x}
                 y1={w.a.y}
                 x2={w.b.x}
                 y2={w.b.y}
-                stroke={wallColor}
-                strokeWidth={w.thickness}
+                stroke={isReviewTarget ? '#e58a00' : wallColor}
+                strokeWidth={isReviewTarget ? w.thickness + 80 : w.thickness}
                 strokeLinecap="butt"
               />
               <line
@@ -485,10 +578,13 @@ export function Editor2D() {
           const mx = w.a.x + (w.b.x - w.a.x) * midT
           const my = w.a.y + (w.b.y - w.a.y) * midT
           const isSel = selOpening === o.id
+          const isReviewTarget =
+            selectedReviewTarget?.kind === 'opening' && selectedReviewTarget.id === o.id
           return (
             <g
               key={o.id}
               data-testid={`opening-${o.id}`}
+              data-review-highlight={isReviewTarget ? 'true' : undefined}
               transform={`translate(${mx},${my}) rotate(${(ang * 180) / Math.PI})`}
               onClick={(e) => {
                 e.stopPropagation()
@@ -502,8 +598,8 @@ export function Editor2D() {
                 width={o.width}
                 height={w.thickness + 20}
                 fill="#fff"
-                stroke={isSel ? '#ff9800' : '#c9ced4'}
-                strokeWidth={isSel ? 24 : 12}
+                stroke={isReviewTarget ? '#e58a00' : isSel ? '#ff9800' : '#c9ced4'}
+                strokeWidth={isReviewTarget ? 40 : isSel ? 24 : 12}
               />
               {o.type === 'window' && (
                 <>

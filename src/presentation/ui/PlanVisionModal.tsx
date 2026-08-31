@@ -23,6 +23,10 @@ import {
 import { applyFloorPlanDraft, FloorPlanDraftError } from '../../application/applyFloorPlanDraft'
 import { useAppRuntime, useStoreApi } from '../AppRuntimeContext'
 import { planReviewIssueMessage, scaleAssessmentMessage } from '../planReviewPresenter'
+import {
+  floorPlanFingerprint,
+  floorPlanReviewTargetFingerprints,
+} from '../../domain/floorPlanReview'
 
 const MAX_DIM = 1600 // 성능 가드: 긴 변 최대 px
 interface AppliedSummary {
@@ -352,8 +356,10 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
           sourceHeight: img.height,
           mmPerPx: previewPlanRef.current.mmPerPx,
           scaleMode: scaleAssessment.mode === 'estimated' ? 'estimated' : 'calibrated',
-          requiredFor3d: scaleAssessment.mode === 'estimated',
+          requiredFor3d: true,
           status: 'pending',
+          baselinePlanFingerprint: floorPlanFingerprint(plan),
+          baselineTargetFingerprints: floorPlanReviewTargetFingerprints(plan),
         },
         createdAt: '',
         updatedAt: '',
@@ -367,7 +373,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
           1,
           Math.round((performance.now() - conversionStartedAtRef.current) / 1000)
         ),
-        requires2dReview: scaleAssessment.mode === 'estimated',
+        requires2dReview: true,
       })
       setStatus('변환 적용 완료')
     } catch (e) {
@@ -415,7 +421,7 @@ export function PlanVisionModal({ onClose }: { onClose: () => void }) {
               disabled={appliedSummary.requires2dReview}
               title={
                 appliedSummary.requires2dReview
-                  ? '추정 축척은 2D에서 원본·실측 검수를 완료해야 합니다.'
+                  ? 'CV 초안은 2D에서 대표 요소의 검수 근거를 저장해야 합니다.'
                   : undefined
               }
             >

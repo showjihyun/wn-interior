@@ -15,6 +15,6 @@ Users are responsible for confirming that their use of third-party photographs, 
 
 ## TripoSR
 
-The optional local worker installs TripoSR from its upstream repository at the commit pinned in `services/triposr-worker/compose.yaml`. TripoSR source code and pretrained model are provided upstream under the MIT license. See the upstream project for its complete notices and model information.
+The optional local worker installs TripoSR from its upstream repository at the commit pinned in `workers/triposr-worker/compose.yaml`. TripoSR source code and pretrained model are provided upstream under the MIT license. See the upstream project for its complete notices and model information.
 
 The worker image also contains PyTorch, CUDA and an NVIDIA container base, each governed by its own upstream license and notices. They are not relicensed by this repository's MIT license.

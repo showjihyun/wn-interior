@@ -1,7 +1,7 @@
 # TripoSR review view·좌표·품질 평가 보강
 
 - 계약: worker는 전처리 이미지와 4개 회전 뷰를 hash와 함께 quarantine에 저장하고, TripoSR 좌표를 Three.js 좌표로 변환하며, 공식 치수 축 보정비 2배 이내·IoU 0.75 이상인 결과만 사람 검수 단계로 보낸다.
-- 테스트: `services/triposr-worker/tests/test_worker_math.py`, `src/application/productMeshApproval.test.ts`, `src/application/generatedMeshReview.test.ts`, `src/infrastructure/generated-mesh/HttpGeneratedMeshWorker.test.ts`, `src/infrastructure/generated-mesh/OfflineGeneratedMeshAdapters.test.ts`, `src/presentation/scene/generatedMeshFit.test.ts`, `src/presentation/scene/ProductVisual.test.tsx`
+- 테스트: `workers/triposr-worker/tests/test_worker_math.py`, `src/application/productMeshApproval.test.ts`, `src/application/generatedMeshReview.test.ts`, `src/infrastructure/generated-mesh/HttpGeneratedMeshWorker.test.ts`, `src/infrastructure/generated-mesh/OfflineGeneratedMeshAdapters.test.ts`, `src/presentation/scene/generatedMeshFit.test.ts`, `src/presentation/scene/ProductVisual.test.tsx`
 
 ## RED
 

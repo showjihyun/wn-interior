@@ -297,7 +297,7 @@
 
 제한: 브라우저·origin 로컬 DB이므로 계정 간 또는 다른 기기와 동기화되지 않는다. 서버 계정 저장은 기존 `ProjectRepository` 어댑터를 원격 DB 구현으로 교체하는 별도 범위다.
 
-- [x] Vercel 프런트 배포에서 `services/**` GPU worker 제외 + 명시적 `services.frontend` + 배포 경계 자동 검사
+- [x] Vercel 예약 `services/`와 GPU worker를 분리해 `workers/**` 제외 + 단일 Vite 배포 경계 자동 검사
 
 ### M32 HomePlan Catalog Protocol 1.0 + 설치 의존성 + IKEA 증분 ✅
 

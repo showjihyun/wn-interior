@@ -1,5 +1,5 @@
 # Frontend deployment only. GPU/model workers are deployed as separate Docker services.
-services/**
+workers/**
 .runtime/**
 artifacts/**
 output/**

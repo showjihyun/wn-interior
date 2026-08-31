@@ -7,6 +7,7 @@ import { PlanVisionModal as CvModal } from './PlanVisionModal'
 import { ProjectsModal } from './ProjectsModal'
 import { floorPlanReviewBlocks3d } from '../../domain/floorPlanReview'
 import { requestSampleReset } from '../sampleResetConfirmation'
+import { screenshotAvailability } from '../screenshotAvailability'
 
 function analysisErrorMessage(error: FloorPlanAnalysisError): string {
   const messages: Record<FloorPlanAnalysisError['code'], string> = {
@@ -60,6 +61,7 @@ export function Toolbar() {
   const [cvOpen, setCvOpen] = useState(false)
   const [projOpen, setProjOpen] = useState(false)
   const reviewBlocks3d = floorPlanReviewBlocks3d(s.projectOrigin, s.floorPlanReview)
+  const screenshot = screenshotAvailability(s.mode)
 
   function exportJson() {
     const proj = s.exportProject()
@@ -143,7 +145,11 @@ export function Toolbar() {
       <Btn onClick={() => setVarOpen(true)} title="현재 배치를 저장하고 나중에 불러와 비교">
         🗂 배치안 비교
       </Btn>
-      <Btn onClick={() => sceneSurface.downloadScreenshot()} title="PNG 저장">
+      <Btn
+        onClick={() => sceneSurface.downloadScreenshot()}
+        title={screenshot.title}
+        disabled={screenshot.disabled}
+      >
         📷 스크린샷
       </Btn>
       <Btn onClick={exportJson}>💾 내보내기</Btn>

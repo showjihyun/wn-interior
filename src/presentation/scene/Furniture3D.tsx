@@ -28,8 +28,8 @@ function FurnitureItem({
   plan: FloorPlan
   conflicted: boolean
 }) {
-  const store = useStoreApi()
   const selectedId = useStore((s) => s.selectedId)
+  const pendingProductId = useStore((s) => s.pendingProductId)
   const select = useStore((s) => s.select)
   const movePlacement = useStore((s) => s.movePlacement)
   const moving = useStore((s) => s.moving)
@@ -42,11 +42,18 @@ function FurnitureItem({
   const dragging = useRef(false)
   const isMovingThis = moving?.id === placement.id
   const isMovingAny = !!moving
+  const interactionLocked = !!pendingProductId
 
   // 이동 확정 대기 중엔 카메라 회전 잠금 (전역 이동 상태와 동기화)
   useEffect(() => {
     if (controls) controls.enabled = !moving
   }, [controls, moving])
+
+  useEffect(() => {
+    if (!interactionLocked) return
+    setHovered(false)
+    document.body.style.cursor = ''
+  }, [interactionLocked])
 
   const isSel = selectedId === placement.id
   const yBase =
@@ -69,7 +76,6 @@ function FurnitureItem({
   const beganMove = useRef(false)
 
   function down(e: ThreeEvent<PointerEvent>) {
-    if (store.getState().pendingProductId) return
     if (isMovingAny && !isMovingThis) return // 다른 가구 이동 확정 대기 중엔 무시
     e.stopPropagation()
     select(placement.id)
@@ -129,18 +135,26 @@ function FurnitureItem({
     <group
       position={[placement.pos.x, yBase, placement.pos.z]}
       rotation={[0, (placement.rotY * Math.PI) / 180, 0]}
-      onPointerDown={down}
-      onPointerMove={move}
-      onPointerUp={up}
-      onPointerOver={(e) => {
-        e.stopPropagation()
-        setHovered(true)
-        if (!dragging.current) document.body.style.cursor = 'grab'
-      }}
-      onPointerOut={() => {
-        setHovered(false)
-        if (!dragging.current) document.body.style.cursor = ''
-      }}
+      onPointerDown={interactionLocked ? undefined : down}
+      onPointerMove={interactionLocked ? undefined : move}
+      onPointerUp={interactionLocked ? undefined : up}
+      onPointerOver={
+        interactionLocked
+          ? undefined
+          : (e) => {
+              e.stopPropagation()
+              setHovered(true)
+              if (!dragging.current) document.body.style.cursor = 'grab'
+            }
+      }
+      onPointerOut={
+        interactionLocked
+          ? undefined
+          : () => {
+              setHovered(false)
+              if (!dragging.current) document.body.style.cursor = ''
+            }
+      }
     >
       <ProductVisual product={effProduct} color={color} />
       {isSel && (

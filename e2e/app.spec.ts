@@ -58,6 +58,53 @@ test('카탈로그 제품 클릭 → 캔버스 클릭 배치 → 선택·인스�
   await expect(page.locator('.inspector h4')).toContainText('소파')
 })
 
+test('카탈로그 배치 대기 중에는 기존 오브젝트를 잠그고 Esc 후 선택을 복구한다', async ({
+  page,
+}) => {
+  const sofaId = await page.evaluate(() => {
+    const s = window.__hp3d_store.getState()
+    s.commit((draft) => {
+      draft.placements = []
+    })
+    const id = s.addPlacement('p-sofa3', { x: 9000, z: 5000 })!
+    s.select(null)
+    return id
+  })
+  await page.getByRole('button', { name: '탑뷰' }).click()
+  await page.waitForTimeout(700)
+
+  await page.getByText('홈바 테이블 1200').first().click()
+  expect(await S(page, '.pendingProductId')).toBe('p-island-bar')
+  expect(await S(page, '.selectedId')).toBeNull()
+  await expect(page.locator('.pcard.placing')).toContainText('홈바 테이블 1200')
+
+  const point = await worldPoint(page, 9000, 5000)
+  await page.mouse.move(point.x, point.y)
+  await page.waitForTimeout(200)
+  expect(await page.evaluate(() => document.body.style.cursor)).not.toBe('grab')
+  await expect(page.locator('.statusbar')).toContainText('홈바 테이블 1200 배치 중')
+
+  await page.mouse.click(point.x, point.y)
+  expect(await S(page, '.selectedId')).toBeNull()
+  expect(await S(page, '.pendingProductId')).toBe('p-island-bar')
+
+  await page.getByRole('slider', { name: '☀' }).focus()
+  await page.keyboard.press('Escape')
+  expect(await S(page, '.pendingProductId')).toBeNull()
+  await expect(page.locator('.statusbar')).not.toContainText('배치 중')
+  await expect(page.locator('.pcard.placing')).toHaveCount(0)
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  )
+
+  await page.mouse.click(point.x, point.y)
+  expect(await S(page, '.selectedId')).toBe(sofaId)
+  await expect(page.locator('.inspector h4')).toContainText('소파')
+})
+
 test('인스펙터 회전 버튼이 rotY를 정확히 변경한다', async ({ page }) => {
   await page.evaluate(() => {
     const s = window.__hp3d_store.getState()

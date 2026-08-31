@@ -15,19 +15,23 @@ export function App() {
   const mode = useStore((s) => s.mode)
   const toast = useStore((s) => s.toast)
   const viewPreset = useStore((s) => s.viewPreset)
+  const pendingProduct = useStore((s) =>
+    s.pendingProductId ? s.productById(s.pendingProductId) : undefined
+  )
 
   useEffect(() => {
     function key(e: KeyboardEvent) {
       const st = store.getState()
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
       if (e.key === 'Escape') {
-        const st = store.getState()
+        e.preventDefault()
         // 취소 우선순위: 이동 확정 대기(원위치) → 선택 해제 → 신규 배치 취소
         if (st.moving) st.cancelMove()
         else if (st.selectedId) st.select(null)
         st.setPending(null)
+        return
       }
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
       if ((e.key === 'r' || e.key === 'R') && st.selectedId) {
         const pl = st.placements.find((p) => p.id === st.selectedId)
         if (pl) st.updatePlacement(pl.id, { rotY: pl.rotY + (e.shiftKey ? -15 : 15) })
@@ -73,9 +77,19 @@ export function App() {
         </div>
         <InspectorPanel />
       </div>
-      <div className="statusbar">
-        단위 mm · 자동저장됨 · 좌클릭 배치/선택 · 드래그 이동 → ✓ 이동완료로 확정 · R 회전 · Delete
-        삭제 · Ctrl+Z 되돌리기
+      <div
+        className={`statusbar${pendingProduct ? ' placing' : ''}`}
+        role="status"
+        aria-live="polite"
+      >
+        {pendingProduct ? (
+          <>◎ {pendingProduct.name} 배치 중 · 원하는 위치를 클릭하세요 · Esc 취소</>
+        ) : (
+          <>
+            단위 mm · 자동저장됨 · 좌클릭 배치/선택 · 드래그 이동 → ✓ 이동완료로 확정 · R 회전 ·
+            Delete 삭제 · Ctrl+Z 되돌리기
+          </>
+        )}
       </div>
       {toast && (
         <div key={toast.id} className={`toast toast-${toast.kind}`}>

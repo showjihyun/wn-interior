@@ -185,6 +185,11 @@ body,
   background: #332f1e;
   box-shadow: 0 0 0 1px #ffd54a inset;
 }
+.pcard.placing {
+  border-color: #59d499;
+  background: #1d342d;
+  box-shadow: 0 0 0 1px #59d499 inset;
+}
 .retail-thumb-wrap {
   position: relative;
   height: 118px;
@@ -944,6 +949,12 @@ body,
   color: #79828b;
   font-size: 11.5px;
   border-top: 1px solid #262b31;
+}
+.statusbar.placing {
+  color: #b8f3d8;
+  background: #193027;
+  border-top-color: #3f8f6c;
+  font-weight: 700;
 }
 .modal-bg {
   position: fixed;

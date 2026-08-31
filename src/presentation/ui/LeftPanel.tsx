@@ -30,10 +30,12 @@ const LOCAL_REVIEW_ISSUE_LABELS: Record<string, string> = {
 function ProductCard({
   p,
   selected,
+  pending,
   placedCount,
 }: {
   p: Product
   selected?: boolean
+  pending?: boolean
   placedCount?: number
 }) {
   const setPending = useStore((s) => s.setPending)
@@ -80,7 +82,8 @@ function ProductCard({
   return (
     <div
       ref={ref}
-      className={`pcard${selected ? ' sel' : ''}`}
+      className={`pcard${selected ? ' sel' : ''}${pending ? ' placing' : ''}`}
+      data-placement-pending={pending ? 'true' : undefined}
       onClick={() => {
         setPending(p.id)
         setMode('3d')
@@ -186,6 +189,7 @@ function CatalogTab() {
   const [brand, setBrand] = useState('전체')
   const customProducts = useStore((s) => s.customProducts)
   const selectedId = useStore((s) => s.selectedId)
+  const pendingProductId = useStore((s) => s.pendingProductId)
   const placements = useStore((s) => s.placements)
   const all = cat === 'custom' ? customProducts : products.filter((p) => p.category === cat)
   const list = brand === '전체' ? all : all.filter((p) => p.brand === brand)
@@ -231,6 +235,7 @@ function CatalogTab() {
             key={p.id}
             p={p}
             selected={p.id === selectedProductId}
+            pending={p.id === pendingProductId}
             placedCount={placedCount.get(p.id)}
           />
         ))}

@@ -32,9 +32,15 @@ import { SceneSurfaceRegistry } from './presentation/scene/SceneSurfaceRegistry'
 import { ProductTextureEngine } from './presentation/texture/ProductTextureEngine'
 import { FLOOR_MATERIALS, WALL_MATERIALS } from './infrastructure/reference-data/data/materials'
 import { StaticApprovedMeshCatalog } from './infrastructure/generated-mesh/StaticApprovedMeshCatalog'
-import type { ProductCatalog } from './application/ports'
+import type { ProductCatalog, ProjectRepository } from './application/ports'
 import { ProductVisualStatusRegistry } from './presentation/scene/ProductVisualStatusRegistry'
 import type { Product } from './domain/model'
+import {
+  createDurableSessionProjectRepository,
+  IndexedDbProjectDatabase,
+  migrateProjectRepository,
+} from './infrastructure/persistence/IndexedDbProjectRepository'
+import { resolveBrowserWorkspaceId } from './infrastructure/persistence/BrowserSessionWorkspace'
 
 const cvServerUrl =
   (import.meta.env.VITE_CV_SERVER_URL as string | undefined)?.replace(/\/+$/, '') ??
@@ -48,8 +54,15 @@ export interface ApplicationComposition {
   runtime: AppRuntime
 }
 
-export function createApplicationComposition(): ApplicationComposition {
-  const projectRepository = new SessionStorageProjectRepository()
+export interface ApplicationCompositionOptions {
+  projectRepository?: ProjectRepository
+  projectStorage?: AppRuntime['projectStorage']
+}
+
+export function createApplicationComposition(
+  options: ApplicationCompositionOptions = {}
+): ApplicationComposition {
+  const projectRepository = options.projectRepository ?? new SessionStorageProjectRepository()
   const ids = new BrowserIdGenerator()
   const clock = new SystemClock()
   const baseProductCatalog = new StaticProductCatalog()
@@ -111,6 +124,7 @@ export function createApplicationComposition(): ApplicationComposition {
       roomPredictionDefault:
         nonCommercialResearch && import.meta.env.VITE_ROOM_POLYGON_ENGINE === 'raster2seq',
     },
+    projectStorage: options.projectStorage ?? { kind: 'session' },
     store: createAppStore({
       projectService,
       ids,
@@ -125,4 +139,36 @@ export function createApplicationComposition(): ApplicationComposition {
     }),
   }
   return { runtime }
+}
+
+export async function createBrowserApplicationComposition(): Promise<ApplicationComposition> {
+  let sessionRepository = new SessionStorageProjectRepository()
+  try {
+    const workspaceId = resolveBrowserWorkspaceId({
+      location: window.location,
+      history: window.history,
+      storage: sessionStorage,
+      nextId: () => crypto.randomUUID(),
+    })
+    const scopedSessionRepository = new SessionStorageProjectRepository(
+      sessionStorage,
+      `hp3d.workspace.${workspaceId}`
+    )
+    migrateProjectRepository(sessionRepository, scopedSessionRepository)
+    sessionRepository = scopedSessionRepository
+    const projectRepository = await createDurableSessionProjectRepository({
+      workspaceId,
+      database: new IndexedDbProjectDatabase(),
+      sessionRepository,
+    })
+    return createApplicationComposition({
+      projectRepository,
+      projectStorage: { kind: 'indexeddb', workspaceId },
+    })
+  } catch {
+    return createApplicationComposition({
+      projectRepository: sessionRepository,
+      projectStorage: { kind: 'session' },
+    })
+  }
 }

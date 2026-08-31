@@ -31,7 +31,7 @@
 - Vite + React18 + TS + @react-three/fiber + drei + zustand
 - 단일 데이터 소스: `Project{plan, placements}` → 2D(SVG)/3D(three.js) 모두 이것만 렌더
 - 단위: 전부 mm 내부 저장, 화면에 cm/m 병기
-- Undo/Redo: zustand 스냅샷 스택, 탭별 sessionStorage 자동저장(debounce)
+- Undo/Redo: zustand 스냅샷 스택, 세션 URL별 IndexedDB 영구 저장 + sessionStorage 동기 캐시
 
 ---
 
@@ -280,6 +280,19 @@
 - [x] 대표 요소·판정·근거·완료 시각·도면 fingerprint를 프로젝트에 자동 저장하고 재열기 복구
 - [x] 근거 없는 과거 `completed` 상태는 완료로 신뢰하지 않고 다시 검수
 - [x] TDD·전체 E2E·production preview·실브라우저 시각 검증
+
+### M31 세션별 IndexedDB 영구 저장 ✅
+
+- [x] 새 접속마다 무작위 `workspace` URL 키 생성, 새로고침 시 동일 키 유지
+- [x] IndexedDB `homeplan3d/projects` 저장소에 workspace별 프로젝트 CRUD 영구 저장
+- [x] sessionStorage 동기 캐시도 workspace별 namespace로 분리해 교차 오염 차단
+- [x] 탭 종료 후 같은 브라우저에서 같은 세션 URL을 열면 프로젝트 목록·현재 값 복구
+- [x] 다른 workspace URL은 같은 프로젝트 ID도 공유하지 않음
+- [x] 기존 sessionStorage 데이터를 IndexedDB로 최신 `updatedAt` 기준 병합·이관
+- [x] IndexedDB 사용 불가 시 현재 탭 sessionStorage로 안전 폴백하고 UI에 제한 표시
+- [x] TDD·전체 E2E·production preview·실브라우저 검증
+
+제한: 브라우저·origin 로컬 DB이므로 계정 간 또는 다른 기기와 동기화되지 않는다. 서버 계정 저장은 기존 `ProjectRepository` 어댑터를 원격 DB 구현으로 교체하는 별도 범위다.
 
 ### M24 2D→3D 정확도 2,200건 감사 ✅
 

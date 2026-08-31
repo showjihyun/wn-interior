@@ -28,6 +28,10 @@ export interface AppRuntime {
     roomPredictionEnabled: boolean
     roomPredictionDefault: boolean
   }
+  projectStorage: {
+    kind: 'indexeddb' | 'session'
+    workspaceId?: string
+  }
 }
 
 const AppRuntimeContext = createContext<AppRuntime | null>(null)

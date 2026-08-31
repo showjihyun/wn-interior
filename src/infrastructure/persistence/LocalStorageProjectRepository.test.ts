@@ -1,6 +1,7 @@
 ﻿// 계약 테스트 — 프로젝트 저장소 어댑터 (현재 localStorage, 향후 DB 교체)
 import { describe, it, expect, beforeEach } from 'vitest'
 import { LocalStorageProjectRepository as LocalStorageAdapter } from './LocalStorageProjectRepository'
+import { SessionStorageProjectRepository } from './LocalStorageProjectRepository'
 import type { Project } from '../../domain/model'
 
 function makeProject(id: string, name: string, wallCount = 1): Project {
@@ -31,6 +32,7 @@ describe('LocalStorageAdapter (프로젝트별 저장)', () => {
   let a: LocalStorageAdapter
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     a = new LocalStorageAdapter()
   })
 
@@ -83,5 +85,16 @@ describe('LocalStorageAdapter (프로젝트별 저장)', () => {
     a.save(makeProject('p2', 'y'))
     for (const project of a.list()) a.delete(project.id)
     expect(a.list()).toHaveLength(0)
+  })
+
+  it('workspace별 sessionStorage 캐시는 같은 탭에서도 서로 섞이지 않는다', () => {
+    const workspaceA = new SessionStorageProjectRepository(sessionStorage, 'hp3d.workspace.a')
+    const workspaceB = new SessionStorageProjectRepository(sessionStorage, 'hp3d.workspace.b')
+
+    workspaceA.save(makeProject('p1', 'A 전용'))
+
+    expect(workspaceA.load('p1')?.name).toBe('A 전용')
+    expect(workspaceB.list()).toEqual([])
+    expect(workspaceB.load('p1')).toBeNull()
   })
 })

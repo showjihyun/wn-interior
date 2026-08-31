@@ -511,7 +511,9 @@ test('같은 브라우저의 접속 세션마다 프로젝트를 격리하고 �
   await sessionA.waitForFunction(() => !!(window as any).__hp3d_store)
   expect(await S(sessionA, '.projectName')).toBe('세션 A 전용')
   await sessionA.getByRole('button', { name: /📁 프로젝트/ }).click()
-  await expect(sessionA.locator('.modal .hint').first()).toContainText('현재 탭 세션에 자동 저장')
+  await expect(sessionA.locator('.modal .hint').first()).toContainText(
+    '현재 세션 URL별 브라우저 DB'
+  )
 
   const sessionB = await context.newPage()
   await sessionB.goto('/')
@@ -529,6 +531,28 @@ test('같은 브라우저의 접속 세션마다 프로젝트를 격리하고 �
   await sessionA.reload()
   await sessionA.waitForFunction(() => !!(window as any).__hp3d_store)
   expect(await S(sessionA, '.projectName')).toBe('세션 A 전용')
+})
+
+test('세션 URL을 다시 열면 탭 종료 뒤에도 브라우저 DB에서 프로젝트를 복구한다', async ({
+  context,
+}) => {
+  const workspace = `e2e-${Date.now()}`
+  const first = await context.newPage()
+  await first.goto(`/?workspace=${workspace}`)
+  await first.waitForFunction(() => !!(window as any).__hp3d_store)
+  await first.evaluate(() => window.__hp3d_store.getState().newProject('DB 영구 저장 우리집'))
+  await first.waitForTimeout(1_000)
+  await first.close()
+
+  const reopened = await context.newPage()
+  await reopened.goto(`/?workspace=${workspace}`)
+  await reopened.waitForFunction(() => !!(window as any).__hp3d_store)
+
+  expect(await reopened.evaluate(() => window.__hp3d_store.getState().projectName)).toBe(
+    'DB 영구 저장 우리집'
+  )
+  await reopened.getByRole('button', { name: /📁 프로젝트/ }).click()
+  await expect(reopened.locator('.modal .hint').first()).toContainText('브라우저 DB')
 })
 
 test('기존 단일 슬롯 데이터는 첫 로드 시 마이그레이션된다', async ({ page }) => {

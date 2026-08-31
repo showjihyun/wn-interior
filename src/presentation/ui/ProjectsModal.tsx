@@ -1,11 +1,12 @@
 // ─────────────────────────────────────────────────────────────
-// 프로젝트 관리 — 세션(브라우저)별 다중 프로젝트 목록/생성/열기/삭제
-// 나중: StorageAdapter를 DB 어댑터로 교체하면 계정별 CRUD로 확장
+// 프로젝트 관리 — 세션 URL별 IndexedDB 다중 프로젝트 목록/생성/열기/삭제
+// 계정 저장은 ProjectRepository를 원격 DB 어댑터로 교체해 확장
 // ─────────────────────────────────────────────────────────────
 import { useEffect, useState } from 'react'
-import { useStore } from '../AppRuntimeContext'
+import { useAppRuntime, useStore } from '../AppRuntimeContext'
 
 export function ProjectsModal({ onClose }: { onClose: () => void }) {
+  const { projectStorage } = useAppRuntime()
   const currentId = useStore((s) => s.projectId)
   const newProject = useStore((s) => s.newProject)
   const openProject = useStore((s) => s.openProject)
@@ -30,8 +31,17 @@ export function ProjectsModal({ onClose }: { onClose: () => void }) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>📁 내 프로젝트</h3>
         <p className="hint">
-          현재 탭 세션에 자동 저장됩니다. 새로고침 후에는 유지되지만 탭을 닫으면 삭제됩니다. 장기
-          보관은 상단 내보내기를 사용하세요.
+          {projectStorage.kind === 'indexeddb' ? (
+            <>
+              현재 세션 URL별 브라우저 DB(IndexedDB)에 자동 저장됩니다. 탭을 닫아도 이 브라우저에서
+              같은 URL로 다시 접속하면 복구됩니다. 계정·다른 기기와는 동기화되지 않습니다.
+            </>
+          ) : (
+            <>
+              브라우저 DB를 사용할 수 없어 현재 탭에만 저장됩니다. 장기 보관은 상단 내보내기를
+              사용하세요.
+            </>
+          )}
         </p>
         <button
           className="primary"

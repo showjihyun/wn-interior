@@ -7,8 +7,7 @@ export interface KeyValueStorage {
   removeItem(key: string): void
 }
 
-const INDEX_KEY = 'hp3d.index'
-const projKey = (id: string) => `hp3d.proj.${id}`
+const DEFAULT_NAMESPACE = 'hp3d'
 const record = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object'
 const finite = (value: unknown): value is number =>
@@ -55,11 +54,22 @@ function decodeMeta(value: unknown): ProjectMeta | null {
 }
 
 export class LocalStorageProjectRepository implements ProjectRepository {
-  constructor(private readonly storage: KeyValueStorage = localStorage) {}
+  constructor(
+    private readonly storage: KeyValueStorage = localStorage,
+    private readonly namespace = DEFAULT_NAMESPACE
+  ) {}
+
+  private get indexKey() {
+    return `${this.namespace}.index`
+  }
+
+  private projectKey(id: string) {
+    return `${this.namespace}.proj.${id}`
+  }
 
   list(): ProjectMeta[] {
     try {
-      const raw = this.storage.getItem(INDEX_KEY)
+      const raw = this.storage.getItem(this.indexKey)
       const parsed: unknown = raw ? JSON.parse(raw) : []
       if (!Array.isArray(parsed)) return []
       return parsed.map(decodeMeta).filter((meta): meta is ProjectMeta => meta !== null)
@@ -70,7 +80,7 @@ export class LocalStorageProjectRepository implements ProjectRepository {
 
   load(id: string): Project | null {
     try {
-      const raw = this.storage.getItem(projKey(id))
+      const raw = this.storage.getItem(this.projectKey(id))
       return raw ? decodeProjectDocument(JSON.parse(raw)) : null
     } catch {
       return null
@@ -85,23 +95,23 @@ export class LocalStorageProjectRepository implements ProjectRepository {
       updatedAt: project.updatedAt,
       createdAt: project.createdAt,
     }
-    this.storage.setItem(projKey(project.id), JSON.stringify(project))
+    this.storage.setItem(this.projectKey(project.id), JSON.stringify(project))
     const list = this.list().filter((candidate) => candidate.id !== project.id)
     list.unshift(meta)
-    this.storage.setItem(INDEX_KEY, JSON.stringify(list))
+    this.storage.setItem(this.indexKey, JSON.stringify(list))
   }
 
   delete(id: string): void {
-    this.storage.removeItem(projKey(id))
+    this.storage.removeItem(this.projectKey(id))
     this.storage.setItem(
-      INDEX_KEY,
+      this.indexKey,
       JSON.stringify(this.list().filter((candidate) => candidate.id !== id))
     )
   }
 }
 
 export class SessionStorageProjectRepository extends LocalStorageProjectRepository {
-  constructor(storage: KeyValueStorage = sessionStorage) {
-    super(storage)
+  constructor(storage: KeyValueStorage = sessionStorage, namespace = DEFAULT_NAMESPACE) {
+    super(storage, namespace)
   }
 }

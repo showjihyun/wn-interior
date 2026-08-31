@@ -111,7 +111,9 @@ test('IKEA 수전을 싱크대에 배치한 뒤 UI로 회전·확대·축소한�
     s.commit((draft) => {
       draft.placements = []
     })
-    return s.addPlacement('ik-metod-sinarp-sink-cabinet', { x: 9000, z: 5000 })!
+    const cabinetId = s.addPlacement('ik-metod-sinarp-sink-cabinet', { x: 9000, z: 5000 })!
+    s.addPlacement('ik-kilsviken-sink-72', { x: 9000, z: 5000 })
+    return cabinetId
   })
 
   await page.locator('.brandbar').getByRole('button', { name: 'IKEA' }).click()
@@ -260,6 +262,63 @@ test('커스텀 실측 제품 등록 → 카탈로그 등장 → 배치 성공',
   expect(await S(page, `.placements.at(-1).productId`)).toMatch(/^custom-/)
   const dims = await S(page, `.customProducts.at(-1).dims`)
   expect(dims).toEqual({ w: 500, d: 550, h: 900 })
+})
+
+test('국내 카탈로그 protocol JSON을 원자적으로 Import해 필터에 노출한다', async ({ page }) => {
+  const feed = {
+    protocol: 'homeplan.catalog',
+    version: '1.0',
+    catalog: {
+      id: 'livart-e2e',
+      provider: 'Hyundai Livart',
+      locale: 'ko-KR',
+      generatedAt: '2026-08-31T00:00:00.000Z',
+    },
+    products: [
+      {
+        externalId: 'P200089504',
+        name: '리르 3시트 w3000 가죽 소파',
+        brand: '리바트',
+        sku: 'P200089504',
+        classification: { category: 'seating.sofa' },
+        dimensions: { width: 300, depth: 95, height: 87, unit: 'cm' },
+        price: {
+          amount: 2237000,
+          currency: 'KRW',
+          checkedAt: '2026-08-31',
+          basis: '본체 1개',
+        },
+        source: {
+          url: 'https://www.hyundailivart.co.kr/p/P200089504',
+          retrievedAt: '2026-08-31T00:00:00.000Z',
+        },
+        render: { shapeHint: 'sofa3' },
+        installation: { mount: 'floor', provides: ['seating.sofa'] },
+      },
+    ],
+  }
+  const input = page.getByLabel('상품 카탈로그 JSON 가져오기')
+  await input.setInputFiles({
+    name: 'livart-catalog.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(feed)),
+  })
+  await expect(page.getByRole('status', { name: '카탈로그 Import 결과' })).toContainText('신규 1개')
+  await page.getByRole('button', { name: /거실/ }).click()
+  await page.locator('.brandbar').getByRole('button', { name: '리바트' }).click()
+  const card = page.locator('.pcard', { hasText: '리르 3시트 w3000' })
+  await expect(card).toContainText('W300cm')
+  await expect(card).toContainText('2,237,000원')
+
+  const invalid = structuredClone(feed) as any
+  delete invalid.products[0].dimensions.depth
+  await input.setInputFiles({
+    name: 'invalid-catalog.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(invalid)),
+  })
+  await expect(page.getByRole('status', { name: '카탈로그 Import 결과' })).toContainText('거절')
+  await expect(card).toHaveCount(1)
 })
 
 test('마감재 변경이 방 데이터에 반영된다', async ({ page }) => {
@@ -838,6 +897,22 @@ test('브랜드 필터: LG전자만 보기 → 한샘 제품 숨김', async ({ p
   await expect(page.locator('.pcard', { hasText: 'LG' })).toHaveCount(0)
 })
 
+test('IKEA 주방·바닥마감·붙박이 필터와 도배 미판매 경계를 표시한다', async ({ page }) => {
+  await page.locator('.brandbar').getByRole('button', { name: 'IKEA' }).click()
+  await expect(page.getByText(/KNOXHULT 크녹스훌트 주방 204cm/).first()).toBeVisible()
+
+  await page.getByRole('button', { name: /바닥마감/ }).click()
+  await expect(page.getByText(/RUNNEN 룬넨 야외용 조립마루/).first()).toBeVisible()
+
+  await page.getByRole('button', { name: /붙박이·맞춤수납/ }).click()
+  await expect(page.getByText(/PAX\/HASVIK.*맞춤형 옷장 150cm/).first()).toBeVisible()
+
+  await page.getByRole('button', { name: /도배·벽마감/ }).click()
+  await expect(page.locator('.plist')).toContainText(
+    'IKEA Korea 공식 도배·벽마감 판매 상품을 확인하지 못했습니다.'
+  )
+})
+
 test('LG 로봇청소기를 실측(342×342×95)으로 배치한다', async ({ page }) => {
   await page.evaluate(() => {
     const s = window.__hp3d_store.getState()
@@ -868,7 +943,7 @@ test('한샘 슬라이딩 붙박이장은 벽자석 스냅으로 배치된다', 
       d.placements = []
     })
   })
-  await page.getByRole('button', { name: /수납/ }).click()
+  await page.getByRole('button', { name: '🗄️ 수납' }).click()
   await page.getByText('슬라이딩 붙박이장 2400').first().click()
   // 탑뷰에서 북벽의 안방 구간을 클릭해 전체 footprint가 같은 방 안에 남도록 한다.
   await page.getByRole('button', { name: '탑뷰' }).click()

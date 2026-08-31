@@ -243,7 +243,7 @@ The style-diversity regression set now contains 10 real plans (FOCSA, Korean 33-
 - **축척 안전장치:** 실측값을 입력하거나 추정 축척 사용을 명시적으로 확인해야 적용됩니다.
 - **보정 우선 UX:** 변환 후에도 벽·방·문·창문·치수를 직접 편집할 수 있습니다.
 - **실제 배치 규칙:** 25mm 그리드, 벽 자석, 충돌 거부, 설치 높이, Undo/Redo와 배치안 비교를 지원합니다.
-- **실판매 상품:** IKEA Korea 12종의 공식 제품번호·실측·가격 기준·출처 이미지를 보존하고 실제 이미지 텍스처를 3D 형상에 투영합니다.
+- **실판매 상품:** IKEA Korea 15종의 공식 제품번호·실측·가격 기준·출처를 보존합니다. 이 중 권리 경계를 고정한 12종은 로컬 공식 이미지 텍스처를 3D 형상에 투영합니다.
 - **신뢰 경계가 분리된 하이브리드 시각화:** 해시·사용 권리·사람 검수를 통과한 생성 GLB만 이미지 투영을 대체하며, 배치와 충돌은 항상 공식 mm 치수를 사용합니다.
 - **오프라인 메시 검역:** 로컬 전용 worker 결과를 `public/` 밖에 저장하고 실제 GLB 정점·삼각형을 검사한 뒤, 독립된 권리·사람 검수 기록이 있을 때만 게시합니다.
 - **재현 가능한 로컬 모델 서비스:** 고정 버전 TripoSR Docker worker를 CUDA로 `127.0.0.1:8980`에 실행하며 업로드 20MB와 GPU 동시 작업 1개로 제한합니다.
@@ -330,6 +330,19 @@ npm run test:e2e
 npm run test:preview
 npm run verify:full
 ```
+
+## Domestic catalog bridge
+
+한샘·리바트 상품 목록은 브랜드별 CSV/XLSX 템플릿으로 작성한 뒤 HomePlan Catalog Protocol 1.0 JSON으로 변환할 수 있습니다. 웹 상품 HTML용 override 템플릿도 함께 제공합니다.
+
+```powershell
+npm run catalog:convert-sheet -- `
+  --input schemas/templates/hanssem-catalog-template.xlsx `
+  --config schemas/templates/hanssem-sheet.config.json `
+  --output output/hanssem.catalog.json
+```
+
+컬럼, 설치 의존성, 수식 처리 규칙은 [한샘·리바트 CSV/XLSX bridge](docs/CATALOG-SPREADSHEET-BRIDGE.md)를 참고하세요.
 
 ## 선택적 로컬 CNN 연구 모드
 

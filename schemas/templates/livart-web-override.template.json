@@ -1,0 +1,28 @@
+{
+  "sourceUrl": "https://www.hyundailivart.co.kr/p/REPLACE_WITH_PRODUCT_ID",
+  "catalog": {
+    "id": "hyundai-livart-ko",
+    "provider": "Hyundai Livart",
+    "locale": "ko-KR",
+    "generatedAt": "2026-08-31T00:00:00.000Z"
+  },
+  "overrides": {
+    "externalId": "REPLACE_WITH_STABLE_PRODUCT_ID",
+    "sku": "REPLACE_WITH_SKU",
+    "brand": "리바트",
+    "classification": {
+      "category": "seating.sofa",
+      "tags": ["거실", "소파"]
+    },
+    "dimensions": { "width": 3000, "depth": 950, "height": 870, "unit": "mm" },
+    "materials": [],
+    "priceBasis": "본체 1개",
+    "checkedAt": "2026-08-31",
+    "render": { "shapeHint": "sofa3" },
+    "installation": {
+      "mount": "floor",
+      "snapToWall": false,
+      "provides": ["seating.sofa"]
+    }
+  }
+}

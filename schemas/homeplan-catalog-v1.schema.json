@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homeplan3d.dev/schemas/catalog-1.0.json",
+  "title": "HomePlan Catalog Protocol 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "version", "catalog", "products"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "protocol": { "const": "homeplan.catalog" },
+    "version": { "const": "1.0" },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "provider", "locale", "generatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "provider": { "type": "string", "minLength": 1 },
+        "locale": { "const": "ko-KR" },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "products": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/product" }
+    },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$"
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$"
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9]+(?:\\.[a-z0-9-]+)+$"
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "depth", "height", "unit"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "depth": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "enum": ["mm", "cm", "m"] }
+      }
+    },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency", "checkedAt", "basis"],
+      "properties": {
+        "amount": { "type": "integer", "minimum": 1 },
+        "currency": { "const": "KRW" },
+        "checkedAt": { "type": "string", "format": "date" },
+        "basis": { "type": "string", "minLength": 1 },
+        "included": { "type": "array", "items": { "type": "string" } },
+        "excluded": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope"],
+      "properties": {
+        "allOf": { "type": "array", "items": { "$ref": "#/$defs/capability" } },
+        "anyOf": { "type": "array", "items": { "$ref": "#/$defs/capability" } },
+        "scope": { "enum": ["project", "support-chain"] }
+      },
+      "anyOf": [{ "required": ["allOf"] }, { "required": ["anyOf"] }]
+    },
+    "installation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mount"],
+      "properties": {
+        "mount": { "enum": ["floor", "wall", "wall-mount", "ceiling", "surface"] },
+        "snapToWall": { "type": "boolean" },
+        "defaultElevation": { "type": "number", "minimum": 0 },
+        "provides": { "type": "array", "items": { "$ref": "#/$defs/capability" } },
+        "requires": { "$ref": "#/$defs/dependency" },
+        "surface": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supportedBy"],
+          "properties": {
+            "supportedBy": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/capability" }
+            },
+            "anchor": { "enum": ["rear", "center"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mount": { "const": "surface" } } },
+          "then": { "required": ["surface"] }
+        }
+      ]
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "url"],
+      "properties": {
+        "kind": { "enum": ["image", "model", "document"] },
+        "role": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "rights": { "type": "string" }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "type": "string", "minLength": 1 },
+        "sku": { "type": "string" },
+        "dimensions": { "$ref": "#/$defs/dimensions" },
+        "price": { "$ref": "#/$defs/price" },
+        "color": { "type": "string" }
+      }
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "externalId",
+        "name",
+        "brand",
+        "classification",
+        "dimensions",
+        "source",
+        "installation"
+      ],
+      "properties": {
+        "externalId": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "brand": { "type": "string", "minLength": 1 },
+        "sku": { "type": "string" },
+        "classification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["category"],
+          "properties": {
+            "category": { "type": "string", "minLength": 1 },
+            "tags": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "dimensions": { "$ref": "#/$defs/dimensions" },
+        "price": { "$ref": "#/$defs/price" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url", "retrievedAt"],
+          "properties": {
+            "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+            "retrievedAt": { "type": "string", "format": "date-time" }
+          }
+        },
+        "materials": { "type": "array", "items": { "type": "string" } },
+        "assets": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+        "variants": { "type": "array", "items": { "$ref": "#/$defs/variant" } },
+        "installation": { "$ref": "#/$defs/installation" },
+        "render": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shapeHint": { "type": "string" },
+            "colorways": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+            }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    }
+  }
+}

@@ -242,6 +242,33 @@ describe('loadBrandProducts (JSON DB → Product[] 병합)', () => {
     })
   })
 
+  it('IKEA 주방·바닥마감·붙박이 증분 상품은 공식 치수·가격·용도를 분리한다', () => {
+    const all = loadBrandProducts()
+    const kitchen = all.find((product) => product.id === 'ik-knoxhult-kitchen-204')!
+    const flooring = all.find((product) => product.id === 'ik-runnen-floor-decking-beige')!
+    const builtIn = all.find((product) => product.id === 'ik-pax-hasvik-wardrobe-150')!
+
+    expect(kitchen).toMatchObject({
+      category: 'kitchen',
+      dims: { w: 2040, d: 610, h: 2200 },
+      retail: { articleNumber: '295.594.55', amount: 575000 },
+    })
+    expect(kitchen.installation?.provides).toEqual(
+      expect.arrayContaining(['kitchen.base-cabinet', 'kitchen.sink', 'kitchen.faucet'])
+    )
+    expect(flooring).toMatchObject({
+      category: 'flooring',
+      dims: { w: 300, d: 300, h: 20 },
+      retail: { articleNumber: '604.767.35', amount: 22900 },
+    })
+    expect(flooring.name).toContain('야외용')
+    expect(builtIn).toMatchObject({
+      category: 'built-in',
+      dims: { w: 1500, d: 660, h: 2012 },
+      retail: { articleNumber: '194.297.56', amount: 537500 },
+    })
+  })
+
   it('getBrandList: 카탈로그에서 브랜드를 유니크 추출한다 (전체 제외)', () => {
     const brands = getBrandList()
     expect(brands).toContain('한샘')

@@ -57,18 +57,35 @@ describe('스토어 — 배치/Undo/Redo', () => {
     expect(S().past).toHaveLength(historyAfterValid)
   })
 
-  it('IKEA 수전은 싱크대 상판에만 배치하고 받침과 설치 높이를 저장한다', () => {
+  it('IKEA 수전은 같은 하부장 chain에 싱크가 있을 때만 배치한다', () => {
     const faucetIdWithoutSink = S().addPlacement('ik-aelmaren-kitchen-faucet', {
       x: 9000,
       z: 5000,
     })
     expect(faucetIdWithoutSink).toBeNull()
-    expect(S().toast?.msg).toContain('싱크대 상판')
+    expect(S().toast?.msg).toContain('상판')
 
     const cabinetId = S().addPlacement('ik-metod-sinarp-sink-cabinet', {
       x: 9000,
       z: 5000,
     })!
+    const otherCabinetId = S().addPlacement('ik-metod-sinarp-sink-cabinet', {
+      x: 8000,
+      z: 5000,
+    })!
+    const otherSinkId = S().addPlacement('ik-kilsviken-sink-72', {
+      x: 8000,
+      z: 5000,
+    })!
+
+    expect(otherSinkId).not.toBeNull()
+    expect(
+      S().placements.find((placement) => placement.id === otherSinkId)?.supportPlacementId
+    ).toBe(otherCabinetId)
+    expect(S().addPlacement('ik-aelmaren-kitchen-faucet', { x: 9000, z: 5000 })).toBeNull()
+    expect(S().toast?.msg).toContain('싱크')
+
+    const sinkId = S().addPlacement('ik-kilsviken-sink-72', { x: 9000, z: 5000 })!
     const faucetId = S().addPlacement('ik-aelmaren-kitchen-faucet', {
       x: 9000,
       z: 5000,
@@ -76,9 +93,18 @@ describe('스토어 — 배치/Undo/Redo', () => {
     const faucet = S().placements.find((placement) => placement.id === faucetId)!
 
     expect(faucet.supportPlacementId).toBe(cabinetId)
+    expect(S().placements.find((placement) => placement.id === sinkId)?.supportPlacementId).toBe(
+      cabinetId
+    )
     expect(faucet.elevationOverride).toBe(800)
     expect(faucet.pos.y).toBe(800)
     expect(faucet.pos.z).toBeLessThan(5000)
+
+    S().removePlacement(sinkId)
+    expect(S().placements.some((placement) => placement.id === sinkId)).toBe(true)
+    expect(S().toast?.msg).toContain('종속 제품')
+    S().removePlacement(cabinetId)
+    expect(S().placements.some((placement) => placement.id === cabinetId)).toBe(true)
   })
 
   it('undo는 마지막 커밋을 되돌린다', () => {

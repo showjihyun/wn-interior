@@ -4,6 +4,7 @@ shots/
 test-results/
 coverage/
 output/playwright/
+tmp/spreadsheets/
 playwright-report/
 blob-report/
 .playwright-cli/

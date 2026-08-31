@@ -259,7 +259,7 @@ test('IKEA BILLY를 현재 SKU·가격과 5개 선반의 열린 책장으로 렌
   page.on('pageerror', (error) => errors.push(String(error).slice(0, 300)))
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__hp3d_store && !!(window as any).__hp3d_scene)
-  await page.getByRole('button', { name: /수납/ }).click()
+  await page.getByRole('button', { name: '🗄️ 수납' }).click()
   const card = page.locator('.pcard', { hasText: /IKEA BILLY 빌리 책장/ })
   await expect(card).toContainText('BILLY 005.220.47')
   await expect(card).toContainText('89,900원')
@@ -504,7 +504,7 @@ test('IKEA PAX/FORSAND를 공식 2프레임·4도어 구성과 가격으로 렌�
   page.on('pageerror', (error) => errors.push(String(error).slice(0, 300)))
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__hp3d_store && !!(window as any).__hp3d_scene)
-  await page.getByRole('button', { name: /수납/ }).click()
+  await page.getByRole('button', { name: '🗄️ 수납' }).click()
 
   const card = page.locator('.pcard', {
     hasText: /IKEA PAX 팍스.*FORSAND 포르산드/,

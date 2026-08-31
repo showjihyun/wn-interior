@@ -1,0 +1,28 @@
+{
+  "sourceUrl": "https://store.hanssem.com/REPLACE_WITH_PRODUCT_URL",
+  "catalog": {
+    "id": "hanssem-ko",
+    "provider": "Hanssem",
+    "locale": "ko-KR",
+    "generatedAt": "2026-08-31T00:00:00.000Z"
+  },
+  "overrides": {
+    "externalId": "REPLACE_WITH_STABLE_PRODUCT_ID",
+    "sku": "REPLACE_WITH_SKU",
+    "brand": "한샘",
+    "classification": {
+      "category": "kitchen.base-cabinet",
+      "tags": ["주방", "하부장"]
+    },
+    "dimensions": { "width": 800, "depth": 600, "height": 850, "unit": "mm" },
+    "materials": [],
+    "priceBasis": "본체 1개",
+    "checkedAt": "2026-08-31",
+    "render": { "shapeHint": "sinkLower" },
+    "installation": {
+      "mount": "floor",
+      "snapToWall": true,
+      "provides": ["support.base-cabinet", "support.countertop"]
+    }
+  }
+}

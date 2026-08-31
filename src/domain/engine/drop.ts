@@ -5,10 +5,12 @@ import type { FloorPlan, Placement, Product } from '../model'
 import { footprintAABB, aabbOverlap, pointInPolygon, roomAt } from './geom'
 import { resolveAuthoritativePlacementGeometry } from '../authoritativePlacementGeometry'
 import { requiresSurfaceHost, resolveSurfacePlacement } from '../surfacePlacement'
+import { validateInstallationDependencies } from '../installationDependencies'
 
 export interface DropResult {
   ok: boolean
-  reason?: 'out-of-room' | 'collision' | 'surface-required'
+  reason?: 'out-of-room' | 'collision' | 'surface-required' | 'missing-dependency'
+  missingCapabilities?: string[]
 }
 
 function footprintCorners(
@@ -52,11 +54,22 @@ export function canDropAt(
 ): DropResult {
   const room = roomAt(plan, x, z)
   if (!room) return { ok: false, reason: 'out-of-room' }
-  if (
-    requiresSurfaceHost(product) &&
-    !resolveSurfacePlacement(product, placements, x, z, productOf)
-  ) {
+  const surface = resolveSurfacePlacement(product, placements, x, z, productOf)
+  if (requiresSurfaceHost(product) && !surface) {
     return { ok: false, reason: 'surface-required' }
+  }
+  const dependencies = validateInstallationDependencies(
+    product,
+    placements,
+    surface?.supportPlacementId,
+    productOf
+  )
+  if (!dependencies.ok) {
+    return {
+      ok: false,
+      reason: 'missing-dependency',
+      missingCapabilities: dependencies.missingCapabilities,
+    }
   }
 
   const selfGeometry = resolveAuthoritativePlacementGeometry(product)

@@ -11,6 +11,9 @@ const CATEGORIES: Record<CategoryId, { label: string; icon: string }> = {
   living: { label: '거실', icon: '🛋️' },
   bedroom: { label: '침실', icon: '🛏️' },
   storage: { label: '수납', icon: '🗄️' },
+  'built-in': { label: '붙박이·맞춤수납', icon: '🧱' },
+  'wall-finish': { label: '도배·벽마감', icon: '🧻' },
+  flooring: { label: '바닥마감', icon: '🪵' },
   appliance: { label: '가전', icon: '📺' },
   lighting: { label: '조명', icon: '💡' },
   bath: { label: '욕실', icon: '🚿' },
@@ -180,14 +183,17 @@ function ProductCard({
 
 function CatalogTab() {
   const { productCatalog } = useAppRuntime()
-  const products = productCatalog.list()
+  const customProducts = useStore((s) => s.customProducts)
+  const products = [...productCatalog.list(), ...customProducts]
   const brands = [
     '전체',
     ...new Set(products.flatMap((product) => (product.brand ? [product.brand] : []))),
   ]
   const [cat, setCat] = useState<CategoryId>('kitchen')
   const [brand, setBrand] = useState('전체')
-  const customProducts = useStore((s) => s.customProducts)
+  const importProductCatalog = useStore((s) => s.importProductCatalog)
+  const importRef = useRef<HTMLInputElement>(null)
+  const [importReport, setImportReport] = useState('')
   const selectedId = useStore((s) => s.selectedId)
   const pendingProductId = useStore((s) => s.pendingProductId)
   const placements = useStore((s) => s.placements)
@@ -202,6 +208,34 @@ function CatalogTab() {
 
   return (
     <>
+      <div className="catalog-import">
+        <button type="button" onClick={() => importRef.current?.click()}>
+          ⬇ 상품 카탈로그 JSON
+        </button>
+        <input
+          ref={importRef}
+          type="file"
+          accept="application/json,.json"
+          aria-label="상품 카탈로그 JSON 가져오기"
+          style={{ display: 'none' }}
+          onChange={async (event) => {
+            const file = event.target.files?.[0]
+            if (!file) return
+            const result = importProductCatalog(await file.text())
+            setImportReport(
+              result.ok
+                ? `신규 ${result.imported}개 · 갱신 ${result.updated}개 · 경고 ${result.issues.length}개`
+                : `거절 · ${result.issues[0]?.path ?? '$'} · ${result.issues[0]?.message ?? '알 수 없는 오류'}`
+            )
+            event.target.value = ''
+          }}
+        />
+        {importReport && (
+          <span role="status" aria-label="카탈로그 Import 결과">
+            {importReport}
+          </span>
+        )}
+      </div>
       <div className="cats">
         {(Object.keys(CATEGORIES) as CategoryId[]).map((c) => (
           <button key={c} className={`cat${cat === c ? ' on' : ''}`} onClick={() => setCat(c)}>
@@ -225,9 +259,11 @@ function CatalogTab() {
       <div className="plist">
         {list.length === 0 && (
           <p className="hint" style={{ padding: 12 }}>
-            {brand !== '전체'
-              ? `${brand} 제품이 없는 카테고리입니다.`
-              : '아래 "+ 등록"으로 내 가구를 추가하세요.'}
+            {brand === 'IKEA' && cat === 'wall-finish'
+              ? 'IKEA Korea 공식 도배·벽마감 판매 상품을 확인하지 못했습니다.'
+              : brand !== '전체'
+                ? `${brand} 제품이 없는 카테고리입니다.`
+                : '아래 "+ 등록"으로 내 가구를 추가하세요.'}
           </p>
         )}
         {list.map((p) => (

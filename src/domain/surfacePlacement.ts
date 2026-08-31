@@ -1,8 +1,6 @@
 import type { Placement, Product } from './model'
 import { resolveDims } from './engine/dims'
 
-const SURFACE_HOST_SHAPES = new Set<Product['shape']>(['sinkLower', 'kitchenSink'])
-
 export interface SurfacePlacement {
   x: number
   z: number
@@ -23,11 +21,17 @@ export function resolveSurfacePlacement(
   productOf: (id: string) => Product | undefined
 ): SurfacePlacement | null {
   if (!requiresSurfaceHost(product)) return null
+  const supportedBy = product.installation?.surface?.supportedBy ?? []
+  if (!supportedBy.length) return null
 
   const hosts = placements
     .map((placement) => {
       const host = productOf(placement.productId)
-      if (!host || !SURFACE_HOST_SHAPES.has(host.shape)) return null
+      if (
+        !host ||
+        !host.installation?.provides.some((capability) => supportedBy.includes(capability))
+      )
+        return null
       const dims = resolveDims(host, placement)
       const radians = (placement.rotY * Math.PI) / 180
       const cos = Math.cos(radians)
@@ -47,7 +51,10 @@ export function resolveSurfacePlacement(
   const { placement, host, dims, cos, sin } = target
   const maxLocalX = Math.max(0, dims.w / 2 - product.dims.w / 2 - 20)
   const localX = Math.max(-maxLocalX, Math.min(maxLocalX, target.localX))
-  const localZ = -dims.d / 2 + Math.min(dims.d / 2, product.dims.d / 2 + 20)
+  const localZ =
+    product.installation?.surface?.anchor === 'center'
+      ? 0
+      : -dims.d / 2 + Math.min(dims.d / 2, product.dims.d / 2 + 20)
   const hostBase =
     host.mount === 'wall-mount' || host.mount === 'surface'
       ? (placement.elevationOverride ?? host.defaultElevation ?? placement.pos.y)

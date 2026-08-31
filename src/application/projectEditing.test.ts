@@ -119,4 +119,43 @@ describe('project editing commands', () => {
     expect(state.placements).toEqual([])
     expect(state.customProducts.map((product) => product.id)).toContain('custom')
   })
+
+  it('프로토콜 상품을 ID별로 원자적 upsert하고 metadata를 복사한다', () => {
+    const product = {
+      id: 'catalog:test:item',
+      name: '가져온 제품',
+      brand: '테스트',
+      category: 'kitchen' as const,
+      dims: { w: 600, d: 600, h: 800 },
+      mount: 'floor' as const,
+      shape: 'box' as const,
+      catalog: {
+        protocolVersion: '1.0' as const,
+        catalogId: 'test',
+        externalId: 'item',
+        provider: 'Test',
+        sourceUrl: 'https://example.com/item',
+        retrievedAt: '2026-08-31T00:00:00.000Z',
+        taxonomy: 'kitchen.base-cabinet',
+        tags: [],
+        materials: ['목재'],
+        sourceImageUrls: [],
+        variants: [],
+      },
+      installation: { provides: ['kitchen.base-cabinet'] },
+    }
+    const first = executeProjectEdit(initial(), { type: 'import-products', products: [product] })
+    const second = executeProjectEdit(first, {
+      type: 'import-products',
+      products: [{ ...product, name: '갱신된 제품' }],
+    })
+
+    expect(second.customProducts).toHaveLength(1)
+    expect(second.customProducts[0]).toMatchObject({
+      name: '갱신된 제품',
+      catalog: { materials: ['목재'] },
+      installation: { provides: ['kitchen.base-cabinet'] },
+    })
+    expect(second.customProducts[0].catalog?.materials).not.toBe(product.catalog.materials)
+  })
 })

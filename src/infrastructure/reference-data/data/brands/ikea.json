@@ -293,6 +293,17 @@
       "dims": { "w": 260, "d": 300, "h": 360 },
       "mount": "surface",
       "shape": "faucet",
+      "installation": {
+        "provides": ["kitchen.faucet"],
+        "requires": {
+          "allOf": ["kitchen.base-cabinet", "kitchen.sink"],
+          "scope": "support-chain"
+        },
+        "surface": {
+          "supportedBy": ["kitchen.base-cabinet"],
+          "anchor": "rear"
+        }
+      },
       "colorways": ["#aeb6bc"],
       "note": "공식 높이 36cm · footprint는 제품 이미지/35mm 설치구멍 기준 렌더 envelope",
       "sourceUrl": "https://www.ikea.com/kr/ko/p/aelmaren-kitchen-mixer-tap-stainless-steel-colour-30567001/",
@@ -323,10 +334,19 @@
       "model": "KILSVIKEN 793.851.13",
       "category": "kitchen",
       "dims": { "w": 720, "d": 460, "h": 180 },
-      "mount": "wall-mount",
-      "snapToWall": true,
-      "defaultElevation": 800,
+      "mount": "surface",
       "shape": "kitchenSink",
+      "installation": {
+        "provides": ["kitchen.sink"],
+        "requires": {
+          "allOf": ["kitchen.base-cabinet"],
+          "scope": "support-chain"
+        },
+        "surface": {
+          "supportedBy": ["kitchen.base-cabinet"],
+          "anchor": "center"
+        }
+      },
       "colorways": ["#25272a"],
       "note": "공식 외곽 길이 72 × 앞뒤 46cm · 그릇 깊이 18cm · 48L",
       "sourceUrl": "https://www.ikea.com/kr/ko/p/kilsviken-inset-sink-1-bowl-black-quartz-composite-s79385113/",
@@ -360,6 +380,9 @@
       "mount": "floor",
       "snapToWall": true,
       "shape": "sinkLower",
+      "installation": {
+        "provides": ["kitchen.base-cabinet", "kitchen.countertop"]
+      },
       "colorways": ["#6b4936"],
       "note": "공식 폭 60 × 깊이 61.6 × 프레임 높이 80cm",
       "sourceUrl": "https://www.ikea.com/kr/ko/p/metod-base-cabinet-for-sink-white-sinarp-brown-s89453470/",
@@ -382,6 +405,89 @@
         "projection": "front",
         "removeWhiteBackground": true,
         "alphaThreshold": 246
+      }
+    },
+    {
+      "id": "ik-knoxhult-kitchen-204",
+      "name": "IKEA KNOXHULT 크녹스훌트 주방 204cm",
+      "model": "KNOXHULT 295.594.55",
+      "category": "kitchen",
+      "dims": { "w": 2040, "d": 610, "h": 2200 },
+      "mount": "floor",
+      "snapToWall": true,
+      "shape": "box",
+      "installation": {
+        "provides": ["kitchen.base-cabinet", "kitchen.countertop", "kitchen.sink", "kitchen.faucet"]
+      },
+      "colorways": ["#f2f1eb"],
+      "note": "공식 전체 envelope 204×61×220cm · 싱크·LAGAN 수전 포함 완성형 주방",
+      "sourceUrl": "https://www.ikea.com/kr/ko/p/knoxhult-kitchen-white-s29559455/",
+      "retail": {
+        "retailer": "IKEA Korea",
+        "articleNumber": "295.594.55",
+        "productUrl": "https://www.ikea.com/kr/ko/p/knoxhult-kitchen-white-s29559455/",
+        "currency": "KRW",
+        "amount": 575000,
+        "checkedAt": "2026-08-31",
+        "priceBasis": "KNOXHULT 204cm 주방 구성 1세트",
+        "included": ["벽수납장", "하부수납장 2개", "LAGAN 수전", "FYNDIG 싱크", "배수트랩"],
+        "excluded": ["가전제품", "손잡이", "설치비"],
+        "description": "사전 구성된 소형 주방 솔루션"
+      }
+    },
+    {
+      "id": "ik-runnen-floor-decking-beige",
+      "name": "IKEA RUNNEN 룬넨 야외용 조립마루 베이지",
+      "model": "RUNNEN 604.767.35",
+      "category": "flooring",
+      "dims": { "w": 300, "d": 300, "h": 20 },
+      "mount": "floor",
+      "shape": "rug",
+      "installation": {
+        "provides": ["finish.flooring.outdoor"]
+      },
+      "colorways": ["#c4b49a"],
+      "note": "야외·베란다용 30×30cm 조립마루 9장 · 0.81㎡/패키지",
+      "sourceUrl": "https://www.ikea.com/kr/ko/p/runnen-floor-decking-outdoor-beige-60476735/",
+      "retail": {
+        "retailer": "IKEA Korea",
+        "articleNumber": "604.767.35",
+        "productUrl": "https://www.ikea.com/kr/ko/p/runnen-floor-decking-outdoor-beige-60476735/",
+        "currency": "KRW",
+        "amount": 22900,
+        "checkedAt": "2026-08-31",
+        "priceBasis": "30×30cm 야외용 조립마루 9장 · 0.81㎡",
+        "included": ["RUNNEN 조립마루 9장"],
+        "excluded": ["모서리마감재", "코너마감재", "설치비"],
+        "description": "단단하고 평평한 야외 표면용 폴리프로필렌 조립마루"
+      }
+    },
+    {
+      "id": "ik-pax-hasvik-wardrobe-150",
+      "name": "IKEA PAX/HASVIK 팩스/하스비크 맞춤형 옷장 150cm",
+      "model": "PAX/HASVIK 194.297.56",
+      "category": "built-in",
+      "dims": { "w": 1500, "d": 660, "h": 2012 },
+      "mount": "floor",
+      "snapToWall": true,
+      "shape": "modularWardrobe",
+      "installation": {
+        "provides": ["storage.built-in-system"]
+      },
+      "colorways": ["#f4f4f2"],
+      "note": "붙박이처럼 구성하는 맞춤형 PAX 시스템 · 슬라이딩도어",
+      "sourceUrl": "https://www.ikea.com/kr/ko/p/pax-hasvik-wardrobe-white-white-s19429756/",
+      "retail": {
+        "retailer": "IKEA Korea",
+        "articleNumber": "194.297.56",
+        "productUrl": "https://www.ikea.com/kr/ko/p/pax-hasvik-wardrobe-white-white-s19429756/",
+        "currency": "KRW",
+        "amount": 537500,
+        "checkedAt": "2026-08-31",
+        "priceBasis": "PAX/HASVIK 150cm 옷장 구성 1세트",
+        "included": ["PAX 프레임 2개", "HASVIK 슬라이딩도어", "옷장레일", "선반 3개"],
+        "excluded": ["추가 내부수납용품", "설치비"],
+        "description": "벽 고정이 필요한 PAX 맞춤형 시스템 옷장"
       }
     },
     {

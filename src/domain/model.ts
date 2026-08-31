@@ -110,6 +110,41 @@ export interface ProductDimensionVariant {
   dims: { w: number; d: number; h: number }
 }
 
+export interface CatalogProductMetadata {
+  protocolVersion: '1.0'
+  catalogId: string
+  externalId: string
+  provider: string
+  sourceUrl: string
+  retrievedAt: string
+  sku?: string
+  taxonomy: string
+  tags: string[]
+  materials: string[]
+  sourceImageUrls: string[]
+  variants: Array<{
+    id: string
+    label: string
+    sku?: string
+    dims?: { w: number; d: number; h: number }
+    price?: number
+    color?: string
+  }>
+}
+
+export interface ProductInstallationContract {
+  provides: string[]
+  requires?: {
+    allOf?: string[]
+    anyOf?: string[]
+    scope: 'project' | 'support-chain'
+  }
+  surface?: {
+    supportedBy: string[]
+    anchor: 'rear' | 'center'
+  }
+}
+
 /** 카탈로그 제품 — 전부 실측(mm) 기준 */
 export interface Product {
   id: string
@@ -139,10 +174,24 @@ export interface Product {
   appearance?: ProductAppearance
   /** 접이식·확장형 제품의 이름 있는 공식 사용 상태. */
   dimensionVariants?: ProductDimensionVariant[]
+  /** 외부 카탈로그 provenance. 사이트 DOM이 아니라 버전형 protocol의 정규화 결과다. */
+  catalog?: CatalogProductMetadata
+  /** 설치 시 제공/요구 capability와 물리적 받침 계약 */
+  installation?: ProductInstallationContract
 }
 
 export type CategoryId =
-  'kitchen' | 'living' | 'bedroom' | 'storage' | 'appliance' | 'lighting' | 'bath' | 'custom'
+  | 'kitchen'
+  | 'living'
+  | 'bedroom'
+  | 'storage'
+  | 'built-in'
+  | 'wall-finish'
+  | 'flooring'
+  | 'appliance'
+  | 'lighting'
+  | 'bath'
+  | 'custom'
 
 export type ShapeKind =
   | 'box'

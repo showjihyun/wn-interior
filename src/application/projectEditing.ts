@@ -22,6 +22,7 @@ export type ProjectEdit =
   | { type: 'remove-opening'; openingId: string }
   | { type: 'set-wall-height'; height: number }
   | { type: 'add-custom-product'; product: Product }
+  | { type: 'import-products'; products: Product[] }
 
 const clonePlacement = (placement: Placement): Placement => ({
   ...placement,
@@ -61,6 +62,40 @@ export function cloneEditorSnapshot(snapshot: EditorSnapshot): EditorSnapshot {
         ...variant,
         dims: { ...variant.dims },
       })),
+      catalog: product.catalog
+        ? {
+            ...product.catalog,
+            tags: [...product.catalog.tags],
+            materials: [...product.catalog.materials],
+            sourceImageUrls: [...product.catalog.sourceImageUrls],
+            variants: product.catalog.variants.map((variant) => ({
+              ...variant,
+              dims: variant.dims ? { ...variant.dims } : undefined,
+            })),
+          }
+        : undefined,
+      installation: product.installation
+        ? {
+            provides: [...product.installation.provides],
+            requires: product.installation.requires
+              ? {
+                  ...product.installation.requires,
+                  allOf: product.installation.requires.allOf
+                    ? [...product.installation.requires.allOf]
+                    : undefined,
+                  anyOf: product.installation.requires.anyOf
+                    ? [...product.installation.requires.anyOf]
+                    : undefined,
+                }
+              : undefined,
+            surface: product.installation.surface
+              ? {
+                  ...product.installation.surface,
+                  supportedBy: [...product.installation.surface.supportedBy],
+                }
+              : undefined,
+          }
+        : undefined,
     })),
   }
 }
@@ -141,6 +176,19 @@ export function executeProjectEdit(
     case 'add-custom-product':
       next.customProducts.push(edit.product)
       break
+    case 'import-products': {
+      const clonedImports = cloneEditorSnapshot({
+        plan: next.plan,
+        placements: [],
+        customProducts: edit.products,
+      }).customProducts
+      const imported = new Map(clonedImports.map((product) => [product.id, product]))
+      next.customProducts = [
+        ...next.customProducts.filter((product) => !imported.has(product.id)),
+        ...clonedImports,
+      ]
+      break
+    }
   }
 
   return {

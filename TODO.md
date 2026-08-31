@@ -299,6 +299,36 @@
 
 - [x] Vercel 프런트 배포에서 `services/**` GPU worker 제외 + 배포 경계 자동 검사
 
+### M32 HomePlan Catalog Protocol 1.0 + 설치 의존성 + IKEA 증분 ✅
+
+- [x] 국내 가구·인테리어 상품 교환용 버전형 JSON Schema·TypeScript validator
+- [x] provider·외부 ID·출처·치수·단위·가격 기준·옵션·소재·자산·설치 capability 규격
+- [x] cm/m→mm, taxonomy→내부 카테고리, 미지원 shape→box warning 정규화
+- [x] 원자적 JSON Import·경로별 오류·ID 갱신·Undo/Redo·자동저장 경계
+- [x] `allOf`/`anyOf` + `project`/`support-chain` 의존성과 제공자 삭제 보호
+- [x] METOD 하부장 → KILSVIKEN 싱크 → ALMAREN 수전 AND 의존 체인
+- [x] Catalog Protocol conformance: 리바트 소파 + IKEA 주방 chain 2개 feed·4개 상품
+- [x] IKEA KNOXHULT 주방, RUNNEN 야외용 조립마루, PAX/HASVIK 맞춤형 옷장 공식 증분
+- [x] `도배·벽마감`, `바닥마감`, `붙박이·맞춤수납` 필터와 IKEA 도배 미판매 안내
+
+### M33 Schema.org·OpenGraph 오프라인 카탈로그 어댑터 ✅
+
+- [x] Schema.org `Product`/`Brand`/`Offer`/`QuantitativeValue` JSON-LD 변환
+- [x] `@graph`·배열 JSON-LD와 깨진 블록 후속 탐색
+- [x] JSON-LD가 없는 리바트형 OpenGraph title·image·price 폴백
+- [x] W/D/H·taxonomy·installation 누락 시 override 없이 배치 상품 생성 거절
+- [x] 저장 HTML/JSON-LD + adapter config → Protocol 1.0 JSON CLI
+- [x] 리바트 최소 HTML fixture·override·생성 feed conformance
+
+### M34 한샘·리바트 override + CSV/XLSX bridge ✅
+
+- [x] 한샘·리바트 전용 web adapter override 템플릿
+- [x] 공통 31컬럼 CSV/XLSX 상품 입력 규격과 브랜드 기본값 config
+- [x] XLSX products/guide 시트, 필터·고정창·드롭다운·필수값 강조
+- [x] BOM·quoted CSV·복수값·boolean·단위·설치 의존성 변환
+- [x] 계산 cache 없는 XLSX 수식 거절과 Windows UTF-8 subprocess 경계
+- [x] 한샘·리바트 CSV/XLSX Protocol 결과 동등성 conformance
+
 ### M24 2D→3D 정확도 2,200건 감사 ✅
 
 - [x] CubiCasa5K 실제 도면 1,000건 층화 표본 추출 + 이미지/SVG CRC 검증

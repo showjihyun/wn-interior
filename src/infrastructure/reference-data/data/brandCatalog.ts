@@ -49,6 +49,18 @@ interface RawBrandProduct {
     label?: string
     dims?: { w?: number; d?: number; h?: number }
   }>
+  installation?: {
+    provides?: string[]
+    requires?: {
+      allOf?: string[]
+      anyOf?: string[]
+      scope?: string
+    }
+    surface?: {
+      supportedBy?: string[]
+      anchor?: string
+    }
+  }
 }
 
 interface RawBrandFile {
@@ -70,6 +82,9 @@ const CATEGORIES: CategoryId[] = [
   'living',
   'bedroom',
   'storage',
+  'built-in',
+  'wall-finish',
+  'flooring',
   'appliance',
   'lighting',
   'bath',
@@ -249,6 +264,28 @@ export function validateBrandProduct(raw: RawBrandProduct): ValidateResult {
       label: variant.label!.trim(),
       dims: { w: variant.dims!.w!, d: variant.dims!.d!, h: variant.dims!.h! },
     })),
+    installation: raw.installation
+      ? {
+          provides: [...(raw.installation.provides ?? [])],
+          requires: raw.installation.requires
+            ? {
+                allOf: raw.installation.requires.allOf
+                  ? [...raw.installation.requires.allOf]
+                  : undefined,
+                anyOf: raw.installation.requires.anyOf
+                  ? [...raw.installation.requires.anyOf]
+                  : undefined,
+                scope: raw.installation.requires.scope === 'project' ? 'project' : 'support-chain',
+              }
+            : undefined,
+          surface: raw.installation.surface
+            ? {
+                supportedBy: [...(raw.installation.surface.supportedBy ?? [])],
+                anchor: raw.installation.surface.anchor === 'center' ? 'center' : 'rear',
+              }
+            : undefined,
+        }
+      : undefined,
   }
   return { ok: true, product }
 }

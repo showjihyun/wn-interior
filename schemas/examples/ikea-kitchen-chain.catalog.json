@@ -1,0 +1,99 @@
+{
+  "$schema": "https://homeplan3d.dev/schemas/catalog-1.0.json",
+  "protocol": "homeplan.catalog",
+  "version": "1.0",
+  "catalog": {
+    "id": "ikea-korea-kitchen",
+    "provider": "IKEA Korea",
+    "locale": "ko-KR",
+    "generatedAt": "2026-08-31T00:00:00.000Z"
+  },
+  "products": [
+    {
+      "externalId": "894.534.70",
+      "name": "METOD 메토드 싱크대하부장 SINARP",
+      "brand": "IKEA",
+      "sku": "894.534.70",
+      "classification": { "category": "kitchen.base-cabinet" },
+      "dimensions": { "width": 600, "depth": 616, "height": 800, "unit": "mm" },
+      "price": {
+        "amount": 165000,
+        "currency": "KRW",
+        "checkedAt": "2026-08-31",
+        "basis": "도어+프레임+경첩 조합 1세트"
+      },
+      "source": {
+        "url": "https://www.ikea.com/kr/ko/p/metod-base-cabinet-for-sink-white-sinarp-brown-s89453470/",
+        "retrievedAt": "2026-08-31T00:00:00.000Z"
+      },
+      "render": { "shapeHint": "sinkLower" },
+      "installation": {
+        "mount": "floor",
+        "snapToWall": true,
+        "provides": ["kitchen.base-cabinet", "kitchen.countertop"]
+      }
+    },
+    {
+      "externalId": "793.851.13",
+      "name": "KILSVIKEN 실스비켄 싱글싱크",
+      "brand": "IKEA",
+      "sku": "793.851.13",
+      "classification": { "category": "kitchen.sink" },
+      "dimensions": { "width": 720, "depth": 460, "height": 180, "unit": "mm" },
+      "price": {
+        "amount": 387000,
+        "currency": "KRW",
+        "checkedAt": "2026-08-31",
+        "basis": "싱크볼 구성 1세트"
+      },
+      "source": {
+        "url": "https://www.ikea.com/kr/ko/p/kilsviken-inset-sink-1-bowl-black-quartz-composite-s79385113/",
+        "retrievedAt": "2026-08-31T00:00:00.000Z"
+      },
+      "render": { "shapeHint": "kitchenSink" },
+      "installation": {
+        "mount": "surface",
+        "provides": ["kitchen.sink"],
+        "requires": {
+          "allOf": ["kitchen.base-cabinet"],
+          "scope": "support-chain"
+        },
+        "surface": {
+          "supportedBy": ["kitchen.base-cabinet"],
+          "anchor": "center"
+        }
+      }
+    },
+    {
+      "externalId": "305.670.01",
+      "name": "ALMAREN 엘마렌 주방수전",
+      "brand": "IKEA",
+      "sku": "305.670.01",
+      "classification": { "category": "kitchen.faucet" },
+      "dimensions": { "width": 260, "depth": 300, "height": 360, "unit": "mm" },
+      "price": {
+        "amount": 130000,
+        "currency": "KRW",
+        "checkedAt": "2026-08-31",
+        "basis": "주방수전 1개"
+      },
+      "source": {
+        "url": "https://www.ikea.com/kr/ko/p/aelmaren-kitchen-mixer-tap-stainless-steel-colour-30567001/",
+        "retrievedAt": "2026-08-31T00:00:00.000Z"
+      },
+      "render": { "shapeHint": "faucet" },
+      "installation": {
+        "mount": "surface",
+        "provides": ["kitchen.faucet"],
+        "requires": {
+          "allOf": ["kitchen.base-cabinet", "kitchen.sink"],
+          "scope": "support-chain"
+        },
+        "surface": {
+          "supportedBy": ["kitchen.base-cabinet"],
+          "anchor": "rear"
+        }
+      }
+    }
+  ]
+}

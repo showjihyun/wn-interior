@@ -261,7 +261,7 @@ test('프로덕션 빌드: IKEA LACK을 하부선반 커피테이블로 렌더�
 test('프로덕션 빌드: IKEA BILLY를 현재 SKU의 열린 책장으로 렌더한다', async ({ page }) => {
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__hp3d_store && !!(window as any).__hp3d_scene)
-  await page.getByRole('button', { name: /수납/ }).click()
+  await page.getByRole('button', { name: '🗄️ 수납' }).click()
   const card = page.locator('.pcard', { hasText: /IKEA BILLY 빌리 책장/ })
   await expect(card).toContainText('BILLY 005.220.47')
   await expect(card).toContainText('89,900원')
@@ -341,7 +341,7 @@ test('프로덕션 빌드: IKEA NORDEN을 890mm 게이트레그 기본 상태로
 test('프로덕션 빌드: IKEA PAX/FORSAND를 2프레임·4도어로 렌더한다', async ({ page }) => {
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__hp3d_store && !!(window as any).__hp3d_scene)
-  await page.getByRole('button', { name: /수납/ }).click()
+  await page.getByRole('button', { name: '🗄️ 수납' }).click()
   const card = page.locator('.pcard', {
     hasText: /IKEA PAX 팍스.*FORSAND 포르산드/,
   })

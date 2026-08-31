@@ -68,6 +68,40 @@ const cloneProduct = (product: Product): Product => ({
     ...variant,
     dims: { ...variant.dims },
   })),
+  catalog: product.catalog
+    ? {
+        ...product.catalog,
+        tags: [...product.catalog.tags],
+        materials: [...product.catalog.materials],
+        sourceImageUrls: [...product.catalog.sourceImageUrls],
+        variants: product.catalog.variants.map((variant) => ({
+          ...variant,
+          dims: variant.dims ? { ...variant.dims } : undefined,
+        })),
+      }
+    : undefined,
+  installation: product.installation
+    ? {
+        provides: [...product.installation.provides],
+        requires: product.installation.requires
+          ? {
+              ...product.installation.requires,
+              allOf: product.installation.requires.allOf
+                ? [...product.installation.requires.allOf]
+                : undefined,
+              anyOf: product.installation.requires.anyOf
+                ? [...product.installation.requires.anyOf]
+                : undefined,
+            }
+          : undefined,
+        surface: product.installation.surface
+          ? {
+              ...product.installation.surface,
+              supportedBy: [...product.installation.surface.supportedBy],
+            }
+          : undefined,
+      }
+    : undefined,
 })
 
 const cloneFloorPlanReview = (review?: FloorPlanReview): FloorPlanReview | undefined =>

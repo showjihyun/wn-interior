@@ -22,6 +22,13 @@ import { canDropAt } from '../../domain/engine/drop'
 import { resolveDims } from '../../domain/engine/dims'
 import { roomAt } from '../../domain/engine/geom'
 import { requiresSurfaceHost, resolveSurfacePlacement } from '../../domain/surfacePlacement'
+import { placementFailureMessage } from '../placementFailureMessage'
+import {
+  importCatalogProtocol,
+  InvalidCatalogProtocolError,
+  type CatalogProtocolIssue,
+} from '../../application/catalogProtocol'
+import { findBrokenInstallationDependents } from '../../domain/installationDependencies'
 import type {
   AiSettingsRepository,
   Clock,
@@ -126,6 +133,12 @@ export interface AppState {
   setWallHeight: (h: number) => void
 
   addCustomProduct: (p: Omit<Product, 'id'>) => string
+  importProductCatalog: (text: string) => {
+    ok: boolean
+    imported: number
+    updated: number
+    issues: CatalogProtocolIssue[]
+  }
   loadProject: (p: Project) => void
   exportProject: () => Project
   resetToSample: () => void
@@ -361,7 +374,7 @@ export function createAppStore({
         const z = Math.round(pos.z)
         const surface = resolveSurfacePlacement(prod, state.placements, x, z, state.productById)
         if (requiresSurfaceHost(prod) && !surface) {
-          state.showToast('수전은 싱크대 상판을 클릭해 배치하세요')
+          state.showToast(placementFailureMessage(prod, { ok: false, reason: 'surface-required' }))
           return null
         }
         const target = surface ?? { x, z, rotY, elevation: 0, supportPlacementId: undefined }
@@ -376,13 +389,7 @@ export function createAppStore({
           state.productById
         )
         if (!result.ok) {
-          state.showToast(
-            result.reason === 'out-of-room'
-              ? '방 안에만 배치할 수 있어요'
-              : result.reason === 'surface-required'
-                ? '수전은 싱크대 상판을 클릭해 배치하세요'
-                : '공간이 부족해 배치할 수 없어요'
-          )
+          state.showToast(placementFailureMessage(prod, result))
           return null
         }
         const room = roomAt(state.plan, target.x, target.z)
@@ -453,6 +460,12 @@ export function createAppStore({
       },
 
       removePlacement: (id) => {
+        const state = get()
+        const dependents = findBrokenInstallationDependents(id, state.placements, state.productById)
+        if (dependents.length) {
+          state.showToast(`종속 제품 ${dependents.length}개를 먼저 삭제하세요`)
+          return
+        }
         commitEdit({ type: 'remove-placement', id })
         if (get().selectedId === id) set({ selectedId: null })
       },
@@ -488,6 +501,32 @@ export function createAppStore({
         const id = 'custom-' + uid()
         commitEdit({ type: 'add-custom-product', product: { ...p, id } })
         return id
+      },
+
+      importProductCatalog: (text) => {
+        try {
+          const result = importCatalogProtocol(text)
+          const existing = new Set(get().customProducts.map((product) => product.id))
+          const updated = result.products.filter((product) => existing.has(product.id)).length
+          const imported = result.products.length - updated
+          commitEdit({ type: 'import-products', products: result.products })
+          get().showToast(`카탈로그 신규 ${imported}개·갱신 ${updated}개`, 'info')
+          return { ok: true, imported, updated, issues: result.issues }
+        } catch (error) {
+          const issues =
+            error instanceof InvalidCatalogProtocolError
+              ? error.issues
+              : [
+                  {
+                    severity: 'error' as const,
+                    code: 'import-failed',
+                    path: '$',
+                    message: 'catalog import failed',
+                  },
+                ]
+          get().showToast('카탈로그 Import를 거절했어요', 'error')
+          return { ok: false, imported: 0, updated: 0, issues }
+        }
       },
 
       loadProject: (p) => {

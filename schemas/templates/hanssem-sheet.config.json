@@ -1,0 +1,13 @@
+{
+  "catalog": {
+    "id": "hanssem-ko",
+    "provider": "Hanssem",
+    "locale": "ko-KR",
+    "generatedAt": "2026-08-31T00:00:00.000Z"
+  },
+  "defaults": {
+    "brand": "한샘",
+    "unit": "mm",
+    "mount": "floor"
+  }
+}

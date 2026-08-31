@@ -1,0 +1,37 @@
+{
+  "$schema": "https://homeplan3d.dev/schemas/catalog-1.0.json",
+  "protocol": "homeplan.catalog",
+  "version": "1.0",
+  "catalog": {
+    "id": "hyundai-livart-ko",
+    "provider": "Hyundai Livart",
+    "locale": "ko-KR",
+    "generatedAt": "2026-08-31T00:00:00.000Z"
+  },
+  "products": [
+    {
+      "externalId": "P200089504",
+      "name": "리르 3시트 w3000 가죽 소파",
+      "brand": "리바트",
+      "sku": "P200089504",
+      "classification": {
+        "category": "seating.sofa",
+        "tags": ["4인용", "가죽"]
+      },
+      "dimensions": { "width": 300, "depth": 95, "height": 87, "unit": "cm" },
+      "price": {
+        "amount": 2237000,
+        "currency": "KRW",
+        "checkedAt": "2026-08-31",
+        "basis": "리르 3시트 본체 1개"
+      },
+      "source": {
+        "url": "https://www.hyundailivart.co.kr/p/P200089504",
+        "retrievedAt": "2026-08-31T00:00:00.000Z"
+      },
+      "materials": ["천연 황소 가죽", "PVC", "알루미늄"],
+      "render": { "shapeHint": "sofa3", "colorways": ["#8b7568"] },
+      "installation": { "mount": "floor", "provides": ["seating.sofa"] }
+    }
+  ]
+}

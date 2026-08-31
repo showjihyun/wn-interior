@@ -1,0 +1,24 @@
+{
+  "sourceUrl": "https://www.hyundailivart.co.kr/p/P200089504",
+  "catalog": {
+    "id": "hyundai-livart-ko",
+    "provider": "Hyundai Livart",
+    "locale": "ko-KR",
+    "generatedAt": "2026-08-31T00:00:00.000Z"
+  },
+  "overrides": {
+    "externalId": "P200089504",
+    "sku": "P200089504",
+    "brand": "리바트",
+    "classification": {
+      "category": "seating.sofa",
+      "tags": ["4인용", "가죽"]
+    },
+    "dimensions": { "width": 3000, "depth": 950, "height": 870, "unit": "mm" },
+    "materials": ["천연 황소 가죽", "PVC", "알루미늄"],
+    "priceBasis": "리르 3시트 본체 1개",
+    "checkedAt": "2026-08-31",
+    "render": { "shapeHint": "sofa3" },
+    "installation": { "mount": "floor", "provides": ["seating.sofa"] }
+  }
+}

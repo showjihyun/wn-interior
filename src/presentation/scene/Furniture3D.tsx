@@ -17,6 +17,7 @@ import { getPlanCenter } from '../../domain/planBounds'
 import { computePlacementConflicts } from '../../domain/placementConflicts'
 import { ProductVisual } from './ProductVisual'
 import { resolveSurfacePlacement } from '../../domain/surfacePlacement'
+import { placementFailureMessage } from '../placementFailureMessage'
 
 function FurnitureItem({
   placement,
@@ -308,15 +309,7 @@ function Ghost({ plan }: { plan: FloorPlan }) {
       (pid) => store.getState().productById(pid)
     )
     if (!r.ok) {
-      store
-        .getState()
-        .showToast(
-          r.reason === 'out-of-room'
-            ? '방 안에만 배치할 수 있어요'
-            : r.reason === 'surface-required'
-              ? '수전은 싱크대 상판을 클릭해 배치하세요'
-              : '공간이 부족해 배치할 수 없어요'
-        )
+      store.getState().showToast(placementFailureMessage(product, r))
       return
     }
     const placementId = addPlacement(pendingId, { x: candidate.x, z: candidate.z }, candidate.rotY)

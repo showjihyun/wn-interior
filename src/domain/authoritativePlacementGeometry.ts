@@ -14,7 +14,7 @@ export function resolveAuthoritativePlacementGeometry(
 ): AuthoritativePlacementGeometry {
   const dims = resolveDims(product, placement)
   const elevation =
-    product.mount === 'wall-mount'
+    product.mount === 'wall-mount' || product.mount === 'surface'
       ? (placement?.elevationOverride ?? product.defaultElevation ?? 0)
       : 0
   return {

@@ -57,6 +57,30 @@ describe('스토어 — 배치/Undo/Redo', () => {
     expect(S().past).toHaveLength(historyAfterValid)
   })
 
+  it('IKEA 수전은 싱크대 상판에만 배치하고 받침과 설치 높이를 저장한다', () => {
+    const faucetIdWithoutSink = S().addPlacement('ik-aelmaren-kitchen-faucet', {
+      x: 9000,
+      z: 5000,
+    })
+    expect(faucetIdWithoutSink).toBeNull()
+    expect(S().toast?.msg).toContain('싱크대 상판')
+
+    const cabinetId = S().addPlacement('ik-metod-sinarp-sink-cabinet', {
+      x: 9000,
+      z: 5000,
+    })!
+    const faucetId = S().addPlacement('ik-aelmaren-kitchen-faucet', {
+      x: 9000,
+      z: 5000,
+    })!
+    const faucet = S().placements.find((placement) => placement.id === faucetId)!
+
+    expect(faucet.supportPlacementId).toBe(cabinetId)
+    expect(faucet.elevationOverride).toBe(800)
+    expect(faucet.pos.y).toBe(800)
+    expect(faucet.pos.z).toBeLessThan(5000)
+  })
+
   it('undo는 마지막 커밋을 되돌린다', () => {
     const before = S().placements.length
     S().addPlacement('p-chair', { x: 6000, z: 2000 })

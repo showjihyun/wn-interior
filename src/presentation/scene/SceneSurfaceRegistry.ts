@@ -3,14 +3,53 @@ import * as THREE from 'three'
 export class SceneSurfaceRegistry {
   private renderer: THREE.WebGLRenderer | null = null
   private camera: THREE.Camera | null = null
+  private controls: {
+    target: THREE.Vector3
+    minDistance: number
+    maxDistance: number
+    update(): void
+  } | null = null
 
-  register(renderer: THREE.WebGLRenderer, camera: THREE.Camera): () => void {
+  register(
+    renderer: THREE.WebGLRenderer,
+    camera: THREE.Camera,
+    controls?: {
+      target: THREE.Vector3
+      minDistance: number
+      maxDistance: number
+      update(): void
+    } | null
+  ): () => void {
     this.renderer = renderer
     this.camera = camera
+    this.controls = controls ?? null
     return () => {
       if (this.renderer === renderer) this.renderer = null
       if (this.camera === camera) this.camera = null
+      if (this.controls === controls) this.controls = null
     }
+  }
+
+  zoomIn(): boolean {
+    return this.zoom(0.8)
+  }
+
+  zoomOut(): boolean {
+    return this.zoom(1.25)
+  }
+
+  private zoom(scale: number): boolean {
+    if (!this.camera || !this.controls) return false
+    const offset = this.camera.position.clone().sub(this.controls.target)
+    const distance = offset.length()
+    if (!Number.isFinite(distance) || distance <= 0) return false
+    const nextDistance = Math.max(
+      this.controls.minDistance,
+      Math.min(this.controls.maxDistance, distance * scale)
+    )
+    this.camera.position.copy(this.controls.target).addScaledVector(offset, nextDistance / distance)
+    this.controls.update()
+    return true
   }
 
   current(): { renderer: THREE.WebGLRenderer; camera: THREE.Camera } | null {

@@ -16,6 +16,7 @@ import { canDropAt } from '../../domain/engine/drop'
 import { getPlanCenter } from '../../domain/planBounds'
 import { computePlacementConflicts } from '../../domain/placementConflicts'
 import { ProductVisual } from './ProductVisual'
+import { resolveSurfacePlacement } from '../../domain/surfacePlacement'
 
 function FurnitureItem({
   placement,
@@ -59,7 +60,7 @@ function FurnitureItem({
   const yBase =
     product.mount === 'ceiling'
       ? plan.wallHeight
-      : product.mount === 'wall-mount'
+      : product.mount === 'wall-mount' || product.mount === 'surface'
         ? (placement.elevationOverride ?? product.defaultElevation ?? 0)
         : 0
   const color = placement.colorway ?? product.colorways?.[0]
@@ -256,9 +257,13 @@ function Ghost({ plan }: { plan: FloorPlan }) {
   const setPending = useStore((s) => s.setPending)
   const addPlacement = useStore((s) => s.addPlacement)
   const product = useStore((s) => (pendingId ? s.productById(pendingId) : undefined))
-  const [ghost, setGhost] = useState<{ x: number; z: number; rotY: number; ok: boolean } | null>(
-    null
-  )
+  const [ghost, setGhost] = useState<{
+    x: number
+    z: number
+    rotY: number
+    elevation: number
+    ok: boolean
+  } | null>(null)
 
   if (!pendingId || !product) return null
 
@@ -266,17 +271,25 @@ function Ghost({ plan }: { plan: FloorPlan }) {
     const hit = rayGround(e.ray)
     if (!hit || !product) return
     const s = resolveSnap(plan, product, hit.x, hit.y, ghost?.rotY ?? 0)
+    const surface = resolveSurfacePlacement(
+      product,
+      store.getState().placements,
+      s.x,
+      s.z,
+      store.getState().productById
+    )
+    const candidate = surface ?? { x: s.x, z: s.z, rotY: s.rotY, elevation: 0 }
     const validation = canDropAt(
       plan,
       product,
       store.getState().placements,
       null,
-      s.x,
-      s.z,
-      s.rotY,
+      candidate.x,
+      candidate.z,
+      candidate.rotY,
       (pid) => store.getState().productById(pid)
     )
-    setGhost({ x: s.x, z: s.z, rotY: s.rotY, ok: validation.ok })
+    setGhost({ ...candidate, ok: validation.ok })
   }
 
   function confirm(e: ThreeEvent<MouseEvent>) {
@@ -300,7 +313,9 @@ function Ghost({ plan }: { plan: FloorPlan }) {
         .showToast(
           r.reason === 'out-of-room'
             ? '방 안에만 배치할 수 있어요'
-            : '공간이 부족해 배치할 수 없어요'
+            : r.reason === 'surface-required'
+              ? '수전은 싱크대 상판을 클릭해 배치하세요'
+              : '공간이 부족해 배치할 수 없어요'
         )
       return
     }
@@ -324,7 +339,11 @@ function Ghost({ plan }: { plan: FloorPlan }) {
       </mesh>
       {ghost && (
         <group
-          position={[ghost.x, product.mount === 'ceiling' ? plan.wallHeight : 0, ghost.z]}
+          position={[
+            ghost.x,
+            product.mount === 'ceiling' ? plan.wallHeight : ghost.elevation,
+            ghost.z,
+          ]}
           rotation={[0, (ghost.rotY * Math.PI) / 180, 0]}
           onPointerMove={track}
           onClick={confirm}

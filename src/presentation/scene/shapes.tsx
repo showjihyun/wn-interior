@@ -529,16 +529,19 @@ export function Shape({ kind, p, c }: { kind: Product['shape'] } & ShapeProps): 
             rough={0.4}
             metal={0.4}
           />
-          {/* 수도꼭지 */}
-          <Cyl rTop={14} rBot={14} h={260} pos={[0, h, -d / 2 + 60]} color={STEEL} />
-          <Cyl
-            rTop={11}
-            rBot={11}
-            h={180}
-            pos={[0, h + 250, -d / 2 + 150]}
-            color={STEEL}
-            rotX={Math.PI / 2}
-          />
+          {!p.retail?.excluded.includes('수전') && (
+            <>
+              <Cyl rTop={14} rBot={14} h={260} pos={[0, h, -d / 2 + 60]} color={STEEL} />
+              <Cyl
+                rTop={11}
+                rBot={11}
+                h={180}
+                pos={[0, h + 250, -d / 2 + 150]}
+                color={STEEL}
+                rotX={Math.PI / 2}
+              />
+            </>
+          )}
           {/* 문 손잡이 라인 */}
           <Box size={[w - 60, 14, 12]} pos={[30, h - counterT - 120, d / 2 - 26]} color={STEEL} />
         </group>

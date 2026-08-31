@@ -105,6 +105,82 @@ test('카탈로그 배치 대기 중에는 기존 오브젝트를 잠그고 Esc 
   await expect(page.locator('.inspector h4')).toContainText('소파')
 })
 
+test('IKEA 수전을 싱크대에 배치한 뒤 UI로 회전·확대·축소한다', async ({ page }) => {
+  const cabinetId = await page.evaluate(() => {
+    const s = window.__hp3d_store.getState()
+    s.commit((draft) => {
+      draft.placements = []
+    })
+    return s.addPlacement('ik-metod-sinarp-sink-cabinet', { x: 9000, z: 5000 })!
+  })
+
+  await page.locator('.brandbar').getByRole('button', { name: 'IKEA' }).click()
+  await page
+    .getByText(/엘마렌 주방수전/)
+    .first()
+    .click()
+  await page.getByRole('button', { name: '탑뷰' }).click()
+  await page.waitForTimeout(700)
+  const point = await worldPoint(page, 9000, 5000)
+  await page.mouse.move(point.x, point.y)
+  await page.waitForTimeout(200)
+  await page.mouse.click(point.x, point.y)
+  await page.waitForFunction(() =>
+    window.__hp3d_store
+      .getState()
+      .placements.some((placement) => placement.productId === 'ik-aelmaren-kitchen-faucet')
+  )
+  const faucetId = await page.evaluate(
+    () =>
+      window.__hp3d_store
+        .getState()
+        .placements.find((placement) => placement.productId === 'ik-aelmaren-kitchen-faucet')!.id
+  )
+
+  const rotate = page.getByRole('button', { name: '선택 제품 15도 회전' })
+  const zoomIn = page.getByRole('button', { name: '화면 확대' })
+  const zoomOut = page.getByRole('button', { name: '화면 축소' })
+  await expect(rotate).toBeVisible()
+  await expect(zoomIn).toBeVisible()
+  await expect(zoomOut).toBeVisible()
+
+  const faucetBefore = await page.evaluate(
+    (id) => window.__hp3d_store.getState().placements.find((placement) => placement.id === id),
+    faucetId
+  )
+  expect(faucetBefore.supportPlacementId).toBe(cabinetId)
+  expect(faucetBefore.elevationOverride).toBe(800)
+
+  await rotate.click()
+  expect(
+    await S(page, `.placements.find((placement) => placement.id === '${faucetId}').rotY`)
+  ).toBe(faucetBefore.rotY + 15)
+
+  const distance = () =>
+    page.evaluate(() => {
+      const camera = window.__hp3d_cam
+      const plan = window.__hp3d_store.getState().plan
+      const xs = plan.walls.flatMap((wall: any) => [wall.a.x, wall.b.x])
+      const zs = plan.walls.flatMap((wall: any) => [wall.a.y, wall.b.y])
+      const target = {
+        x: (Math.min(...xs) + Math.max(...xs)) / 2,
+        y: 400,
+        z: (Math.min(...zs) + Math.max(...zs)) / 2,
+      }
+      return Math.hypot(
+        camera.position.x - target.x,
+        camera.position.y - target.y,
+        camera.position.z - target.z
+      )
+    })
+  const beforeZoom = await distance()
+  await zoomIn.click()
+  const afterZoomIn = await distance()
+  expect(afterZoomIn).toBeLessThan(beforeZoom)
+  await zoomOut.click()
+  expect(await distance()).toBeCloseTo(beforeZoom, 0)
+})
+
 test('인스펙터 회전 버튼이 rotY를 정확히 변경한다', async ({ page }) => {
   await page.evaluate(() => {
     const s = window.__hp3d_store.getState()

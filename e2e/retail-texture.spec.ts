@@ -83,6 +83,9 @@ test('공식 사진 투영면은 상품군과 관계없이 원본 crop 비율을
       const state = window.__hp3d_store.getState()
       const product = state.productById(id)
       window.__hp3d_store.setState({ placements: [] })
+      if (id === 'ik-aelmaren-kitchen-faucet') {
+        state.addPlacement('ik-metod-sinarp-sink-cabinet', { x: 9000, z: 5000 })
+      }
       state.addPlacement(id, { x: 9000, z: 5000 })
       const appearance = product.appearance
       if (!appearance) throw new Error(`retail-appearance-missing:${id}`)

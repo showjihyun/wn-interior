@@ -189,7 +189,10 @@ export function validateBrandProduct(raw: RawBrandProduct): ValidateResult {
     ? (raw.category as CategoryId)
     : 'custom'
   const mount =
-    raw.mount === 'wall-mount' || raw.mount === 'ceiling' || raw.mount === 'wall'
+    raw.mount === 'wall-mount' ||
+    raw.mount === 'ceiling' ||
+    raw.mount === 'wall' ||
+    raw.mount === 'surface'
       ? raw.mount
       : 'floor'
 

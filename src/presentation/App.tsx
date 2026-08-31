@@ -5,6 +5,7 @@ import { LeftPanel } from './ui/LeftPanel'
 import { InspectorPanel } from './ui/InspectorPanel'
 import { Editor2D } from './editor2d/Editor2D'
 import { WalkPanel } from './ui/WalkPanel'
+import { SceneControls } from './ui/SceneControls'
 
 const Scene3D = lazy(() =>
   import('./scene/Scene3D').then((module) => ({ default: module.Scene3D }))
@@ -74,6 +75,7 @@ export function App() {
             <Editor2D />
           )}
           {mode === '3d' && viewPreset === 'walk' && <WalkPanel />}
+          {mode === '3d' && viewPreset !== 'walk' && <SceneControls />}
         </div>
         <InspectorPanel />
       </div>

@@ -80,7 +80,7 @@ export interface FloorPlanReviewEvidenceInput {
   note: string
 }
 
-export type Mount = 'floor' | 'wall-mount' | 'ceiling' | 'wall'
+export type Mount = 'floor' | 'wall-mount' | 'ceiling' | 'wall' | 'surface'
 
 export interface RetailProductInfo {
   retailer: string
@@ -199,6 +199,8 @@ export interface Placement {
   rotY: number // deg
   colorway?: string
   elevationOverride?: number
+  /** 상판 부착형 제품이 올라간 배치 인스턴스 */
+  supportPlacementId?: string
   /** 치수 오버라이드 — 유사 제품을 실측에 맞게 조정 (누락/무효 값은 제품 실측 폴백) */
   dimsOverride?: { w: number; d: number; h: number }
 }

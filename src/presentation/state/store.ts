@@ -21,6 +21,7 @@ import type { AiSettings } from '../../application/aiSettings'
 import { canDropAt } from '../../domain/engine/drop'
 import { resolveDims } from '../../domain/engine/dims'
 import { roomAt } from '../../domain/engine/geom'
+import { requiresSurfaceHost, resolveSurfacePlacement } from '../../domain/surfacePlacement'
 import type {
   AiSettingsRepository,
   Clock,
@@ -358,25 +359,33 @@ export function createAppStore({
         if (!prod) return null
         const x = Math.round(pos.x)
         const z = Math.round(pos.z)
+        const surface = resolveSurfacePlacement(prod, state.placements, x, z, state.productById)
+        if (requiresSurfaceHost(prod) && !surface) {
+          state.showToast('수전은 싱크대 상판을 클릭해 배치하세요')
+          return null
+        }
+        const target = surface ?? { x, z, rotY, elevation: 0, supportPlacementId: undefined }
         const result = canDropAt(
           state.plan,
           prod,
           state.placements,
           null,
-          x,
-          z,
-          rotY,
+          target.x,
+          target.z,
+          target.rotY,
           state.productById
         )
         if (!result.ok) {
           state.showToast(
             result.reason === 'out-of-room'
               ? '방 안에만 배치할 수 있어요'
-              : '공간이 부족해 배치할 수 없어요'
+              : result.reason === 'surface-required'
+                ? '수전은 싱크대 상판을 클릭해 배치하세요'
+                : '공간이 부족해 배치할 수 없어요'
           )
           return null
         }
-        const room = roomAt(state.plan, x, z)
+        const room = roomAt(state.plan, target.x, target.z)
         if (!room) return null
         const id = uid()
         commitEdit({
@@ -385,9 +394,11 @@ export function createAppStore({
             id,
             productId,
             roomId: room.id,
-            pos: { x, y: 0, z },
-            rotY,
+            pos: { x: target.x, y: target.elevation, z: target.z },
+            rotY: target.rotY,
             colorway: prod.colorways?.[0],
+            elevationOverride: surface?.elevation,
+            supportPlacementId: surface?.supportPlacementId,
           },
         })
         set({ selectedId: id })

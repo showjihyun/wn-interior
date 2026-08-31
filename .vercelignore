@@ -1,0 +1,9 @@
+# Frontend deployment only. GPU/model workers are deployed as separate Docker services.
+services/**
+.runtime/**
+artifacts/**
+output/**
+coverage/**
+test-results/**
+playwright-report/**
+blob-report/**

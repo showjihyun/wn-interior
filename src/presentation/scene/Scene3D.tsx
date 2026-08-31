@@ -70,15 +70,16 @@ function GlRegistrar() {
   const gl = useThree((s) => s.gl)
   const camera = useThree((s) => s.camera)
   const scene = useThree((s) => s.scene)
+  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null
   useEffect(() => {
-    const unregister = sceneSurface.register(gl, camera)
+    const unregister = sceneSurface.register(gl, camera, controls)
     if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       ;(window as unknown as Record<string, unknown>).__hp3d_gl = gl
       ;(window as unknown as Record<string, unknown>).__hp3d_cam = camera
       ;(window as unknown as Record<string, unknown>).__hp3d_scene = scene
     }
     return unregister
-  }, [camera, gl, scene, sceneSurface])
+  }, [camera, controls, gl, scene, sceneSurface])
   return null
 }
 

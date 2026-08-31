@@ -117,6 +117,38 @@ body,
   position: relative;
   min-width: 0;
 }
+.scene-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid #bec8d1;
+  border-radius: 10px;
+  background: #f7f9fbe6;
+  box-shadow: 0 4px 14px #26313b24;
+  backdrop-filter: blur(6px);
+}
+.scene-controls button {
+  min-width: 66px;
+  border: 1px solid #aeb9c4;
+  border-radius: 7px;
+  background: #fff;
+  color: #28343f;
+  padding: 7px 9px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.scene-controls button:hover:not(:disabled) {
+  border-color: #3d82b7;
+  background: #edf6fc;
+}
+.scene-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
 
 /* ── 좌측 패널 ── */
 .left {
